@@ -1,0 +1,10 @@
+{
+  "api_key": "sk-e2549958a17640339fdeaa1085a2b0fa",
+  "api_base_url": "https://dashscope-intl.aliyuncs.com/compatible-mode/v1",
+  "model": "qwen3-max",
+  "temperature": 0.7,
+  "max_tokens": 4096,
+  "theme": "light",
+  "sidebar_width": 260,
+  "username": "User"
+}

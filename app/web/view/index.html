@@ -1,0 +1,508 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Engineer Agent</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="app-container">
+        <!-- Sidebar -->
+        <div class="sidebar" id="sidebar">
+            <!-- Logo Section -->
+            <div class="sidebar-logo">
+                <div class="sidebar-logo-header">
+                    <div class="sidebar-logo-icon">
+                        <i class="fa-solid fa-robot"></i>
+                    </div>
+                    <div class="sidebar-logo-text">
+                        <h2>Agent Hub</h2>
+                        <p>Enterprise Edition</p>
+                    </div>
+                </div>
+                <button class="btn-new-chat" onclick="newConversation()">
+                    <i class="fa-solid fa-plus"></i>
+                    <span>New Conversation</span>
+                </button>
+            </div>
+
+            <!-- Menu Section -->
+            <div class="sidebar-menu">
+                <!-- Core Functions -->
+                <div class="menu-section">
+                    <div class="menu-section-header">
+                        <div class="menu-section-dot"></div>
+                        <span class="menu-section-title">Core Functions</span>
+                    </div>
+                    <a href="/dashboard" class="menu-item"><i class="fa-solid fa-gauge-high"></i><span>Dashboard</span></a>
+                    <button class="menu-item" data-view="chat">
+                        <i class="fa-solid fa-code"></i>
+                        <span>Code Development</span>
+                    </button>
+                    <button class="menu-item" data-view="fc">
+                        <i class="fa-solid fa-bolt"></i>
+                        <span>Function Compute</span>
+                    </button>
+                    <button class="menu-item" data-view="resources">
+                        <i class="fa-solid fa-server"></i>
+                        <span>Resource Management</span>
+                    </button>
+                    <button class="menu-item" data-view="deploy">
+                        <i class="fa-solid fa-rocket"></i>
+                        <span>Deployment & Ops</span>
+                    </button>
+                </div>
+
+                <!-- Intelligent Agents -->
+                <div class="menu-section">
+                    <div class="menu-section-header">
+                        <div class="menu-section-dot"></div>
+                        <span class="menu-section-title">Intelligent Agents</span>
+                    </div>
+                    <button class="menu-item" data-view="security">
+                        <i class="fa-solid fa-shield-halved"></i>
+                        <span>Security Governance</span>
+                    </button>
+                    <button class="menu-item" data-view="cost">
+                        <i class="fa-solid fa-dollar-sign"></i>
+                        <span>Cost Optimization</span>
+                    </button>
+                    <button class="menu-item" data-view="agents-create">
+                        <i class="fa-solid fa-plus"></i>
+                        <span>Create Agent</span>
+                    </button>
+                </div>
+
+                <!-- Management Center -->
+                <div class="menu-section">
+                    <div class="menu-section-header">
+                        <div class="menu-section-dot"></div>
+                        <span class="menu-section-title">Management Center</span>
+                    </div>
+                    <button class="menu-item" data-view="skills">
+                        <i class="fa-solid fa-gear"></i>
+                        <span>Skill Center</span>
+                    </button>
+                    <button class="menu-item" data-view="knowledge">
+                        <i class="fa-solid fa-book"></i>
+                        <span>Knowledge Base</span>
+                    </button>
+                    <button class="menu-item" data-view="agents">
+                        <i class="fa-solid fa-robot"></i>
+                        <span>Agent Center</span>
+                    </button>
+                </div>
+
+                <!-- Auxiliary Tools -->
+                <div class="menu-section">
+                    <div class="menu-section-header">
+                        <div class="menu-section-dot"></div>
+                        <span class="menu-section-title">Auxiliary Tools</span>
+                    </div>
+                    <button class="menu-item" data-view="docs">
+                        <i class="fa-solid fa-file-lines"></i>
+                        <span>Documents & Reports</span>
+                    </button>
+                    <button class="menu-item" data-view="monitor">
+                        <i class="fa-solid fa-chart-line"></i>
+                        <span>Monitoring Panel</span>
+                    </button>
+                </div>
+
+                <!-- History Section -->
+                <div class="history-section">
+                    <div class="history-header" onclick="toggleHistory()">
+                        <div class="history-header-left">
+                            <div class="history-dot"></div>
+                            <span class="history-title">History</span>
+                        </div>
+                        <div class="history-toggle" id="history-toggle">
+                            <i class="fa-solid fa-chevron-down"></i>
+                        </div>
+                    </div>
+                    <div class="history-list" id="history-list">
+                        <!-- History items will be populated by JS -->
+                        <div class="empty-state" id="history-empty">
+                            <p class="text-muted" style="padding: 10px 16px; font-size: 13px;">No conversations yet</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- User Section -->
+            <div class="sidebar-user">
+                <div class="user-info">
+                    <div class="user-avatar">
+                        <i class="fa-solid fa-user"></i>
+                    </div>
+                    <div class="user-details">
+                        <p class="user-name">User Name</p>
+                        <div class="user-status">
+                            <div class="user-status-dot"></div>
+                            <span class="user-status-text">Online</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Sidebar Resize Handle -->
+        <div class="sidebar-resize-handle" id="sidebar-resize-handle"></div>
+
+        <!-- Main Content -->
+        <div class="main-content">
+            <!-- Header -->
+            <header class="header">
+                <div class="header-left">
+                    <div class="header-logo">
+                        <span>AI</span>
+                    </div>
+                    <span class="header-title">Agent Hub</span>
+                </div>
+                <div class="header-right">
+                    <button class="header-btn" onclick="showSettings()" title="Settings">
+                        <i class="fa-solid fa-gear"></i>
+                    </button>
+                    <button class="header-btn" title="Notifications">
+                        <i class="fa-solid fa-bell"></i>
+                    </button>
+                    <button class="header-user-btn" title="Profile">
+                        <div class="header-user-avatar">
+                            <i class="fa-solid fa-user"></i>
+                        </div>
+                    </button>
+                </div>
+            </header>
+
+            <!-- Chat View -->
+            <div class="chat-view view active" id="chat-view">
+                <div class="chat-view-header">
+                    <div class="chat-view-header-left">
+                        <i class="fa-solid fa-robot"></i>
+                        <h1>Agent Chat</h1>
+                    </div>
+                    <div class="chat-view-header-actions">
+                        <button class="btn btn-outline" id="toggle-execution-btn" onclick="toggleExecutionPanel()">
+                            <i class="fa-solid fa-terminal"></i>
+                            <span>Execution</span>
+                        </button>
+                        <button class="btn btn-outline" onclick="toggleMemoryPanel()">
+                            <i class="fa-solid fa-brain"></i>
+                            <span>Memory</span>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="chat-main">
+                    <div class="chat-container" id="chat-container">
+                        <div class="welcome-message" id="welcome-message">
+                            <div class="welcome-icon">
+                                <i class="fa-solid fa-robot"></i>
+                            </div>
+                            <h2>AliCloud Agent Hub</h2>
+                            <p>Select actions or start conversation</p>
+                        </div>
+                    </div>
+
+                    <!-- Execution Panel -->
+                    <div class="execution-panel" id="execution-panel">
+                        <div class="execution-panel-header">
+                            <h2>Agent Execution</h2>
+                            <button class="execution-panel-toggle" onclick="toggleExecutionPanel()">
+                                <i class="fa-solid fa-chevron-right"></i>
+                            </button>
+                        </div>
+                        <div class="execution-panel-content">
+                            <!-- Task Breakdown Card -->
+                            <div class="task-breakdown-card">
+                                <h3>Task Breakdown</h3>
+                                <div class="step-item" data-step="1">
+                                    <div class="step-icon pending">
+                                        <i class="fa-solid fa-circle"></i>
+                                    </div>
+                                    <span class="step-text">Understanding Intent</span>
+                                </div>
+                                <div class="step-item" data-step="2">
+                                    <div class="step-icon pending">
+                                        <i class="fa-solid fa-circle"></i>
+                                    </div>
+                                    <span class="step-text">Selecting Agent</span>
+                                </div>
+                                <div class="step-item" data-step="3">
+                                    <div class="step-icon pending">
+                                        <i class="fa-solid fa-circle"></i>
+                                    </div>
+                                    <span class="step-text">Processing Request</span>
+                                </div>
+                                <div class="step-item" data-step="4">
+                                    <div class="step-icon pending">
+                                        <i class="fa-solid fa-circle"></i>
+                                    </div>
+                                    <span class="step-text">Generating Response</span>
+                                </div>
+                            </div>
+
+                            <!-- Logs Card -->
+                            <div class="logs-card">
+                                <div class="logs-card-header">
+                                    <i class="fa-solid fa-clock"></i>
+                                    <h3>Real-time Logs</h3>
+                                </div>
+                                <div class="logs-list" id="logs-list">
+                                    <div class="log-entry info">
+                                        <span class="log-time">--:--:--</span>
+                                        <i class="fa-solid fa-circle-info log-icon"></i>
+                                        <span class="log-message">System ready</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Tool Execution Card (hidden by default) -->
+                            <div class="tool-execution-card hidden" id="tool-execution-card">
+                                <div class="tool-execution-header">
+                                    <div class="tool-execution-status">
+                                        <div class="tool-execution-spinner"></div>
+                                        <i class="fa-solid fa-check tool-execution-icon"></i>
+                                        <i class="fa-solid fa-xmark tool-execution-icon"></i>
+                                        <span class="tool-execution-message">Preparing...</span>
+                                    </div>
+                                    <span class="tool-execution-time">
+                                        <i class="fa-regular fa-clock"></i>
+                                        <span class="execution-time-value">0.0s</span>
+                                    </span>
+                                </div>
+                                <div class="progress-bar-container hidden" id="progress-container">
+                                    <div class="progress-bar-label">
+                                        <span>Writing progress</span>
+                                        <span id="progress-text">0%</span>
+                                    </div>
+                                    <div class="progress-bar">
+                                        <div class="progress-bar-fill" id="progress-fill" style="width: 0%"></div>
+                                    </div>
+                                </div>
+                                <div class="tool-file-info hidden" id="tool-file-info">
+                                    <i class="fa-solid fa-file-code"></i>
+                                    <span id="tool-filename">filename</span>
+                                </div>
+                            </div>
+
+                            <!-- Code Output Block (hidden by default) -->
+                            <div class="code-output-block hidden" id="code-output-block">
+                                <div class="code-output-header" onclick="toggleCodeOutput()">
+                                    <div class="code-output-info">
+                                        <i class="fa-solid fa-robot"></i>
+                                        <span id="code-output-filename">File</span>
+                                        <span class="code-output-meta" id="code-output-meta"></span>
+                                    </div>
+                                    <div class="code-output-toggle">
+                                        <i class="fa-solid fa-chevron-down" id="code-output-toggle-icon"></i>
+                                    </div>
+                                </div>
+                                <div class="code-output-body" id="code-output-body">
+                                    <div class="code-output-content">
+                                        <pre id="code-output-content"></pre>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Thinking Steps (hidden by default) -->
+                            <div class="thinking-steps-list hidden" id="thinking-steps-list">
+                                <!-- Will be populated by JS -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Chat Input Area -->
+                <div class="chat-input-area">
+                    <div class="chat-input-wrapper">
+                        <!-- Toolbar -->
+                        <div class="input-toolbar">
+                            <!-- Knowledge Base Selector -->
+                            <div class="dropdown" id="kb-dropdown">
+                                <button class="toolbar-btn" onclick="toggleKbDropdown(event)">
+                                    <i class="fa-solid fa-paperclip"></i>
+                                    <span id="kb-button-text">Select Knowledge Base</span>
+                                    <i class="fa-solid fa-chevron-down chevron-icon"></i>
+                                </button>
+                                <div class="dropdown-menu skill-selector-menu hidden" id="kb-menu">
+                                    <div class="skill-selector-header">
+                                        <span style="font-size: 12px; color: #6B7280;">Select Knowledge Bases</span>
+                                    </div>
+                                    <div class="skill-selector-item" data-kb="kb1" onclick="toggleKbSelection('kb1')">
+                                        <div class="skill-selector-name">
+                                            <span>Operation Manual</span>
+                                            <i class="fa-solid fa-check"></i>
+                                        </div>
+                                    </div>
+                                    <div class="skill-selector-item" data-kb="kb2" onclick="toggleKbSelection('kb2')">
+                                        <div class="skill-selector-name">
+                                            <span>Security Standards</span>
+                                            <i class="fa-solid fa-check"></i>
+                                        </div>
+                                    </div>
+                                    <div class="skill-selector-item" data-kb="kb3" onclick="toggleKbSelection('kb3')">
+                                        <div class="skill-selector-name">
+                                            <span>Architecture Docs</span>
+                                            <i class="fa-solid fa-check"></i>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Skill Selector -->
+                            <div class="dropdown" id="skill-dropdown">
+                                <button class="toolbar-btn" id="skill-selector-btn" onclick="toggleSkillDropdown(event)">
+                                    <i class="fa-solid fa-puzzle-piece"></i>
+                                    <span id="skill-button-text">Select Skill (Optional)</span>
+                                    <i class="fa-solid fa-chevron-down chevron-icon"></i>
+                                </button>
+                                <div class="dropdown-menu skill-selector-menu hidden" id="skill-menu">
+                                    <div class="skill-selector-header">
+                                        <span style="font-size: 12px; color: #6B7280;">Select a Skill</span>
+                                    </div>
+                                    <div class="skill-selector-item" data-skill="" onclick="selectSkill('')">
+                                        <div class="skill-selector-name">
+                                            <span>No Skill (Auto-select)</span>
+                                            <i class="fa-solid fa-check"></i>
+                                        </div>
+                                    </div>
+                                    <!-- Skills will be populated by JS -->
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Input Form -->
+                        <form class="chat-input-form" onsubmit="handleSubmit(event)">
+                            <textarea
+                                class="chat-textarea"
+                                id="chat-input"
+                                placeholder="Type your message..."
+                                rows="1"
+                                onkeydown="handleKeyDown(event)"
+                                oninput="autoResize(this)"
+                            ></textarea>
+                            <button type="submit" class="send-btn" id="send-btn">
+                                <i class="fa-solid fa-paper-plane"></i>
+                            </button>
+                        </form>
+
+                        <!-- Stop Button (hidden by default) -->
+                        <div class="stop-streaming-btn hidden" id="stop-streaming-container" onclick="stopStreaming()">
+                            <i class="fa-solid fa-stop"></i>
+                            <span>Stop</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Skills View -->
+            <div class="view" id="skills-view">
+                <div class="skills-view-header">
+                    <h2>Skill Center</h2>
+                    <button class="btn btn-primary" onclick="showCreateSkillDialog()">
+                        <i class="fa-solid fa-plus"></i>
+                        Create Skill
+                    </button>
+                </div>
+                <div class="skills-container" id="skills-container">
+                    <div class="loading">Loading skills...</div>
+                </div>
+            </div>
+
+            <!-- Workspace View -->
+            <div class="view" id="workspace-view">
+                <div class="workspace-view-header">
+                    <h2>Workspace</h2>
+                    <button class="btn btn-primary" onclick="showUploadDialog()">
+                        <i class="fa-solid fa-upload"></i>
+                        Upload
+                    </button>
+                </div>
+                <div class="workspace-container">
+                    <div class="file-tree" id="file-tree">
+                        <div class="loading">Loading files...</div>
+                    </div>
+                    <div class="file-editor" id="file-editor">
+                        <div class="editor-placeholder">
+                            <i class="fa-solid fa-file-lines"></i>
+                            <p>Select a file to view or edit</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Settings View -->
+            <div class="view" id="settings-view">
+                <div class="settings-view-header">
+                    <h2>Settings</h2>
+                </div>
+                <div class="settings-container">
+                    <div class="settings-section">
+                        <h3>API Configuration</h3>
+                        <div class="form-group">
+                            <label>API Key</label>
+                            <input type="password" id="api-key" placeholder="Enter your API key">
+                        </div>
+                        <div class="form-group">
+                            <label>API Base URL</label>
+                            <input type="text" id="api-url" value="https://dashscope-intl.aliyuncs.com/compatible-mode/v1">
+                        </div>
+                        <div class="form-group">
+                            <label>Model</label>
+                            <select id="model-select">
+                                <option value="qwen3-max">Qwen3 Max</option>
+                                <option value="qwen3-plus">Qwen3 Plus</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="settings-section" style="margin-top: 16px;">
+                        <h3>System Settings</h3>
+                        <div class="form-group">
+                            <label>Theme</label>
+                            <select id="theme-select">
+                                <option value="light">Light</option>
+                                <option value="dark">Dark</option>
+                            </select>
+                        </div>
+                    </div>
+                    <button class="btn btn-primary" style="margin-top: 16px;" onclick="saveSettings()">
+                        <i class="fa-solid fa-save"></i>
+                        Save Settings
+                    </button>
+                </div>
+            </div>
+
+            <!-- Generic View (for unimplemented views) -->
+            <div class="view" id="generic-view">
+                <div class="settings-view-header">
+                    <h2 id="generic-view-title">Page Title</h2>
+                </div>
+                <div class="settings-container">
+                    <div class="empty-state">
+                        <i class="fa-solid fa-folder-open"></i>
+                        <p>This feature is under development</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Container -->
+    <div class="toast-container" id="toast-container"></div>
+
+    <!-- Dialog Overlay -->
+    <div class="dialog-overlay" id="dialog-overlay">
+        <div class="dialog" id="dialog-content">
+            <!-- Dialog content will be populated by JS -->
+        </div>
+    </div>
+
+    <script src="/static/js/app.js"></script>
+</body>
+</html>

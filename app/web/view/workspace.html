@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Workspace - Engineer Agent</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="app-container">
+        <div class="sidebar" id="sidebar">
+            <div class="sidebar-logo">
+                <div class="sidebar-logo-header">
+                    <div class="sidebar-logo-icon"><i class="fa-solid fa-robot"></i></div>
+                    <div class="sidebar-logo-text"><h2>Agent Hub</h2><p>Enterprise Edition</p></div>
+                </div>
+                <button class="btn-new-chat" onclick="window.location.href='/chat'">
+                    <i class="fa-solid fa-plus"></i>
+                    <span>New Conversation</span>
+                </button>
+            </div>
+            <div class="sidebar-menu">
+                <div class="menu-section">
+                    <div class="menu-section-header"><div class="menu-section-dot"></div><span class="menu-section-title">Core Functions</span></div>
+                    <a href="/dashboard" class="menu-item"><i class="fa-solid fa-gauge-high"></i><span>Dashboard</span></a>
+                    <a href="/chat" class="menu-item"><i class="fa-solid fa-code"></i><span>Code Development</span></a>
+                    <a href="/chat?type=fc" class="menu-item"><i class="fa-solid fa-bolt"></i><span>Function Compute</span></a>
+                    <a href="/resources" class="menu-item"><i class="fa-solid fa-server"></i><span>Resource Management</span></a>
+                    <a href="/deploy" class="menu-item"><i class="fa-solid fa-rocket"></i><span>Deployment & Ops</span></a>
+                </div>
+                <div class="menu-section">
+                    <div class="menu-section-header"><div class="menu-section-dot"></div><span class="menu-section-title">Management Center</span></div>
+                    <a href="/skills" class="menu-item"><i class="fa-solid fa-puzzle-piece"></i><span>Skill Center</span></a>
+                    <a href="/knowledge" class="menu-item"><i class="fa-solid fa-book-open"></i><span>Knowledge Base</span></a>
+                    <a href="/agents" class="menu-item"><i class="fa-solid fa-robot"></i><span>Agent Center</span></a>
+                </div>
+                <div class="menu-section">
+                    <div class="menu-section-header"><div class="menu-section-dot"></div><span class="menu-section-title">Auxiliary Tools</span></div>
+                    <a href="/docs" class="menu-item"><i class="fa-solid fa-file-lines"></i><span>Documents & Reports</span></a>
+                    <a href="/monitoring" class="menu-item"><i class="fa-solid fa-chart-line"></i><span>Monitoring Panel</span></a>
+                    <a href="/settings" class="menu-item"><i class="fa-solid fa-gear"></i><span>Settings</span></a>
+                </div>
+                <div class="history-section">
+                    <div class="history-header" onclick="toggleHistory()">
+                        <div class="history-header-left"><div class="history-dot"></div><span class="history-title">History</span></div>
+                        <div class="history-toggle"><i class="fa-solid fa-chevron-down"></i></div>
+                    </div>
+                    <div class="history-list" id="history-list">
+                        <div class="empty-state"><p class="text-muted" style="padding: 10px 16px; font-size: 13px;">No conversations yet</p></div>
+                    </div>
+                </div>
+            </div>
+            <div class="sidebar-user">
+                <div class="user-info">
+                    <div class="user-avatar"><i class="fa-solid fa-user"></i></div>
+                    <div class="user-details"><p class="user-name">User</p><div class="user-status"><div class="user-status-dot"></div><span class="user-status-text">Online</span></div></div>
+                </div>
+                <div class="sidebar-user-actions">
+                    <a href="/settings" title="Settings" class="sidebar-action-btn"><i class="fa-solid fa-gear"></i></a>
+                    <a href="/settings" title="Logout" onclick="logout()" class="sidebar-action-btn logout"><i class="fa-solid fa-right-from-bracket"></i></a>
+                </div>
+            </div>
+            <div class="sidebar-resize-handle" id="sidebar-resize-handle"></div>
+        </div>
+
+        <div class="main-content">
+            <header class="header">
+                <div class="header-left">
+                    <div class="header-logo"><span>AI</span></div>
+                    <span class="header-title">Workspace</span>
+                </div>
+                <div class="header-right">
+                    <button class="header-btn" onclick="refreshFiles()" title="Refresh"><i class="fa-solid fa-rotate"></i></button>
+                    <button class="header-btn" onclick="showUploadDialog()" title="Upload"><i class="fa-solid fa-upload"></i></button>
+                    <button class="header-btn header-btn-primary" onclick="showNewFileDialog()" title="New File">
+                        <i class="fa-solid fa-file-circle-plus"></i> New File
+                    </button>
+                </div>
+            </header>
+
+            <div class="workspace-container">
+                <div class="file-tree" id="file-tree">
+                    <div class="loading-state"><i class="fa-solid fa-spinner fa-spin"></i> Loading files...</div>
+                </div>
+                <div class="editor-divider" id="editor-divider"></div>
+                <div class="file-editor" id="file-editor">
+                    <div class="editor-placeholder">
+                        <i class="fa-solid fa-folder-open"></i>
+                        <h3>Workspace Files</h3>
+                        <p>Select a file from the tree to view or edit</p>
+                        <button class="btn btn-primary" onclick="showNewFileDialog()">
+                            <i class="fa-solid fa-plus"></i> Create New File
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="dialog-overlay" id="dialog-overlay">
+        <div class="dialog">
+            <div class="dialog-header"><h3 id="dialog-title">Dialog</h3><button class="dialog-close" onclick="hideDialog()">&times;</button></div>
+            <div class="dialog-body" id="dialog-body"></div>
+            <div class="dialog-footer">
+                <button class="btn btn-outline" onclick="hideDialog()">Cancel</button>
+                <button class="btn btn-primary" id="dialog-confirm">Confirm</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="toast-container" id="toast-container"></div>
+
+    <style>
+        .workspace-container { flex: 1; display: flex; overflow: hidden; }
+        .file-tree {
+            width: 260px;
+            background: #1E2A38;
+            color: #C9D1D9;
+            overflow-y: auto;
+            flex-shrink: 0;
+            border-right: 1px solid #2D3748;
+        }
+        .file-tree::-webkit-scrollbar { width: 6px; }
+        .file-tree::-webkit-scrollbar-thumb { background: #3D4F63; border-radius: 3px; }
+        .file-tree ul { list-style: none; padding: 4px 0; }
+        .folder-item { }
+        .folder-header {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            padding: 5px 8px;
+            cursor: pointer;
+            user-select: none;
+            border-radius: 4px;
+            margin: 0 4px;
+        }
+        .folder-header:hover { background: rgba(255,255,255,0.08); }
+        .folder-toggle { font-size: 9px; color: #4A5568; width: 12px; transition: transform 0.15s; }
+        .folder-toggle.open { transform: rotate(90deg); }
+        .folder-header i:nth-child(3) { color: #FBBF24; }
+        .folder-name { flex: 1; font-size: 13px; }
+        .folder-count { font-size: 10px; color: #4A5568; background: rgba(255,255,255,0.08); padding: 1px 5px; border-radius: 8px; }
+        .folder-children { padding-left: 12px; }
+        .file-item {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            padding: 4px 8px 4px 20px;
+            cursor: pointer;
+            font-size: 13px;
+            border-radius: 4px;
+            margin: 0 4px;
+            transition: background 0.1s;
+        }
+        .file-item:hover { background: rgba(255,255,255,0.08); }
+        .file-item.active { background: rgba(0,105,67,0.3); color: #10B981; }
+        .file-item i { color: #60A5FA; flex-shrink: 0; }
+        .file-name { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .editor-divider { width: 4px; background: #2D3748; cursor: col-resize; flex-shrink: 0; transition: background 0.2s; }
+        .editor-divider:hover { background: var(--primary); }
+        .file-editor { flex: 1; display: flex; flex-direction: column; background: #FFFFFF; overflow: hidden; }
+        .editor-placeholder {
+            flex: 1; display: flex; flex-direction: column;
+            align-items: center; justify-content: center;
+            color: var(--grey); padding: 40px;
+        }
+        .editor-placeholder i { font-size: 56px; margin-bottom: 16px; color: var(--border-color); }
+        .editor-placeholder h3 { font-size: 18px; color: var(--text-primary); margin-bottom: 8px; }
+        .editor-placeholder p { font-size: 13px; margin-bottom: 20px; }
+        .editor-toolbar {
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 8px 16px;
+            background: var(--light-grey-bg);
+            border-bottom: 1px solid var(--border-color);
+            gap: 12px;
+            flex-shrink: 0;
+        }
+        .editor-toolbar-left { display: flex; align-items: center; gap: 8px; }
+        .editor-toolbar-left > i { color: #60A5FA; }
+        .editor-filename { font-size: 13px; font-weight: 600; color: var(--text-primary); }
+        .editor-path { font-size: 11px; color: var(--grey); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 300px; }
+        .editor-toolbar-right { display: flex; gap: 6px; }
+        .editor-content { flex: 1; overflow: hidden; display: flex; }
+        .file-editor-textarea {
+            width: 100%; height: 100%;
+            padding: 16px;
+            border: none; outline: none;
+            font-family: 'JetBrains Mono', 'Fira Code', monospace;
+            font-size: 13px; line-height: 1.6;
+            resize: none; background: #F8FAFC;
+            color: var(--text-primary);
+        }
+        .file-editor-textarea:focus { background: #FFFFFF; }
+        .editor-statusbar {
+            display: flex; gap: 16px; align-items: center;
+            padding: 4px 16px;
+            background: var(--light-grey-bg);
+            border-top: 1px solid var(--border-color);
+            font-size: 11px; color: var(--grey);
+            flex-shrink: 0;
+        }
+        .loading-state { text-align: center; padding: 24px; color: #9CA3AF; font-size: 13px; }
+
+        .header-btn-primary { background: var(--primary) !important; color: #FFFFFF !important; border: 1px solid var(--primary) !important; display: flex; align-items: center; gap: 6px; padding: 6px 14px; font-size: 13px; border-radius: 6px; }
+        .header-btn-primary:hover { opacity: 0.9; }
+        .btn-danger-outline { background: none !important; color: #DC2626 !important; border: 1px solid #DC2626 !important; }
+        .btn-danger-outline:hover { background: #FEF2F2 !important; }
+        .dialog-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); align-items: center; justify-content: center; z-index: 1000; }
+        .dialog-overlay.show { display: flex; }
+        .dialog { background: #FFFFFF; padding: 24px; width: 90%; max-width: 420px; border-radius: 12px; }
+        .dialog-header { display: flex; justify-content: space-between; margin-bottom: 20px; }
+        .dialog-header h3 { font-size: 16px; font-weight: 600; }
+        .dialog-close { background: none; border: none; font-size: 20px; color: var(--grey); cursor: pointer; }
+        .dialog-body { margin-bottom: 20px; }
+        .dialog-footer { display: flex; justify-content: flex-end; gap: 8px; }
+        .form-group { margin-bottom: 16px; }
+        .form-group:last-child { margin-bottom: 0; }
+        .form-group label { display: block; font-size: 13px; font-weight: 500; color: var(--text-secondary); margin-bottom: 6px; }
+        .btn { padding: 8px 16px; border-radius: 6px; cursor: pointer; font-size: 14px; font-weight: 500; transition: opacity 0.15s; }
+        .btn:hover { opacity: 0.9; }
+        .btn-primary { background: var(--primary); color: #FFFFFF; border: 1px solid var(--primary); }
+        .btn-outline { background: #FFFFFF; color: var(--text-secondary); border: 1px solid var(--border-color); }
+        .btn-outline:hover { background: var(--light-grey-bg); }
+        .btn-sm { padding: 5px 12px; font-size: 12px; }
+    </style>
+
+    <script src="/static/js/workspace.js"></script>
+</body>
+</html>

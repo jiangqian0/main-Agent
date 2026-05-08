@@ -1,0 +1,525 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Knowledge Base - Engineer Agent</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="app-container">
+        <div class="sidebar" id="sidebar">
+            <div class="sidebar-logo">
+                <div class="sidebar-logo-header">
+                    <div class="sidebar-logo-icon"><i class="fa-solid fa-robot"></i></div>
+                    <div class="sidebar-logo-text">
+                        <h2>Agent Hub</h2>
+                        <p>Enterprise Edition</p>
+                    </div>
+                </div>
+                <button class="btn-new-chat" onclick="window.location.href='/chat'">
+                    <i class="fa-solid fa-plus"></i>
+                    <span>New Conversation</span>
+                </button>
+            </div>
+            <div class="sidebar-menu">
+                <div class="menu-section">
+                    <div class="menu-section-header"><div class="menu-section-dot"></div><span class="menu-section-title">Core Functions</span></div>
+                    <a href="/dashboard" class="menu-item"><i class="fa-solid fa-gauge-high"></i><span>Dashboard</span></a>
+                    <a href="/chat" class="menu-item"><i class="fa-solid fa-code"></i><span>Code Development</span></a>
+                    <a href="/chat?type=fc" class="menu-item"><i class="fa-solid fa-bolt"></i><span>Function Compute</span></a>
+                    <a href="/resources" class="menu-item"><i class="fa-solid fa-server"></i><span>Resource Management</span></a>
+                    <a href="/deploy" class="menu-item"><i class="fa-solid fa-rocket"></i><span>Deployment & Ops</span></a>
+                </div>
+                <div class="menu-section">
+                    <div class="menu-section-header"><div class="menu-section-dot"></div><span class="menu-section-title">Management Center</span></div>
+                    <a href="/skills" class="menu-item"><i class="fa-solid fa-puzzle-piece"></i><span>Skill Center</span></a>
+                    <a href="/knowledge" class="menu-item active"><i class="fa-solid fa-book-open"></i><span>Knowledge Base</span></a>
+                    <a href="/agents" class="menu-item"><i class="fa-solid fa-robot"></i><span>Agent Center</span></a>
+                </div>
+                <div class="menu-section">
+                    <div class="menu-section-header"><div class="menu-section-dot"></div><span class="menu-section-title">Auxiliary Tools</span></div>
+                    <a href="/docs" class="menu-item"><i class="fa-solid fa-file-lines"></i><span>Documents & Reports</span></a>
+                    <a href="/monitoring" class="menu-item"><i class="fa-solid fa-chart-line"></i><span>Monitoring Panel</span></a>
+                    <a href="/settings" class="menu-item"><i class="fa-solid fa-gear"></i><span>Settings</span></a>
+                </div>
+            </div>
+            <div class="sidebar-user">
+                <div class="user-info">
+                    <div class="user-avatar"><i class="fa-solid fa-user"></i></div>
+                    <div class="user-details"><p class="user-name">User</p><div class="user-status"><div class="user-status-dot"></div><span class="user-status-text">Online</span></div></div>
+                </div>
+                <div class="sidebar-user-actions">
+                    <a href="/settings" title="Settings" class="sidebar-action-btn"><i class="fa-solid fa-gear"></i></a>
+                    <a href="/settings" title="Logout" onclick="logout()" class="sidebar-action-btn logout"><i class="fa-solid fa-right-from-bracket"></i></a>
+                </div>
+            </div>
+        </div>
+        <div class="sidebar-resize-handle" id="sidebar-resize-handle"></div>
+
+        <div class="main-content">
+            <header class="header">
+                <div class="header-left">
+                    <div class="header-logo"><span>AI</span></div>
+                    <span class="header-title">Knowledge Base</span>
+                </div>
+                <div class="header-right">
+                    <button class="header-btn" onclick="location.reload()"><i class="fa-solid fa-rotate"></i></button>
+                    <button class="header-btn header-btn-primary" onclick="showCreateDialog()">
+                        <i class="fa-solid fa-plus"></i> New Entry
+                    </button>
+                </div>
+            </header>
+
+            <div class="page-content">
+                <div class="page-header">
+                    <div>
+                        <h1>Knowledge Base</h1>
+                        <p>Manage reference documents, guides, and context for the agent</p>
+                    </div>
+                    <div class="kb-stats" id="kb-stats"></div>
+                </div>
+
+                <div class="kb-toolbar">
+                    <div class="kb-search-box">
+                        <i class="fa-solid fa-search"></i>
+                        <input type="text" id="kb-search" placeholder="Search knowledge base..." oninput="handleSearch()">
+                        <button class="kb-search-clear" id="kb-search-clear" onclick="clearSearch()" style="display:none">
+                            <i class="fa-solid fa-times"></i>
+                        </button>
+                    </div>
+                    <div class="kb-filters">
+                        <select id="kb-category-filter" onchange="handleFilter()">
+                            <option value="">All Categories</option>
+                        </select>
+                        <div class="kb-view-toggle">
+                            <button class="kb-view-btn active" data-view="grid" onclick="setView('grid')"><i class="fa-solid fa-grid-2"></i></button>
+                            <button class="kb-view-btn" data-view="list" onclick="setView('list')"><i class="fa-solid fa-list"></i></button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="kb-container" id="kb-container">
+                    <div class="kb-loading"><i class="fa-solid fa-spinner fa-spin"></i> Loading knowledge base...</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Create / Edit Dialog -->
+    <div class="dialog-overlay" id="dialog-overlay">
+        <div class="dialog kb-dialog">
+            <div class="dialog-header">
+                <h3 id="dialog-title"><i class="fa-solid fa-book"></i> New Entry</h3>
+                <button class="dialog-close" onclick="hideDialog()">&times;</button>
+            </div>
+            <div class="dialog-body">
+                <div class="form-group">
+                    <label>Title *</label>
+                    <input type="text" id="kb-title" placeholder="e.g., API Integration Guide">
+                </div>
+                <div class="form-group">
+                    <label>Category</label>
+                    <div class="input-with-addon">
+                        <select id="kb-category-select">
+                            <option value="General">General</option>
+                            <option value="Development">Development</option>
+                            <option value="DevOps">DevOps</option>
+                            <option value="Architecture">Architecture</option>
+                            <option value="Testing">Testing</option>
+                            <option value="Security">Security</option>
+                            <option value="Database">Database</option>
+                        </select>
+                        <input type="text" id="kb-new-category" placeholder="Or type new..." style="flex:1">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Tags</label>
+                    <input type="text" id="kb-tags" placeholder="Comma-separated tags: python, fastapi, api">
+                </div>
+                <div class="form-group">
+                    <label>Content *</label>
+                    <textarea id="kb-content" placeholder="Enter knowledge base content..." rows="12"></textarea>
+                </div>
+            </div>
+            <div class="dialog-footer">
+                <button class="btn btn-outline" onclick="hideDialog()">Cancel</button>
+                <button class="btn btn-primary" id="dialog-confirm" onclick="confirmDialog()">
+                    <i class="fa-solid fa-save"></i> Save Entry
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- View Dialog -->
+    <div class="dialog-overlay" id="view-dialog-overlay">
+        <div class="dialog kb-dialog kb-dialog-wide">
+            <div class="dialog-header">
+                <h3 id="view-title"><i class="fa-solid fa-book-open"></i></h3>
+                <div class="dialog-header-actions">
+                    <button class="dialog-action-btn" onclick="editCurrentEntry()" title="Edit"><i class="fa-solid fa-pencil"></i></button>
+                    <button class="dialog-close" onclick="closeViewDialog()">&times;</button>
+                </div>
+            </div>
+            <div class="dialog-body kb-view-body">
+                <div class="kb-view-meta">
+                    <span class="kb-view-category" id="view-category"></span>
+                    <span class="kb-view-tags" id="view-tags"></span>
+                    <span class="kb-view-date" id="view-date"></span>
+                </div>
+                <div class="kb-view-content" id="view-content"></div>
+            </div>
+            <div class="dialog-footer">
+                <button class="btn btn-outline" onclick="closeViewDialog()">Close</button>
+                <button class="btn btn-danger" onclick="deleteCurrentEntry()"><i class="fa-solid fa-trash"></i> Delete</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="toast-container" id="toast-container"></div>
+
+    <style>
+        .page-content { flex: 1; overflow-y: auto; padding: 24px 32px; background: var(--light-grey-bg); }
+        .page-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+        .page-header h1 { font-size: 20px; font-weight: 600; color: var(--text-primary); margin-bottom: 4px; }
+        .page-header p { font-size: 13px; color: var(--grey); }
+        .kb-stats { display: flex; gap: 16px; }
+        .kb-stat { background: #FFFFFF; border: 1px solid var(--border-color); padding: 8px 16px; font-size: 13px; color: var(--text-secondary); }
+        .kb-stat strong { color: var(--primary); font-weight: 600; }
+
+        .kb-toolbar { display: flex; gap: 12px; align-items: center; margin-bottom: 20px; flex-wrap: wrap; }
+        .kb-search-box { flex: 1; min-width: 240px; display: flex; align-items: center; gap: 8px; background: #FFFFFF; border: 1px solid var(--border-color); padding: 0 12px; }
+        .kb-search-box i { color: var(--grey); }
+        .kb-search-box input { border: none; outline: none; flex: 1; padding: 10px 0; font-size: 14px; background: transparent; }
+        .kb-search-clear { background: none; border: none; cursor: pointer; color: var(--grey); padding: 4px; }
+        .kb-search-clear:hover { color: var(--text-primary); }
+        .kb-filters { display: flex; gap: 8px; align-items: center; }
+        .kb-filters select { padding: 8px 12px; border: 1px solid var(--border-color); background: #FFFFFF; font-size: 13px; cursor: pointer; }
+        .kb-view-toggle { display: flex; background: #FFFFFF; border: 1px solid var(--border-color); }
+        .kb-view-btn { background: none; border: none; padding: 8px 12px; cursor: pointer; color: var(--grey); }
+        .kb-view-btn.active { background: var(--primary); color: #FFFFFF; }
+        .kb-view-btn:hover:not(.active) { background: var(--light-grey-bg); }
+
+        .kb-container { }
+        .kb-loading { text-align: center; padding: 64px; color: var(--grey); }
+        .kb-empty { text-align: center; padding: 64px; }
+        .kb-empty i { font-size: 48px; color: var(--border-color); margin-bottom: 16px; }
+        .kb-empty h3 { font-size: 16px; color: var(--text-primary); margin-bottom: 8px; }
+        .kb-empty p { font-size: 13px; color: var(--grey); margin-bottom: 20px; }
+
+        /* Grid view */
+        .kb-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 16px; }
+        .kb-card { background: #FFFFFF; border: 1px solid var(--border-color); padding: 16px; cursor: pointer; transition: box-shadow 0.2s, border-color 0.2s; }
+        .kb-card:hover { border-color: var(--primary); box-shadow: 0 2px 8px rgba(0,105,67,0.1); }
+        .kb-card-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px; }
+        .kb-card-header h3 { font-size: 14px; font-weight: 600; color: var(--text-primary); flex: 1; }
+        .kb-card-cat { font-size: 11px; padding: 2px 8px; background: var(--light-grey-bg); color: var(--grey); border-radius: 4px; }
+        .kb-card-preview { font-size: 13px; color: var(--grey); line-height: 1.5; margin-bottom: 12px; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+        .kb-card-footer { display: flex; justify-content: space-between; align-items: center; }
+        .kb-card-tags { display: flex; gap: 4px; flex-wrap: wrap; }
+        .kb-card-tag { font-size: 11px; padding: 2px 6px; background: var(--primary); color: #FFFFFF; border-radius: 3px; }
+        .kb-card-date { font-size: 11px; color: var(--grey); }
+
+        /* List view */
+        .kb-list { display: flex; flex-direction: column; gap: 8px; }
+        .kb-list-item { background: #FFFFFF; border: 1px solid var(--border-color); padding: 12px 16px; cursor: pointer; display: flex; align-items: center; gap: 12px; transition: border-color 0.2s; }
+        .kb-list-item:hover { border-color: var(--primary); }
+        .kb-list-item i { font-size: 18px; color: var(--grey); flex-shrink: 0; }
+        .kb-list-item-body { flex: 1; min-width: 0; }
+        .kb-list-item-title { font-size: 14px; font-weight: 500; color: var(--text-primary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .kb-list-item-preview { font-size: 12px; color: var(--grey); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .kb-list-item-meta { display: flex; gap: 12px; align-items: center; flex-shrink: 0; }
+        .kb-list-item-cat { font-size: 11px; padding: 2px 8px; background: var(--light-grey-bg); color: var(--grey); border-radius: 4px; }
+        .kb-list-item-date { font-size: 11px; color: var(--grey); white-space: nowrap; }
+
+        /* Dialog */
+        .kb-dialog { max-width: 560px; }
+        .kb-dialog-wide { max-width: 720px; }
+        .dialog-header-actions { display: flex; gap: 8px; align-items: center; }
+        .dialog-action-btn { background: none; border: 1px solid var(--border-color); padding: 6px 10px; cursor: pointer; color: var(--grey); border-radius: 4px; }
+        .dialog-action-btn:hover { background: var(--light-grey-bg); color: var(--primary); }
+        .input-with-addon { display: flex; gap: 8px; }
+        .input-with-addon select { flex-shrink: 0; }
+        .dialog-body { max-height: 60vh; overflow-y: auto; }
+        .kb-view-body { padding: 4px 0; }
+        .kb-view-meta { display: flex; gap: 8px; align-items: center; margin-bottom: 16px; flex-wrap: wrap; padding-bottom: 12px; border-bottom: 1px solid var(--border-color); }
+        .kb-view-category { font-size: 11px; padding: 3px 8px; background: var(--primary); color: #FFFFFF; border-radius: 4px; }
+        .kb-view-tags { display: flex; gap: 4px; }
+        .kb-view-tag { font-size: 11px; padding: 2px 6px; background: var(--light-grey-bg); color: var(--grey); border-radius: 3px; }
+        .kb-view-date { font-size: 11px; color: var(--grey); margin-left: auto; }
+        .kb-view-content { font-size: 14px; line-height: 1.7; color: var(--text-primary); white-space: pre-wrap; word-break: break-word; }
+
+        .header-btn-primary { background: var(--primary) !important; color: #FFFFFF !important; border-color: var(--primary) !important; display: flex; align-items: center; gap: 6px; padding: 6px 14px; font-size: 13px; }
+        .header-btn-primary:hover { opacity: 0.9; }
+        .btn-danger { background: #DC2626; color: #FFFFFF; border: 1px solid #DC2626; }
+        .btn-danger:hover { background: #B91C1C; }
+        .dialog-footer { display: flex; justify-content: flex-end; gap: 8px; }
+    </style>
+
+    <script>
+    const API_BASE = '/api/knowledge';
+    let entries = [];
+    let filteredEntries = [];
+    let currentView = 'grid';
+    let currentEditId = null;
+    let currentViewId = null;
+
+    document.addEventListener('DOMContentLoaded', () => {
+        checkAuth();
+        initSidebarResize();
+        loadEntries();
+    });
+
+    function checkAuth() {
+        const session = localStorage.getItem('agent_session') || sessionStorage.getItem('agent_session');
+        if (!session) window.location.href = '/login';
+    }
+
+    function logout() {
+        localStorage.removeItem('agent_session');
+        sessionStorage.removeItem('agent_session');
+        window.location.href = '/login';
+    }
+
+    function initSidebarResize() {
+        const sidebar = document.getElementById('sidebar');
+        const handle = document.getElementById('sidebar-resize-handle');
+        let dragging = false;
+        handle && handle.addEventListener('mousedown', e => {
+            dragging = true;
+            document.body.style.cursor = 'col-resize';
+            document.body.style.userSelect = 'none';
+            e.preventDefault();
+        });
+        document.addEventListener('mousemove', e => {
+            if (!dragging) return;
+            sidebar.style.width = Math.min(400, Math.max(200, e.clientX)) + 'px';
+        });
+        document.addEventListener('mouseup', () => {
+            dragging = false;
+            document.body.style.cursor = '';
+            document.body.style.userSelect = '';
+        });
+    }
+
+    async function loadEntries() {
+        try {
+            const resp = await fetch(API_BASE);
+            const data = await resp.json();
+            entries = data.entries || [];
+            updateStats();
+            loadCategoryFilter();
+            applyFilters();
+        } catch {
+            showToast('Failed to load knowledge base', 'error');
+            renderEmpty('Failed to load. Please try again.');
+        }
+    }
+
+    function updateStats() {
+        document.getElementById('kb-stats').innerHTML = `
+            <div class="kb-stat"><strong>${entries.length}</strong> entries</div>
+            <div class="kb-stat"><strong>${new Set(entries.map(e => e.category)).size}</strong> categories</div>
+        `;
+    }
+
+    function loadCategoryFilter() {
+        const cats = [...new Set(entries.map(e => e.category))].sort();
+        const sel = document.getElementById('kb-category-filter');
+        sel.innerHTML = '<option value="">All Categories</option>' +
+            cats.map(c => `<option value="${escHtml(c)}">${escHtml(c)}</option>`).join('');
+    }
+
+    function applyFilters() {
+        const q = document.getElementById('kb-search').value.toLowerCase().trim();
+        const cat = document.getElementById('kb-category-filter').value;
+        filteredEntries = entries.filter(e => {
+            const matchQ = !q || e.title.toLowerCase().includes(q) || (e.content||'').toLowerCase().includes(q) || (e.tags||[]).some(t => t.toLowerCase().includes(q));
+            const matchCat = !cat || e.category === cat;
+            return matchQ && matchCat;
+        });
+        renderEntries();
+    }
+
+    function handleSearch() {
+        const q = document.getElementById('kb-search').value.trim();
+        document.getElementById('kb-search-clear').style.display = q ? '' : 'none';
+        applyFilters();
+    }
+
+    function clearSearch() {
+        document.getElementById('kb-search').value = '';
+        document.getElementById('kb-search-clear').style.display = 'none';
+        applyFilters();
+    }
+
+    function handleFilter() { applyFilters(); }
+
+    function setView(view) {
+        currentView = view;
+        document.querySelectorAll('.kb-view-btn').forEach(b => b.classList.toggle('active', b.dataset.view === view));
+        renderEntries();
+    }
+
+    function renderEntries() {
+        const container = document.getElementById('kb-container');
+        if (filteredEntries.length === 0) {
+            container.innerHTML = entries.length === 0
+                ? `<div class="kb-empty"><i class="fa-solid fa-book-open"></i><h3>Knowledge Base is Empty</h3><p>Add your first entry to get started</p><button class="btn btn-primary" onclick="showCreateDialog()"><i class="fa-solid fa-plus"></i> Create Entry</button></div>`
+                : `<div class="kb-empty"><i class="fa-solid fa-magnifying-glass"></i><h3>No Results Found</h3><p>Try adjusting your search or filter</p></div>`;
+            return;
+        }
+        if (currentView === 'grid') {
+            container.innerHTML = `<div class="kb-grid">${filteredEntries.map(e => kbCard(e)).join('')}</div>`;
+        } else {
+            container.innerHTML = `<div class="kb-list">${filteredEntries.map(e => kbListItem(e)).join('')}</div>`;
+        }
+    }
+
+    function renderEmpty(msg) {
+        document.getElementById('kb-container').innerHTML = `<div class="kb-empty"><i class="fa-solid fa-circle-exclamation"></i><h3>${msg}</h3></div>`;
+    }
+
+    function kbCard(e) {
+        const tags = (e.tags||[]).slice(0,3).map(t => `<span class="kb-card-tag">${escHtml(t)}</span>`).join('');
+        const preview = escHtml((e.content||'').slice(0,150));
+        return `<div class="kb-card" onclick="viewEntry('${e.id}')">
+            <div class="kb-card-header">
+                <h3>${escHtml(e.title)}</h3>
+                <span class="kb-card-cat">${escHtml(e.category)}</span>
+            </div>
+            <p class="kb-card-preview">${preview}${e.content&&e.content.length>150?'...':''}</p>
+            <div class="kb-card-footer">
+                <div class="kb-card-tags">${tags}</div>
+                <span class="kb-card-date">${formatDate(e.created_at)}</span>
+            </div>
+        </div>`;
+    }
+
+    function kbListItem(e) {
+        const preview = escHtml((e.content||'').slice(0,80));
+        return `<div class="kb-list-item" onclick="viewEntry('${e.id}')">
+            <i class="fa-solid fa-file-lines"></i>
+            <div class="kb-list-item-body">
+                <div class="kb-list-item-title">${escHtml(e.title)}</div>
+                <div class="kb-list-item-preview">${preview}</div>
+            </div>
+            <div class="kb-list-item-meta">
+                <span class="kb-list-item-cat">${escHtml(e.category)}</span>
+                <span class="kb-list-item-date">${formatDate(e.created_at)}</span>
+            </div>
+        </div>`;
+    }
+
+    function viewEntry(id) {
+        const e = entries.find(x => x.id === id);
+        if (!e) return;
+        currentViewId = id;
+        document.getElementById('view-title').textContent = e.title;
+        document.getElementById('view-category').textContent = e.category;
+        document.getElementById('view-tags').innerHTML = (e.tags||[]).map(t => `<span class="kb-view-tag">${escHtml(t)}</span>`).join('');
+        document.getElementById('view-date').textContent = `Updated ${formatDate(e.updated_at)}`;
+        document.getElementById('view-content').textContent = e.content;
+        document.getElementById('view-dialog-overlay').classList.add('show');
+    }
+
+    function closeViewDialog() {
+        document.getElementById('view-dialog-overlay').classList.remove('show');
+        currentViewId = null;
+    }
+
+    function editCurrentEntry() {
+        if (!currentViewId) return;
+        closeViewDialog();
+        editEntry(currentViewId);
+    }
+
+    function deleteCurrentEntry() {
+        if (!currentViewId || !confirm('Delete this entry?')) return;
+        fetch(`${API_BASE}/${currentViewId}`, { method: 'DELETE' })
+            .then(r => { if(r.ok) { closeViewDialog(); loadEntries(); showToast('Entry deleted'); } else showToast('Delete failed','error'); })
+            .catch(() => showToast('Delete failed','error'));
+    }
+
+    function showCreateDialog() {
+        currentEditId = null;
+        document.getElementById('dialog-title').innerHTML = '<i class="fa-solid fa-book"></i> New Entry';
+        document.getElementById('kb-title').value = '';
+        document.getElementById('kb-category-select').value = 'General';
+        document.getElementById('kb-new-category').value = '';
+        document.getElementById('kb-tags').value = '';
+        document.getElementById('kb-content').value = '';
+        document.getElementById('dialog-confirm').innerHTML = '<i class="fa-solid fa-save"></i> Save Entry';
+        document.getElementById('dialog-overlay').classList.add('show');
+        document.getElementById('kb-title').focus();
+    }
+
+    function editEntry(id) {
+        const e = entries.find(x => x.id === id);
+        if (!e) return;
+        currentEditId = id;
+        document.getElementById('dialog-title').innerHTML = '<i class="fa-solid fa-pencil"></i> Edit Entry';
+        document.getElementById('kb-title').value = e.title;
+        document.getElementById('kb-category-select').value = ['General','Development','DevOps','Architecture','Testing','Security','Database'].includes(e.category) ? e.category : 'General';
+        document.getElementById('kb-new-category').value = ['General','Development','DevOps','Architecture','Testing','Security','Database'].includes(e.category) ? '' : e.category;
+        document.getElementById('kb-tags').value = (e.tags||[]).join(', ');
+        document.getElementById('kb-content').value = e.content;
+        document.getElementById('dialog-confirm').innerHTML = '<i class="fa-solid fa-save"></i> Save Changes';
+        document.getElementById('dialog-overlay').classList.add('show');
+        document.getElementById('kb-title').focus();
+    }
+
+    function hideDialog() { document.getElementById('dialog-overlay').classList.remove('show'); }
+
+    async function confirmDialog() {
+        const title = document.getElementById('kb-title').value.trim();
+        const content = document.getElementById('kb-content').value.trim();
+        if (!title) { showToast('Title is required', 'error'); return; }
+        if (!content) { showToast('Content is required', 'error'); return; }
+
+        const newCat = document.getElementById('kb-new-category').value.trim();
+        const category = newCat || document.getElementById('kb-category-select').value;
+        const tags = document.getElementById('kb-tags').value.split(',').map(t => t.trim()).filter(Boolean);
+
+        const payload = { title, content, category, tags };
+        const url = currentEditId ? `${API_BASE}/${currentEditId}` : API_BASE;
+        const method = currentEditId ? 'PUT' : 'POST';
+
+        try {
+            const resp = await fetch(url, { method, headers:{'Content-Type':'application/json'}, body: JSON.stringify(payload) });
+            if (resp.ok) {
+                hideDialog();
+                loadEntries();
+                showToast(currentEditId ? 'Entry updated' : 'Entry created');
+            } else { showToast('Save failed', 'error'); }
+        } catch { showToast('Save failed', 'error'); }
+    }
+
+    function escHtml(t) {
+        if (!t) return '';
+        return String(t).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+    }
+
+    function formatDate(d) {
+        if (!d) return '';
+        const date = new Date(d), now = new Date(), diff = now - date;
+        const days = Math.floor(diff / 86400000);
+        if (!days) return date.toLocaleTimeString('en-US', {hour:'2-digit', minute:'2-digit'});
+        if (days === 1) return 'Yesterday';
+        if (days < 7) return `${days}d ago`;
+        return date.toLocaleDateString('en-US', {month:'short', day:'numeric'});
+    }
+
+    function showToast(msg, type = 'success') {
+        const container = document.getElementById('toast-container');
+        const t = document.createElement('div');
+        t.className = `toast ${type}`;
+        t.innerHTML = `<i class="fa-solid fa-${type==='success'?'check':'xmark'}"></i>${msg}`;
+        container.appendChild(t);
+        setTimeout(() => t.remove(), 3000);
+    }
+    </script>
+</body>
+</html>

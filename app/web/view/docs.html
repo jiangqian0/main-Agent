@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Documents & Reports - Agent Hub</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="app-container">
+        <div class="sidebar" id="sidebar">
+            <div class="sidebar-menu">
+                <div class="sidebar-logo">
+                    <div class="sidebar-logo-header">
+                        <div class="sidebar-logo-icon"><i class="fa-solid fa-robot"></i></div>
+                        <div class="sidebar-logo-text"><h2>Agent Hub</h2><p>Enterprise Edition</p></div>
+                    </div>
+                    <button class="btn-new-chat" onclick="window.location.href='/chat'">
+                        <i class="fa-solid fa-plus"></i><span>New Conversation</span>
+                    </button>
+                </div>
+                <div class="menu-section">
+                    <div class="menu-section-header"><div class="menu-section-dot"></div><span class="menu-section-title">Core Functions</span></div>
+                    <a href="/dashboard" class="menu-item"><i class="fa-solid fa-gauge-high"></i><span>Dashboard</span></a>
+                    <a href="/chat" class="menu-item"><i class="fa-solid fa-code"></i><span>Code Development</span></a>
+                    <a href="/chat?type=fc" class="menu-item"><i class="fa-solid fa-bolt"></i><span>Function Compute</span></a>
+                    <a href="/resources" class="menu-item"><i class="fa-solid fa-server"></i><span>Resource Management</span></a>
+                    <a href="/deploy" class="menu-item"><i class="fa-solid fa-rocket"></i><span>Deployment & Ops</span></a>
+                </div>
+                <div class="menu-section">
+                    <div class="menu-section-header"><div class="menu-section-dot"></div><span class="menu-section-title">Management Center</span></div>
+                    <a href="/skills" class="menu-item"><i class="fa-solid fa-puzzle-piece"></i><span>Skill Center</span></a>
+                    <a href="/knowledge" class="menu-item"><i class="fa-solid fa-book-open"></i><span>Knowledge Base</span></a>
+                    <a href="/agents" class="menu-item"><i class="fa-solid fa-robot"></i><span>Agent Center</span></a>
+                </div>
+                <div class="menu-section">
+                    <div class="menu-section-header"><div class="menu-section-dot"></div><span class="menu-section-title">Auxiliary Tools</span></div>
+                    <a href="/docs" class="menu-item active"><i class="fa-solid fa-file-lines"></i><span>Documents & Reports</span></a>
+                    <a href="/monitoring" class="menu-item"><i class="fa-solid fa-chart-line"></i><span>Monitoring Panel</span></a>
+                    <a href="/settings" class="menu-item"><i class="fa-solid fa-gear"></i><span>Settings</span></a>
+                </div>
+            </div>
+            <div class="sidebar-user">
+                <div class="user-info">
+                    <div class="user-avatar"><i class="fa-solid fa-user"></i></div>
+                    <div class="user-details"><p class="user-name" id="sidebar-username">User</p><div class="user-status"><div class="user-status-dot"></div><span class="user-status-text">Online</span></div></div>
+                </div>
+                <div class="sidebar-user-actions">
+                    <a href="/settings" title="Settings" class="sidebar-action-btn"><i class="fa-solid fa-gear"></i></a>
+                    <a href="/settings" title="Logout" onclick="logout()" class="sidebar-action-btn logout"><i class="fa-solid fa-right-from-bracket"></i></a>
+                </div>
+            </div>
+            <div class="sidebar-resize-handle" id="sidebar-resize-handle"></div>
+        </div>
+
+        <div class="main-content">
+            <header class="header">
+                <div class="header-left"><div class="header-logo"><span>AI</span></div><span class="header-title">Documents & Reports</span></div>
+                <div class="header-right">
+                    <button class="header-btn" onclick="showCreateDialog()" title="New Document"><i class="fa-solid fa-plus"></i></button>
+                    <button class="header-btn" onclick="loadDocs()" title="Refresh"><i class="fa-solid fa-rotate"></i></button>
+                </div>
+            </header>
+
+            <div class="page-content" id="docs-content" style="padding:24px 32px;background:var(--light-grey-bg);flex:1;overflow-y:auto;">
+                <!-- Category Filters -->
+                <div style="display:flex;gap:8px;margin-bottom:20px;flex-wrap:wrap;">
+                    <button class="filter-btn active" onclick="setCategory('all', this)">All</button>
+                    <button class="filter-btn" onclick="setCategory('report', this)">Reports</button>
+                    <button class="filter-btn" onclick="setCategory('guide', this)">Guides</button>
+                    <button class="filter-btn" onclick="setCategory('api', this)">API Docs</button>
+                    <button class="filter-btn" onclick="setCategory('note', this)">Notes</button>
+                </div>
+
+                <!-- Doc List -->
+                <div id="doc-list" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:14px;"></div>
+
+                <div id="doc-empty" style="display:none;text-align:center;padding:60px;color:var(--grey);">
+                    <i class="fa-solid fa-file-lines" style="font-size:48px;opacity:0.2;display:block;margin-bottom:16px;"></i>
+                    <h3 style="font-size:16px;font-weight:600;margin-bottom:8px;color:var(--text-secondary);">No documents yet</h3>
+                    <p style="font-size:13px;margin-bottom:16px;">Create reports, guides, or notes.</p>
+                    <button onclick="showCreateDialog()" style="background:var(--primary);color:#fff;border:none;padding:10px 20px;border-radius:6px;cursor:pointer;">
+                        <i class="fa-solid fa-plus"></i> Create Document
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Create/Edit Dialog -->
+    <div id="doc-dialog" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.4);z-index:1000;align-items:center;justify-content:center;overflow-y:auto;padding:20px;">
+        <div style="background:#fff;border-radius:12px;padding:24px;width:540px;max-width:100%;box-shadow:0 20px 60px rgba(0,0,0,0.15);">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;">
+                <h2 id="doc-dialog-title" style="font-size:18px;font-weight:600;color:var(--text-primary);">Create Document</h2>
+                <button onclick="closeDocDialog()" style="background:none;border:none;cursor:pointer;color:var(--grey);font-size:18px;"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <div style="display:flex;flex-direction:column;gap:14px;">
+                <div>
+                    <label style="font-size:13px;font-weight:500;color:var(--text-secondary);margin-bottom:4px;display:block;">Title *</label>
+                    <input type="text" id="doc-title" placeholder="Document title" style="width:100%;padding:8px 12px;border:1px solid var(--border-color);border-radius:6px;font-size:13px;outline:none;box-sizing:border-box;">
+                </div>
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+                    <div>
+                        <label style="font-size:13px;font-weight:500;color:var(--text-secondary);margin-bottom:4px;display:block;">Category *</label>
+                        <select id="doc-category" style="width:100%;padding:8px 12px;border:1px solid var(--border-color);border-radius:6px;font-size:13px;outline:none;background:#fff;">
+                            <option value="report">Report</option>
+                            <option value="guide">Guide</option>
+                            <option value="api">API Docs</option>
+                            <option value="note">Note</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label style="font-size:13px;font-weight:500;color:var(--text-secondary);margin-bottom:4px;display:block;">Tags</label>
+                        <input type="text" id="doc-tags" placeholder="tag1, tag2" style="width:100%;padding:8px 12px;border:1px solid var(--border-color);border-radius:6px;font-size:13px;outline:none;box-sizing:border-box;">
+                    </div>
+                </div>
+                <div>
+                    <label style="font-size:13px;font-weight:500;color:var(--text-secondary);margin-bottom:4px;display:block;">Content *</label>
+                    <textarea id="doc-content" rows="8" placeholder="Write your document content here..." style="width:100%;padding:8px 12px;border:1px solid var(--border-color);border-radius:6px;font-size:13px;outline:none;resize:vertical;box-sizing:border-box;font-family:inherit;"></textarea>
+                </div>
+            </div>
+            <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:20px;">
+                <button onclick="closeDocDialog()" style="padding:8px 16px;border:1px solid var(--border-color);border-radius:6px;background:#fff;cursor:pointer;font-size:13px;color:var(--text-secondary);">Cancel</button>
+                <button onclick="saveDoc()" style="padding:8px 16px;border:none;border-radius:6px;background:var(--primary);color:#fff;cursor:pointer;font-size:13px;font-weight:500;">Save</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- View Dialog -->
+    <div id="view-dialog" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.4);z-index:1000;align-items:center;justify-content:center;padding:20px;">
+        <div style="background:#fff;border-radius:12px;padding:24px;width:680px;max-width:100%;max-height:80vh;display:flex;flex-direction:column;box-shadow:0 20px 60px rgba(0,0,0,0.15);">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;flex-shrink:0;">
+                <h2 id="view-title" style="font-size:18px;font-weight:600;color:var(--text-primary);"></h2>
+                <button onclick="closeViewDialog()" style="background:none;border:none;cursor:pointer;color:var(--grey);font-size:18px;"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <div id="view-content" style="flex:1;overflow-y:auto;font-size:14px;line-height:1.7;color:var(--text-secondary);"></div>
+        </div>
+    </div>
+
+    <script src="/static/js/docs.js"></script>
+</body>
+</html>

@@ -1,0 +1,352 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chat - Engineer Agent</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="app-container">
+        <!-- Sidebar -->
+        <div class="sidebar" id="sidebar">
+            <div class="sidebar-resize-handle" id="sidebar-resize-handle"></div>
+
+            <div class="sidebar-logo">
+                <div class="sidebar-logo-header">
+                    <div class="sidebar-logo-icon"><i class="fa-solid fa-robot"></i></div>
+                    <div class="sidebar-logo-text">
+                        <h2>Agent Hub</h2>
+                        <p>Enterprise Edition</p>
+                    </div>
+                </div>
+                <button class="btn-new-chat" onclick="newConversation()">
+                    <i class="fa-solid fa-plus"></i>
+                    <span>New Conversation</span>
+                </button>
+            </div>
+
+            <div class="sidebar-menu">
+                <div class="menu-section">
+                    <div class="menu-section-header"><div class="menu-section-dot"></div><span class="menu-section-title">Core Functions</span></div>
+                    <a href="/dashboard" class="menu-item"><i class="fa-solid fa-gauge-high"></i><span>Dashboard</span></a>
+                    <a href="/chat" class="menu-item active"><i class="fa-solid fa-code"></i><span>Code Development</span></a>
+                    <a href="/chat?type=fc" class="menu-item"><i class="fa-solid fa-bolt"></i><span>Function Compute</span></a>
+                    <a href="/resources" class="menu-item"><i class="fa-solid fa-server"></i><span>Resource Management</span></a>
+                    <a href="/deploy" class="menu-item"><i class="fa-solid fa-rocket"></i><span>Deployment & Ops</span></a>
+                </div>
+                <div class="menu-section">
+                    <div class="menu-section-header"><div class="menu-section-dot"></div><span class="menu-section-title">Intelligent Agents</span></div>
+                    <a href="/agents/security" class="menu-item"><i class="fa-solid fa-shield-halved"></i><span>Security Governance</span></a>
+                    <a href="/agents/cost" class="menu-item"><i class="fa-solid fa-dollar-sign"></i><span>Cost Optimization</span></a>
+                    <a href="/agents/create" class="menu-item"><i class="fa-solid fa-plus"></i><span>Create Agent</span></a>
+                </div>
+                <div class="menu-section">
+                    <div class="menu-section-header"><div class="menu-section-dot"></div><span class="menu-section-title">Management Center</span></div>
+                    <a href="/skills" class="menu-item"><i class="fa-solid fa-puzzle-piece"></i><span>Skill Center</span></a>
+                    <a href="/knowledge" class="menu-item"><i class="fa-solid fa-book-open"></i><span>Knowledge Base</span></a>
+                    <a href="/agents" class="menu-item"><i class="fa-solid fa-robot"></i><span>Agent Center</span></a>
+                </div>
+                <div class="menu-section">
+                    <div class="menu-section-header"><div class="menu-section-dot"></div><span class="menu-section-title">Auxiliary Tools</span></div>
+                    <a href="/docs" class="menu-item"><i class="fa-solid fa-file-lines"></i><span>Documents & Reports</span></a>
+                    <a href="/monitoring" class="menu-item"><i class="fa-solid fa-chart-line"></i><span>Monitoring Panel</span></a>
+                    <a href="/settings" class="menu-item"><i class="fa-solid fa-gear"></i><span>Settings</span></a>
+                </div>
+                <div class="history-section">
+                    <div class="history-header" onclick="toggleHistory()">
+                        <div class="history-header-left"><div class="history-dot"></div><span class="history-title">History</span></div>
+                        <div class="history-toggle" id="history-toggle"><i class="fa-solid fa-chevron-down"></i></div>
+                    </div>
+                    <div class="history-list" id="history-list">
+                        <div class="empty-state"><p class="text-muted" style="padding: 10px 16px; font-size: 13px;">No conversations yet</p></div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="sidebar-user">
+                <div class="user-info">
+                    <div class="user-avatar"><i class="fa-solid fa-user"></i></div>
+                    <div class="user-details">
+                        <p class="user-name" id="username-display">User</p>
+                        <div class="user-status"><div class="user-status-dot"></div><span class="user-status-text">Online</span></div>
+                    </div>
+                </div>
+                <div class="sidebar-user-actions">
+                    <a href="/settings" title="Settings" class="sidebar-action-btn"><i class="fa-solid fa-gear"></i></a>
+                    <a href="/settings" title="Logout" onclick="logout()" class="sidebar-action-btn logout"><i class="fa-solid fa-right-from-bracket"></i></a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Content -->
+        <div class="main-content">
+            <header class="header">
+                <div class="header-left">
+                    <div class="header-logo"><span>AI</span></div>
+                    <span class="header-title">Agent Hub</span>
+                </div>
+                <div class="header-right">
+                    <!-- Model Selector -->
+                    <div class="model-selector" id="model-selector">
+                        <i class="fa-solid fa-cube"></i>
+                        <select id="model-select" title="Select AI Model">
+                            <option value="qwen3-max">Qwen3 Max</option>
+                            <option value="qwen3-plus">Qwen3 Plus</option>
+                            <option value="qwen3">Qwen3</option>
+                            <option value="qwen-plus">Qwen Plus</option>
+                            <option value="qwen-turbo">Qwen Turbo</option>
+                        </select>
+                        <i class="fa-solid fa-chevron-down model-chevron"></i>
+                    </div>
+                    <button class="header-btn" onclick="clearChat()" title="Clear chat"><i class="fa-solid fa-trash"></i></button>
+                    <button class="header-btn" title="Notifications"><i class="fa-solid fa-bell"></i></button>
+                    <button class="header-user-btn" title="Profile">
+                        <div class="header-user-avatar"><i class="fa-solid fa-user"></i></div>
+                    </button>
+                </div>
+            </header>
+
+            <!-- Chat Main -->
+            <div class="chat-main">
+                <!-- Chat Container -->
+                <div class="chat-container" id="chat-container">
+                    <div class="welcome-message" id="welcome-message">
+                        <div class="welcome-icon"><i class="fa-solid fa-robot"></i></div>
+                        <h2>AliCloud Agent Hub</h2>
+                        <p>Start a conversation to get help with your tasks</p>
+                    </div>
+                </div>
+
+                <!-- Right Panel -->
+                <div class="right-panel">
+                    <div class="panel-tabs">
+                        <button class="panel-tab active" data-panel="execution" onclick="switchPanel('execution')">
+                            <i class="fa-solid fa-terminal"></i><span>Execution</span>
+                        </button>
+                        <button class="panel-tab" data-panel="memory" onclick="switchPanel('memory')">
+                            <i class="fa-solid fa-brain"></i><span>Memory</span>
+                        </button>
+                        <button class="panel-tab" data-panel="workspace" onclick="switchPanel('workspace')">
+                            <i class="fa-solid fa-folder"></i><span>Workspace</span>
+                        </button>
+                    </div>
+
+                    <!-- Execution Panel -->
+                    <div class="panel-content active" id="execution-panel">
+                        <div class="task-breakdown">
+                            <h3>Task Breakdown</h3>
+                            <div class="step-item" data-step="1">
+                                <div class="step-icon pending"><i class="fa-solid fa-circle"></i></div>
+                                <span class="step-text">Understanding Intent</span>
+                            </div>
+                            <div class="step-item" data-step="2">
+                                <div class="step-icon pending"><i class="fa-solid fa-circle"></i></div>
+                                <span class="step-text">Selecting Agent</span>
+                            </div>
+                            <div class="step-item" data-step="3">
+                                <div class="step-icon pending"><i class="fa-solid fa-circle"></i></div>
+                                <span class="step-text">Processing Request</span>
+                            </div>
+                            <div class="step-item" data-step="4">
+                                <div class="step-icon pending"><i class="fa-solid fa-circle"></i></div>
+                                <span class="step-text">Generating Response</span>
+                            </div>
+                        </div>
+                        <div id="tool-results-container"></div>
+                        <div class="logs-card">
+                            <div class="logs-header"><i class="fa-solid fa-clock"></i><h3>Real-time Logs</h3></div>
+                            <div class="logs-list" id="logs-list"></div>
+                        </div>
+                    </div>
+
+                    <!-- Memory Panel -->
+                    <div class="panel-content" id="memory-panel">
+                        <div class="memory-panel">
+                            <div class="memory-header">
+                                <div class="memory-header-left"><i class="fa-solid fa-brain"></i><h3>Memory Panel</h3></div>
+                                <div class="memory-header-actions">
+                                    <button onclick="showMemorySettings()" title="Settings"><i class="fa-solid fa-gear"></i></button>
+                                </div>
+                            </div>
+                            <div class="memory-search">
+                                <input type="text" id="memory-search-input" placeholder="Search memories..." oninput="filterMemories()">
+                            </div>
+                            <div class="memory-filters">
+                                <button class="filter-btn active" data-filter="all" onclick="setMemoryFilter('all')">All</button>
+                                <button class="filter-btn" data-filter="preference" onclick="setMemoryFilter('preference')">Preferences</button>
+                                <button class="filter-btn" data-filter="knowledge" onclick="setMemoryFilter('knowledge')">Knowledge</button>
+                                <button class="filter-btn" data-filter="session" onclick="setMemoryFilter('session')">Sessions</button>
+                            </div>
+                            <div class="memory-selection-bar" id="memory-selection-bar">
+                                <span class="selection-count" id="selection-count">0 selected</span>
+                                <div class="selection-actions">
+                                    <button class="selection-btn export" onclick="exportMemories()"><i class="fa-solid fa-download"></i> Export</button>
+                                    <button class="selection-btn delete" onclick="deleteSelectedMemories()"><i class="fa-solid fa-trash"></i> Delete</button>
+                                </div>
+                            </div>
+                            <div class="memory-content" id="memory-content">
+                                <div class="memory-empty"><i class="fa-solid fa-brain"></i><p>No memories found</p><span>Start a conversation to create memories</span></div>
+                            </div>
+                            <div class="memory-footer">
+                                <button class="memory-footer-btn" onclick="loadMemories()"><i class="fa-solid fa-rotate"></i> Refresh</button>
+                                <span class="memory-count" id="memory-count">0 memory items</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Workspace Panel -->
+                    <div class="panel-content" id="workspace-panel">
+                        <div class="workspace-panel">
+                            <div class="workspace-panel-header">
+                                <div class="workspace-panel-header-left"><i class="fa-solid fa-folder-open"></i><h3>Workspace</h3><span class="workspace-panel-count" id="workspace-count">(0 files)</span></div>
+                                <div class="workspace-panel-actions">
+                                    <input type="file" id="upload-input" style="display:none" onchange="handleUpload(event)">
+                                    <button onclick="document.getElementById('upload-input').click()" title="Upload"><i class="fa-solid fa-upload"></i></button>
+                                    <button onclick="loadWorkspaceFiles()" title="Refresh"><i class="fa-solid fa-rotate"></i></button>
+                                </div>
+                            </div>
+                            <div class="workspace-panel-content" id="workspace-content">
+                                <div class="workspace-empty"><i class="fa-solid fa-folder"></i><p>No files yet</p><span>Agent will save files here</span></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Chat Input Area -->
+            <div class="chat-input-area">
+                <!-- Toolbar -->
+                <div class="input-toolbar" id="input-toolbar">
+                    <div class="toolbar-dropdown" id="skill-dropdown-container">
+                        <button class="toolbar-btn" id="skill-btn" onclick="toggleSkillDropdown()" title="Select Skill">
+                            <i class="fa-solid fa-puzzle-piece"></i>
+                            <span id="skill-btn-label">Auto (Smart)</span>
+                            <i class="fa-solid fa-chevron-down" style="font-size:10px;margin-left:2px"></i>
+                        </button>
+                        <div class="toolbar-dropdown-menu" id="skill-dropdown">
+                            <div class="dropdown-header">Select Skill</div>
+                            <div class="dropdown-item active" data-skill="" onclick="selectSkill('')">
+                                <i class="fa-solid fa-wand-magic-sparkles"></i>
+                                <div class="dropdown-item-text"><span class="dropdown-item-title">Auto (Smart)</span><span class="dropdown-item-desc">Automatically match by message</span></div>
+                                <i class="fa-solid fa-check dropdown-check"></i>
+                            </div>
+                            <div class="dropdown-divider"></div>
+                            <div class="dropdown-header">Built-in Skills</div>
+                            <div id="skill-dropdown-list"></div>
+                        </div>
+                    </div>
+                    <div class="toolbar-dropdown" id="kb-dropdown-container">
+                        <button class="toolbar-btn" id="kb-btn" onclick="toggleKbDropdown()" title="Knowledge Base">
+                            <i class="fa-solid fa-book"></i>
+                            <span id="kb-btn-label">Knowledge Base</span>
+                            <i class="fa-solid fa-chevron-down" style="font-size:10px;margin-left:2px"></i>
+                        </button>
+                        <div class="toolbar-dropdown-menu" id="kb-dropdown">
+                            <div class="dropdown-header">Knowledge Base
+                                <a href="/knowledge" class="dropdown-header-link" target="_blank"><i class="fa-solid fa-external-link-alt"></i> Manage</a>
+                            </div>
+                            <div id="kb-dropdown-list" class="kb-dropdown-list"></div>
+                        </div>
+                    </div>
+                </div>
+                <form class="chat-input-form" onsubmit="handleSubmit(event)">
+                    <textarea class="chat-textarea" id="chat-input" placeholder="Type your message... (Shift+Enter for new line)" rows="1" onkeydown="handleKeyDown(event)" oninput="autoResize(this)"></textarea>
+                    <button type="submit" class="send-btn" id="send-btn"><i class="fa-solid fa-paper-plane"></i></button>
+                </form>
+                <button class="stop-btn hidden" id="stop-btn" onclick="stopStreaming()">
+                    <i class="fa-solid fa-stop"></i> Stop
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Memory Settings Dialog -->
+    <div class="dialog-overlay" id="memory-settings-dialog">
+        <div class="dialog">
+            <div class="dialog-header"><h3><i class="fa-solid fa-gear"></i> Memory Settings</h3><button class="dialog-close" onclick="closeMemorySettings()">&times;</button></div>
+            <div class="dialog-body">
+                <div class="dialog-field">
+                    <label>Token Threshold</label>
+                    <div class="dialog-field-row">
+                        <input type="number" id="token-threshold" value="8000" min="1000" max="50000" step="1000">
+                        <span>Token</span>
+                    </div>
+                    <p class="dialog-field-hint">Extract when new messages exceed this token count</p>
+                </div>
+                <div class="dialog-field">
+                    <label>Extract Interval</label>
+                    <div class="dialog-field-row"><span>Every</span><input type="number" id="extract-interval" value="5" min="1" max="20"><span>messages</span></div>
+                    <p class="dialog-field-hint">Trigger extraction after this many new messages</p>
+                </div>
+            </div>
+            <div class="dialog-footer">
+                <button class="dialog-btn cancel" onclick="closeMemorySettings()">Cancel</button>
+                <button class="dialog-btn confirm" onclick="saveMemorySettings()">Save</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="toast-container" id="toast-container"></div>
+
+    <style>
+        .model-selector { display: flex; align-items: center; gap: 4px; background: #FFFFFF; border: 1px solid var(--border-color); padding: 4px 8px; border-radius: 8px; }
+        .model-selector i { color: var(--grey); font-size: 12px; }
+        .model-selector select { border: none; background: transparent; font-size: 13px; color: var(--text-primary); cursor: pointer; outline: none; padding: 2px 4px; }
+        .model-chevron { font-size: 10px !important; }
+        .header-right { display: flex; align-items: center; gap: 8px; }
+
+        /* Toolbar */
+        .input-toolbar { display: flex; gap: 8px; padding: 0 12px 8px; flex-wrap: wrap; }
+        .toolbar-dropdown { position: relative; }
+        .toolbar-btn { display: flex; align-items: center; gap: 6px; padding: 6px 12px; background: #FFFFFF; border: 1px solid var(--border-color); border-radius: 6px; cursor: pointer; font-size: 13px; color: var(--text-secondary); transition: border-color 0.15s, background 0.15s; white-space: nowrap; }
+        .toolbar-btn:hover { border-color: var(--primary); background: var(--primary-bg); color: var(--primary); }
+        .toolbar-btn.active { border-color: var(--primary); background: var(--primary-bg); color: var(--primary); }
+        .toolbar-dropdown-menu { display: none; position: absolute; bottom: calc(100% + 4px); left: 0; min-width: 280px; background: #FFFFFF; border: 1px solid var(--border-color); border-radius: 8px; box-shadow: 0 4px 16px rgba(0,0,0,0.12); z-index: 100; overflow: hidden; }
+        .toolbar-dropdown-menu.open { display: block; }
+        .dropdown-header { padding: 8px 12px 4px; font-size: 11px; font-weight: 600; color: var(--grey); text-transform: uppercase; letter-spacing: 0.5px; display: flex; justify-content: space-between; align-items: center; }
+        .dropdown-header-link { font-size: 11px; color: var(--primary); text-decoration: none; font-weight: 500; display: flex; align-items: center; gap: 4px; }
+        .dropdown-header-link:hover { text-decoration: underline; }
+        .dropdown-item { display: flex; align-items: center; gap: 10px; padding: 8px 12px; cursor: pointer; transition: background 0.1s; }
+        .dropdown-item:hover { background: var(--light-grey-bg); }
+        .dropdown-item.active { background: var(--primary-bg); }
+        .dropdown-item i:first-child { font-size: 14px; color: var(--grey); width: 16px; text-align: center; flex-shrink: 0; }
+        .dropdown-item-text { flex: 1; }
+        .dropdown-item-title { display: block; font-size: 13px; font-weight: 500; color: var(--text-primary); }
+        .dropdown-item-desc { display: block; font-size: 11px; color: var(--grey); }
+        .dropdown-check { color: var(--primary) !important; display: none; }
+        .dropdown-item.active .dropdown-check { display: block; }
+        .dropdown-divider { height: 1px; background: var(--border-color); margin: 4px 0; }
+        .dropdown-skill-item { display: flex; align-items: center; gap: 10px; padding: 8px 12px; cursor: pointer; transition: background 0.1s; }
+        .dropdown-skill-item:hover { background: var(--light-grey-bg); }
+        .dropdown-skill-item.active { background: var(--primary-bg); }
+        .dropdown-skill-item i { font-size: 14px; color: var(--grey); width: 16px; text-align: center; flex-shrink: 0; }
+        .dropdown-skill-item .dropdown-check { color: var(--primary); display: none; }
+        .dropdown-skill-item.active .dropdown-check { display: block; }
+        .skill-text { flex: 1; }
+        .skill-name { display: block; font-size: 13px; font-weight: 500; color: var(--text-primary); }
+        .skill-desc { display: block; font-size: 11px; color: var(--grey); }
+        .skill-badge { font-size: 10px; padding: 1px 5px; border-radius: 3px; background: var(--border-color); color: var(--grey); }
+        .skill-badge.builtin { background: var(--primary-bg); color: var(--primary); }
+        .kb-dropdown-list { max-height: 240px; overflow-y: auto; }
+        .kb-dropdown-item { display: flex; align-items: center; gap: 10px; padding: 8px 12px; cursor: pointer; transition: background 0.1s; }
+        .kb-dropdown-item:hover { background: var(--light-grey-bg); }
+        .kb-dropdown-item input[type="checkbox"] { cursor: pointer; accent-color: var(--primary); }
+        .kb-dropdown-item-label { flex: 1; font-size: 13px; color: var(--text-primary); }
+        .kb-dropdown-empty { padding: 16px 12px; text-align: center; font-size: 12px; color: var(--grey); }
+
+        /* Fix textarea height */
+        .chat-textarea { min-height: 44px !important; }
+        .stop-btn { margin: 4px 12px 0; }
+    </style>
+
+    <script src="/static/js/chat-storage.js"></script>
+    <script src="/static/js/chat-stream.js"></script>
+    <script src="/static/js/chat-execution.js"></script>
+    <script src="/static/js/chat.js"></script>
+</body>
+</html>

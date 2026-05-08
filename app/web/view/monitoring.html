@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Monitoring Panel - Agent Hub</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="app-container">
+        <div class="sidebar" id="sidebar">
+            <div class="sidebar-menu">
+                <div class="sidebar-logo">
+                    <div class="sidebar-logo-header">
+                        <div class="sidebar-logo-icon"><i class="fa-solid fa-robot"></i></div>
+                        <div class="sidebar-logo-text"><h2>Agent Hub</h2><p>Enterprise Edition</p></div>
+                    </div>
+                    <button class="btn-new-chat" onclick="window.location.href='/chat'">
+                        <i class="fa-solid fa-plus"></i><span>New Conversation</span>
+                    </button>
+                </div>
+                <div class="menu-section">
+                    <div class="menu-section-header"><div class="menu-section-dot"></div><span class="menu-section-title">Core Functions</span></div>
+                    <a href="/dashboard" class="menu-item"><i class="fa-solid fa-gauge-high"></i><span>Dashboard</span></a>
+                    <a href="/chat" class="menu-item"><i class="fa-solid fa-code"></i><span>Code Development</span></a>
+                    <a href="/chat?type=fc" class="menu-item"><i class="fa-solid fa-bolt"></i><span>Function Compute</span></a>
+                    <a href="/resources" class="menu-item"><i class="fa-solid fa-server"></i><span>Resource Management</span></a>
+                    <a href="/deploy" class="menu-item"><i class="fa-solid fa-rocket"></i><span>Deployment & Ops</span></a>
+                </div>
+                <div class="menu-section">
+                    <div class="menu-section-header"><div class="menu-section-dot"></div><span class="menu-section-title">Management Center</span></div>
+                    <a href="/skills" class="menu-item"><i class="fa-solid fa-puzzle-piece"></i><span>Skill Center</span></a>
+                    <a href="/knowledge" class="menu-item"><i class="fa-solid fa-book-open"></i><span>Knowledge Base</span></a>
+                    <a href="/agents" class="menu-item"><i class="fa-solid fa-robot"></i><span>Agent Center</span></a>
+                </div>
+                <div class="menu-section">
+                    <div class="menu-section-header"><div class="menu-section-dot"></div><span class="menu-section-title">Auxiliary Tools</span></div>
+                    <a href="/docs" class="menu-item"><i class="fa-solid fa-file-lines"></i><span>Documents & Reports</span></a>
+                    <a href="/monitoring" class="menu-item active"><i class="fa-solid fa-chart-line"></i><span>Monitoring Panel</span></a>
+                    <a href="/settings" class="menu-item"><i class="fa-solid fa-gear"></i><span>Settings</span></a>
+                </div>
+            </div>
+            <div class="sidebar-user">
+                <div class="user-info">
+                    <div class="user-avatar"><i class="fa-solid fa-user"></i></div>
+                    <div class="user-details"><p class="user-name" id="sidebar-username">User</p><div class="user-status"><div class="user-status-dot"></div><span class="user-status-text">Online</span></div></div>
+                </div>
+                <div class="sidebar-user-actions">
+                    <a href="/settings" title="Settings" class="sidebar-action-btn"><i class="fa-solid fa-gear"></i></a>
+                    <a href="/settings" title="Logout" onclick="logout()" class="sidebar-action-btn logout"><i class="fa-solid fa-right-from-bracket"></i></a>
+                </div>
+            </div>
+            <div class="sidebar-resize-handle" id="sidebar-resize-handle"></div>
+        </div>
+
+        <div class="main-content">
+            <header class="header">
+                <div class="header-left"><div class="header-logo"><span>AI</span></div><span class="header-title">Monitoring Panel</span></div>
+                <div class="header-right">
+                    <button class="header-btn" onclick="startAutoRefresh()" title="Start Auto Refresh"><i class="fa-solid fa-play"></i></button>
+                    <button class="header-btn" onclick="stopAutoRefresh()" title="Stop Auto Refresh"><i class="fa-solid fa-pause"></i></button>
+                    <button class="header-btn" onclick="refreshMetrics()" title="Refresh"><i class="fa-solid fa-rotate"></i></button>
+                </div>
+            </header>
+
+            <div class="page-content" id="monitoring-content" style="padding:24px 32px;background:var(--light-grey-bg);flex:1;overflow-y:auto;">
+
+                <!-- Real-time Metrics -->
+                <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px;margin-bottom:24px;">
+                    <div style="background:#fff;border:1px solid var(--border-color);border-radius:10px;padding:16px 20px;display:flex;align-items:center;gap:12px;">
+                        <div style="width:40px;height:40px;background:rgba(59,130,246,0.1);border-radius:10px;display:flex;align-items:center;justify-content:center;"><i class="fa-solid fa-message" style="color:#3B82F6;font-size:16px;"></i></div>
+                        <div><div style="font-size:22px;font-weight:700;color:var(--text-primary);" id="metric-msgs">0</div><div style="font-size:12px;color:var(--grey);">Total Messages</div></div>
+                    </div>
+                    <div style="background:#fff;border:1px solid var(--border-color);border-radius:10px;padding:16px 20px;display:flex;align-items:center;gap:12px;">
+                        <div style="width:40px;height:40px;background:rgba(16,185,129,0.1);border-radius:10px;display:flex;align-items:center;justify-content:center;"><i class="fa-solid fa-clock" style="color:#10B981;font-size:16px;"></i></div>
+                        <div><div style="font-size:22px;font-weight:700;color:var(--text-primary);" id="metric-avg-time">0ms</div><div style="font-size:12px;color:var(--grey);">Avg Response</div></div>
+                    </div>
+                    <div style="background:#fff;border:1px solid var(--border-color);border-radius:10px;padding:16px 20px;display:flex;align-items:center;gap:12px;">
+                        <div style="width:40px;height:40px;background:rgba(245,158,11,0.1);border-radius:10px;display:flex;align-items:center;justify-content:center;"><i class="fa-solid fa-layer-group" style="color:#F59E0B;font-size:16px;"></i></div>
+                        <div><div style="font-size:22px;font-weight:700;color:var(--text-primary);" id="metric-tokens">0</div><div style="font-size:12px;color:var(--grey);">Tokens Used</div></div>
+                    </div>
+                    <div style="background:#fff;border:1px solid var(--border-color);border-radius:10px;padding:16px 20px;display:flex;align-items:center;gap:12px;">
+                        <div style="width:40px;height:40px;background:rgba(124,58,237,0.1);border-radius:10px;display:flex;align-items:center;justify-content:center;"><i class="fa-solid fa-microchip" style="color:#7C3AED;font-size:16px;"></i></div>
+                        <div><div style="font-size:22px;font-weight:700;color:var(--text-primary);" id="metric-tools">0</div><div style="font-size:12px;color:var(--grey);">Tool Calls</div></div>
+                    </div>
+                </div>
+
+                <!-- Charts Row -->
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px;">
+                    <!-- Token Usage Chart -->
+                    <div style="background:#fff;border:1px solid var(--border-color);border-radius:10px;padding:20px;">
+                        <h2 style="font-size:15px;font-weight:600;color:var(--text-primary);margin-bottom:16px;display:flex;align-items:center;gap:8px;">
+                            <i class="fa-solid fa-chart-area" style="color:#7C3AED;"></i> Token Usage (Last 7 days)
+                        </h2>
+                        <div id="token-chart" style="height:180px;display:flex;align-items:flex-end;gap:6px;"></div>
+                        <div style="display:flex;justify-content:space-between;margin-top:8px;">
+                            ${['Mon','Tue','Wed','Thu','Fri','Sat','Sun'].map(d => `<span style="font-size:11px;color:var(--grey);width:14%;text-align:center;">${d}</span>`).join('')}
+                        </div>
+                    </div>
+
+                    <!-- Response Time Chart -->
+                    <div style="background:#fff;border:1px solid var(--border-color);border-radius:10px;padding:20px;">
+                        <h2 style="font-size:15px;font-weight:600;color:var(--text-primary);margin-bottom:16px;display:flex;align-items:center;gap:8px;">
+                            <i class="fa-solid fa-chart-bar" style="color:#10B981;"></i> Response Time (Last 7 days)
+                        </h2>
+                        <div id="response-chart" style="height:180px;display:flex;align-items:flex-end;gap:6px;"></div>
+                        <div style="display:flex;justify-content:space-between;margin-top:8px;">
+                            ${['Mon','Tue','Wed','Thu','Fri','Sat','Sun'].map(d => `<span style="font-size:11px;color:var(--grey);width:14%;text-align:center;">${d}</span>`).join('')}
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Agent Activity Table -->
+                <div style="background:#fff;border:1px solid var(--border-color);border-radius:10px;padding:20px;margin-bottom:16px;">
+                    <h2 style="font-size:15px;font-weight:600;color:var(--text-primary);margin-bottom:16px;display:flex;align-items:center;gap:8px;">
+                        <i class="fa-solid fa-list-check" style="color:var(--primary);"></i> Recent Agent Activity
+                    </h2>
+                    <div style="overflow-x:auto;">
+                        <table style="width:100%;border-collapse:collapse;font-size:13px;">
+                            <thead>
+                                <tr style="border-bottom:2px solid var(--border-color);">
+                                    <th style="text-align:left;padding:8px 12px;color:var(--grey);font-weight:500;font-size:12px;">Time</th>
+                                    <th style="text-align:left;padding:8px 12px;color:var(--grey);font-weight:500;font-size:12px;">Action</th>
+                                    <th style="text-align:left;padding:8px 12px;color:var(--grey);font-weight:500;font-size:12px;">Agent</th>
+                                    <th style="text-align:left;padding:8px 12px;color:var(--grey);font-weight:500;font-size:12px;">Duration</th>
+                                    <th style="text-align:left;padding:8px 12px;color:var(--grey);font-weight:500;font-size:12px;">Tokens</th>
+                                    <th style="text-align:left;padding:8px 12px;color:var(--grey);font-weight:500;font-size:12px;">Status</th>
+                                </tr>
+                            </thead>
+                            <tbody id="activity-table">
+                                <tr><td colspan="6" style="text-align:center;padding:32px;color:var(--grey);">No activity data yet</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- System Resources -->
+                <div style="background:#fff;border:1px solid var(--border-color);border-radius:10px;padding:20px;">
+                    <h2 style="font-size:15px;font-weight:600;color:var(--text-primary);margin-bottom:16px;display:flex;align-items:center;gap:8px;">
+                        <i class="fa-solid fa-server" style="color:#3B82F6;"></i> System Resources
+                    </h2>
+                    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:16px;">
+                        <div>
+                            <div style="display:flex;justify-content:space-between;margin-bottom:6px;">
+                                <span style="font-size:13px;color:var(--text-secondary);">CPU Usage</span>
+                                <span style="font-size:13px;font-weight:600;color:var(--text-primary);" id="cpu-val">—</span>
+                            </div>
+                            <div style="height:8px;background:var(--light-grey-bg);border-radius:4px;overflow:hidden;">
+                                <div id="cpu-bar" style="height:100%;background:#3B82F6;border-radius:4px;width:0%;transition:width 0.5s;"></div>
+                            </div>
+                        </div>
+                        <div>
+                            <div style="display:flex;justify-content:space-between;margin-bottom:6px;">
+                                <span style="font-size:13px;color:var(--text-secondary);">Memory Usage</span>
+                                <span style="font-size:13px;font-weight:600;color:var(--text-primary);" id="mem-val">—</span>
+                            </div>
+                            <div style="height:8px;background:var(--light-grey-bg);border-radius:4px;overflow:hidden;">
+                                <div id="mem-bar" style="height:100%;background:#10B981;border-radius:4px;width:0%;transition:width 0.5s;"></div>
+                            </div>
+                        </div>
+                        <div>
+                            <div style="display:flex;justify-content:space-between;margin-bottom:6px;">
+                                <span style="font-size:13px;color:var(--text-secondary);">Disk Usage</span>
+                                <span style="font-size:13px;font-weight:600;color:var(--text-primary);" id="disk-val">—</span>
+                            </div>
+                            <div style="height:8px;background:var(--light-grey-bg);border-radius:4px;overflow:hidden;">
+                                <div id="disk-bar" style="height:100%;background:#F59E0B;border-radius:4px;width:0%;transition:width 0.5s;"></div>
+                            </div>
+                        </div>
+                        <div>
+                            <div style="display:flex;justify-content:space-between;margin-bottom:6px;">
+                                <span style="font-size:13px;color:var(--text-secondary);">API Latency</span>
+                                <span style="font-size:13px;font-weight:600;color:var(--text-primary);" id="latency-val">—</span>
+                            </div>
+                            <div style="height:8px;background:var(--light-grey-bg);border-radius:4px;overflow:hidden;">
+                                <div id="latency-bar" style="height:100%;background:#7C3AED;border-radius:4px;width:0%;transition:width 0.5s;"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="/static/js/monitoring.js"></script>
+</body>
+</html>
