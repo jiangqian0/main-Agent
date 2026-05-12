@@ -335,13 +335,22 @@ function deleteSelectedMemories() {
   showToast('Deleted');
 }
 
-// ─── Workspace Panel ──────────────────────────────────────────────────────────
+// ─── Workspace Panel (Tree View) ─────────────────────────────────────────────────
 function loadWorkspaceFiles() {
   fetch('/api/workspace/files')
     .then(r => r.ok ? r.json() : [])
     .then(d => { workspaceFiles = Array.isArray(d) ? d : (d.files || []); renderWorkspaceFiles(); })
     .catch(() => { workspaceFiles = []; renderWorkspaceFiles(); });
 }
+
+function refreshWorkspacePanel() {
+  loadWorkspaceFiles();
+}
+
+window.refreshWorkspacePanel = refreshWorkspacePanel;
+
+// Global folder node map for lazy rendering
+const _wsAllFolders = {};
 
 function renderWorkspaceFiles() {
   const content = document.getElementById('workspace-content');
@@ -352,27 +361,147 @@ function renderWorkspaceFiles() {
     content.innerHTML = `<div class="workspace-empty"><i class="fa-solid fa-folder-open"></i><p>No files yet</p><span>Agent will save files here</span></div>`;
     return;
   }
-  content.innerHTML = workspaceFiles.map(f => {
-    const nm = f.name || (f.path || '').split('/').pop();
-    const p = f.path || '';
-    const ext = nm.includes('.') ? nm.split('.').pop() : '';
-    const iconMap = { js: 'fa-js', ts: 'fa-ts', py: 'fa-python', json: 'fa-brackets-json', md: 'fa-markdown', html: 'fa-html', css: 'fa-css3' };
-    const icon = iconMap[ext] || 'fa-file-code';
-    return `<div class="workspace-file-item">
-      <i class="fa-solid ${icon} workspace-file-icon"></i>
-      <div class="workspace-file-info"><span class="workspace-file-name">${escapeHtml(nm)}</span><span class="workspace-file-path">${escapeHtml(p)}</span></div>
-      <div class="workspace-file-actions">
-        <button onclick="event.stopPropagation();downloadFile('${escapeHtml(p)}','${escapeHtml(nm)}')" title="Download"><i class="fa-solid fa-download"></i></button>
-        <button onclick="event.stopPropagation();deleteFile('${escapeHtml(p)}')" title="Delete"><i class="fa-solid fa-trash"></i></button>
-      </div>
-    </div>`;
-  }).join('');
+  const tree = _wsBuildTree(workspaceFiles);
+  _wsSortTree(tree);
+  content.innerHTML = _wsRenderTree(tree);
 }
 
-function formatFileSize(b) {
-  if (b < 1024) return `${b} B`;
-  if (b < 1048576) return `${(b / 1024).toFixed(1)} KB`;
-  return `${(b / 1048576).toFixed(1)} MB`;
+function _wsBuildTree(files) {
+  // Clear folder map
+  Object.keys(_wsAllFolders).forEach(k => delete _wsAllFolders[k]);
+  const root = { name: '', type: 'root', children: {}, _open: true };
+  files.forEach(f => {
+    const parts = (f.path || '').replace(/\\/g, '/').split('/').filter(Boolean);
+    let cur = root;
+    parts.forEach((p, i) => {
+      if (!cur.children[p]) {
+        const isFile = i === parts.length - 1;
+        cur.children[p] = { name: p, type: isFile ? 'file' : 'folder', children: {}, _open: false, path: isFile ? f.path : null };
+        if (!isFile) _wsAllFolders[p] = cur.children[p];
+      }
+      cur = cur.children[p];
+    });
+  });
+  return root;
+}
+
+function _wsSortTree(node) {
+  const keys = Object.keys(node.children).sort((a, b) => {
+    const ca = node.children[a], cb = node.children[b];
+    if (ca.type !== cb.type) return ca.type === 'folder' ? -1 : 1;
+    return a.localeCompare(b);
+  });
+  const sorted = {};
+  keys.forEach(k => { _wsSortTree(node.children[k]); sorted[k] = node.children[k]; });
+  node.children = sorted;
+}
+
+function _wsRenderTree(node, depth = 0) {
+  const indent = depth * 12;
+  let html = '';
+  Object.keys(node.children).forEach(key => {
+    const child = node.children[key];
+    if (child.type === 'file') {
+      const icon = _wsGetFileIcon(child.name);
+      const escapedPath = escapeHtml(child.path || '');
+      const escapedName = escapeHtml(child.name);
+      html += `<div class="ws-tree-row" style="padding-left:${indent}px" onclick="wsOpenFile('${escapedPath.replace(/'/g, "\\'")}')">
+        <span class="ws-tree-indent"></span>
+        <i class="fa-solid ${icon} ws-file-icon"></i>
+        <span class="ws-file-name">${escapedName}</span>
+        <span class="ws-file-actions">
+          <button onclick="event.stopPropagation();wsDownloadFile('${escapedPath.replace(/'/g, "\\'")}','${escapedName.replace(/'/g, "\\'")}')" title="Download"><i class="fa-solid fa-download"></i></button>
+          <button onclick="event.stopPropagation();wsDeleteFile('${escapedPath.replace(/'/g, "\\'")}')" title="Delete"><i class="fa-solid fa-trash"></i></button>
+        </span>
+      </div>`;
+    } else {
+      // Folder — always render collapsed initially; children inserted on demand
+      html += `<div class="ws-tree-row ws-folder-row" style="padding-left:${indent}px" onclick="wsToggleFolder(this, '${key}')">
+        <span class="ws-tree-indent"></span>
+        <i class="fa-solid fa-chevron-right ws-chevron"></i>
+        <i class="fa-solid fa-folder ws-folder-icon"></i>
+        <span class="ws-folder-name">${escapeHtml(key)}</span>
+      </div>`;
+    }
+  });
+  return html;
+}
+
+function wsToggleFolder(el, key) {
+  const row = el.closest ? el.closest('.ws-tree-row') : el;
+  const chevron = row.querySelector('.ws-chevron');
+  const icon = row.querySelector('.ws-folder-icon');
+
+  // Find the children container that may already exist
+  let sibling = row.nextElementSibling;
+  while (sibling && !sibling.classList.contains('ws-tree-children')) {
+    sibling = sibling.nextElementSibling;
+  }
+
+  if (sibling) {
+    // Already opened before — just toggle visibility
+    const isOpen = chevron.classList.toggle('open');
+    chevron.classList.toggle('fa-chevron-down', isOpen);
+    chevron.classList.toggle('fa-chevron-right', !isOpen);
+    icon.className = isOpen ? 'fa-solid fa-folder-open ws-folder-icon' : 'fa-solid fa-folder ws-folder-icon';
+    sibling.style.display = isOpen ? '' : 'none';
+  } else {
+    // First open — insert children div dynamically
+    const folderNode = _wsAllFolders[key];
+    if (!folderNode) return;
+    chevron.classList.add('open');
+    chevron.classList.remove('fa-chevron-right');
+    chevron.classList.add('fa-chevron-down');
+    icon.className = 'fa-solid fa-folder-open ws-folder-icon';
+    const depth = _wsGetDepth(row);
+    const childrenHtml = _wsRenderTree(folderNode, depth);
+    const container = document.createElement('div');
+    container.className = 'ws-tree-children';
+    container.innerHTML = childrenHtml;
+    row.after(container);
+  }
+}
+
+function _wsGetDepth(row) {
+  // Count how many .ws-tree-children ancestors this row is inside
+  let depth = 0;
+  let el = row.previousElementSibling;
+  while (el) {
+    if (el.classList && el.classList.contains('ws-tree-children')) depth++;
+    el = el.previousElementSibling;
+  }
+  return depth;
+}
+
+function wsOpenFile(path) {
+  window.open(`/api/workspace/files/${encodeURIComponent(path)}`, '_blank');
+}
+
+function wsDownloadFile(path, name) {
+  window.open(`/api/workspace/files/${encodeURIComponent(path)}?filename=${encodeURIComponent(name)}`, '_blank');
+}
+
+function wsDeleteFile(path) {
+  if (!confirm(`Delete ${path}?`)) return;
+  fetch(`/api/workspace/files/${encodeURIComponent(path)}`, { method: 'DELETE' })
+    .then(r => r.ok ? loadWorkspaceFiles() : alert('Delete failed'))
+    .catch(() => alert('Delete failed'));
+}
+
+function _wsGetFileIcon(name) {
+  const ext = (name.split('.').pop() || '').toLowerCase();
+  const icons = {
+    py: 'fa-brands fa-python', js: 'fa-brands fa-js', ts: 'fa-brands fa-js',
+    jsx: 'fa-brands fa-react', tsx: 'fa-brands fa-react',
+    html: 'fa-brands fa-html5', css: 'fa-brands fa-css3-alt',
+    json: 'fa-solid fa-brackets-curly', md: 'fa-brands fa-markdown',
+    yaml: 'fa-solid fa-file-code', yml: 'fa-solid fa-file-code',
+    sh: 'fa-solid fa-terminal', bash: 'fa-solid fa-terminal',
+    sql: 'fa-solid fa-database', go: 'fa-solid fa-golang',
+    rs: 'fa-solid fa-rust', java: 'fa-brands fa-java',
+    txt: 'fa-solid fa-file-lines',
+  };
+  return icons[ext] || 'fa-solid fa-file';
 }
 
 function handleUpload(e) {
@@ -381,17 +510,6 @@ function handleUpload(e) {
   fetch('/api/workspace/upload', { method: 'POST', body: fd })
     .then(r => r.ok ? loadWorkspaceFiles() : alert('Upload failed'))
     .catch(() => alert('Upload failed'));
-}
-
-function downloadFile(path, name) {
-  window.open(`/api/workspace/files/${encodeURIComponent(path)}?filename=${encodeURIComponent(name)}`, '_blank');
-}
-
-function deleteFile(path) {
-  if (!confirm(`Delete ${path}?`)) return;
-  fetch(`/api/workspace/files/${encodeURIComponent(path)}`, { method: 'DELETE' })
-    .then(r => r.ok ? loadWorkspaceFiles() : alert('Delete failed'))
-    .catch(() => alert('Delete failed'));
 }
 
 // ─── Input Helpers ────────────────────────────────────────────────────────────
@@ -448,7 +566,7 @@ function showToast(msg, type = 'success') {
   setTimeout(() => t.remove(), 3000);
 }
 
-// ─── Markdown & Utils (shared) ───────────────────────────────────────────────
+// ─── Markdown (shared, with collapsible code blocks) ──────────────────────────────
 function renderMarkdown(content) {
   if (!content) return '';
   let r = content.replace(/\[THINKING\][\s\S]*?\[\/THINKING\]/g, '');
@@ -456,7 +574,29 @@ function renderMarkdown(content) {
 
   r = r.replace(/^- \[x\]\s*(.+)$/gm, '<li class="task-done"><i class="fa-regular fa-check-square"></i>$1</li>');
   r = r.replace(/^- \[ \]\s*(.+)$/gm, '<li class="task-pending"><i class="fa-regular fa-square"></i>$1</li>');
-  r = r.replace(/```(\w+)?\n?([\s\S]*?)```/g, (_, lang, code) => `<pre class="code-block"><code class="language-${lang||'text'}">${code}</code></pre>`);
+
+  // Collapsible code blocks
+  r = r.replace(/```(\w+)?\n?([\s\S]*?)```/g, (_, lang, code) => {
+    const displayLang = lang || 'text';
+    const safeCode = code.trim();
+    const shortCode = safeCode.slice(0, 200);
+    const isLong = safeCode.split('\n').length > 10 || safeCode.length > 300;
+    const codeContent = isLong
+      ? `<div class="code-collapsed-preview">${escapeHtml(shortCode)}<span class="code-ellipsis">...</span></div><pre class="code-collapsed-actual" style="display:none">${escapeHtml(safeCode)}</pre>`
+      : `<pre class="code-inline">${escapeHtml(safeCode)}</pre>`;
+    const toggleBtn = isLong
+      ? `<button class="code-toggle-btn" onclick="toggleCodeBlock(this)"><i class="fa-solid fa-eye"></i> Expand</button>`
+      : '';
+    const langLabel = displayLang !== 'code' ? `<span class="code-lang-label">${escapeHtml(displayLang)}</span>` : '';
+    return `<div class="code-block-collapsible">
+  <div class="code-block-collapsible-header">
+    <span class="code-block-file-name">${langLabel}</span>
+    <div class="code-block-collapsible-actions">${toggleBtn}</div>
+  </div>
+  <div class="code-block-collapsible-body">${codeContent}</div>
+</div>`;
+  });
+
   r = r.replace(/`([^`]+)`/g, '<code>$1</code>');
   r = r.replace(/^### (.+)$/gm, '<h3>$1</h3>');
   r = r.replace(/^## (.+)$/gm, '<h2>$1</h2>');

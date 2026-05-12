@@ -1,0 +1,633 @@
+/* ========================================
+   Dashboard Animations & Effects
+   ======================================== */
+
+/* ─── Card Entrance Animations ──────────────────────────────── */
+@keyframes slideUp {
+    from {
+        opacity: 0;
+        transform: translateY(24px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes slideUpFade {
+    from {
+        opacity: 0;
+        transform: translateY(16px) scale(0.98);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+@keyframes fadeInScale {
+    from {
+        opacity: 0;
+        transform: scale(0.95);
+    }
+    to {
+        opacity: 1;
+        transform: scale(1);
+    }
+}
+
+@keyframes countUp {
+    from {
+        opacity: 0;
+        transform: translateY(8px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* ─── Pulse & Glow Effects ─────────────────────────────────── */
+@keyframes pulseGlow {
+    0%, 100% {
+        box-shadow: 0 0 0 0 rgba(0, 105, 60, 0.3);
+    }
+    50% {
+        box-shadow: 0 0 0 8px rgba(0, 105, 60, 0);
+    }
+}
+
+@keyframes pulseGlowBlue {
+    0%, 100% {
+        box-shadow: 0 0 0 0 rgba(0, 45, 98, 0.3);
+    }
+    50% {
+        box-shadow: 0 0 0 8px rgba(0, 45, 98, 0);
+    }
+}
+
+@keyframes pulseGlowGreen {
+    0%, 100% {
+        box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.3);
+    }
+    50% {
+        box-shadow: 0 0 0 8px rgba(16, 185, 129, 0);
+    }
+}
+
+@keyframes pulseGlowAmber {
+    0%, 100% {
+        box-shadow: 0 0 0 0 rgba(245, 158, 11, 0.3);
+    }
+    50% {
+        box-shadow: 0 0 0 8px rgba(245, 158, 11, 0);
+    }
+}
+
+@keyframes float {
+    0%, 100% {
+        transform: translateY(0px);
+    }
+    50% {
+        transform: translateY(-6px);
+    }
+}
+
+@keyframes shimmer {
+    0% {
+        background-position: -200% center;
+    }
+    100% {
+        background-position: 200% center;
+    }
+}
+
+@keyframes borderGlow {
+    0%, 100% {
+        border-color: rgba(0, 105, 60, 0.2);
+    }
+    50% {
+        border-color: rgba(0, 105, 60, 0.5);
+    }
+}
+
+/* ─── Stat Cards ─────────────────────────────────────────── */
+.dash-stat-card {
+    background: #ffffff;
+    border: 1px solid var(--border-color);
+    border-radius: 16px;
+    padding: 20px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    position: relative;
+    overflow: hidden;
+    transition: transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1),
+                box-shadow 0.25s ease,
+                border-color 0.25s ease;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04), 0 1px 2px rgba(0, 0, 0, 0.03);
+    animation: slideUpFade 0.5s ease both;
+}
+
+.dash-stat-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: linear-gradient(90deg, transparent, var(--card-accent, var(--primary)), transparent);
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.dash-stat-card:hover::before {
+    opacity: 1;
+}
+
+.dash-stat-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 12px 24px rgba(0, 105, 60, 0.1),
+                0 4px 8px rgba(0, 105, 60, 0.06);
+    border-color: rgba(0, 105, 60, 0.25);
+}
+
+.dash-stat-card:active {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(0, 105, 60, 0.08);
+}
+
+.dash-stat-card:nth-child(1) { animation-delay: 0ms; --card-accent: #00693C; }
+.dash-stat-card:nth-child(2) { animation-delay: 80ms; --card-accent: #002D62; }
+.dash-stat-card:nth-child(3) { animation-delay: 160ms; --card-accent: #10B981; }
+.dash-stat-card:nth-child(4) { animation-delay: 240ms; --card-accent: #F59E0B; }
+
+.dash-stat-icon {
+    width: 52px;
+    height: 52px;
+    border-radius: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    position: relative;
+    transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.dash-stat-card:hover .dash-stat-icon {
+    transform: scale(1.1) rotate(-3deg);
+}
+
+.dash-stat-icon i {
+    font-size: 22px;
+    transition: transform 0.3s ease;
+}
+
+.dash-stat-card:hover .dash-stat-icon i {
+    transform: scale(1.1);
+}
+
+/* Icon color variants */
+.dash-stat-icon.icon-green {
+    background: linear-gradient(135deg, rgba(0, 105, 60, 0.12) 0%, rgba(0, 105, 60, 0.06) 100%);
+    box-shadow: 0 4px 12px rgba(0, 105, 60, 0.15);
+}
+
+.dash-stat-icon.icon-blue {
+    background: linear-gradient(135deg, rgba(0, 45, 98, 0.12) 0%, rgba(0, 45, 98, 0.06) 100%);
+    box-shadow: 0 4px 12px rgba(0, 45, 98, 0.15);
+}
+
+.dash-stat-icon.icon-emerald {
+    background: linear-gradient(135deg, rgba(16, 185, 129, 0.12) 0%, rgba(16, 185, 129, 0.06) 100%);
+    box-shadow: 0 4px 12px rgba(16, 185, 129, 0.15);
+}
+
+.dash-stat-icon.icon-amber {
+    background: linear-gradient(135deg, rgba(245, 158, 11, 0.12) 0%, rgba(245, 158, 11, 0.06) 100%);
+    box-shadow: 0 4px 12px rgba(245, 158, 11, 0.15);
+}
+
+.dash-stat-value {
+    font-size: 30px;
+    font-weight: 700;
+    color: var(--text-primary);
+    line-height: 1.1;
+    animation: countUp 0.6s ease both;
+    animation-delay: inherit;
+}
+
+.dash-stat-label {
+    font-size: 13px;
+    color: var(--grey);
+    margin-top: 2px;
+}
+
+/* ─── Quick Action Cards ──────────────────────────────────── */
+.dash-section-card {
+    background: #ffffff;
+    border: 1px solid var(--border-color);
+    border-radius: 16px;
+    padding: 22px;
+    animation: slideUp 0.5s ease both;
+    transition: box-shadow 0.25s ease, border-color 0.25s ease;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+}
+
+.dash-section-card:hover {
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.06);
+    border-color: rgba(0, 105, 60, 0.15);
+}
+
+.dash-section-title {
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-bottom: 18px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.dash-section-title i {
+    font-size: 16px;
+}
+
+/* ─── Quick Action Items ──────────────────────────────────── */
+.dash-quick-action {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 13px 14px;
+    border: 1px solid var(--border-color);
+    border-radius: 10px;
+    text-decoration: none;
+    color: var(--text-primary);
+    cursor: pointer;
+    transition: all 0.2s cubic-bezier(0.34, 1.2, 0.64, 1);
+    background: transparent;
+    position: relative;
+    overflow: hidden;
+    animation: slideUpFade 0.4s ease both;
+}
+
+.dash-quick-action::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(0, 105, 60, 0.04), transparent);
+    transition: left 0.4s ease;
+}
+
+.dash-quick-action:hover::before {
+    left: 100%;
+}
+
+.dash-quick-action:hover {
+    border-color: var(--primary);
+    background: rgba(0, 105, 60, 0.04);
+    transform: translateX(4px);
+    box-shadow: 0 4px 12px rgba(0, 105, 60, 0.08);
+}
+
+.dash-quick-action:active {
+    transform: translateX(2px);
+}
+
+.dash-quick-action:nth-child(1) { animation-delay: 0.05s; }
+.dash-quick-action:nth-child(2) { animation-delay: 0.1s; }
+.dash-quick-action:nth-child(3) { animation-delay: 0.15s; }
+.dash-quick-action:nth-child(4) { animation-delay: 0.2s; }
+.dash-quick-action:nth-child(5) { animation-delay: 0.25s; }
+.dash-quick-action:nth-child(6) { animation-delay: 0.3s; }
+
+.dash-quick-action-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.dash-quick-action:hover .dash-quick-action-icon {
+    transform: scale(1.12) rotate(-5deg);
+}
+
+.dash-quick-action-icon i {
+    font-size: 18px;
+}
+
+.dash-quick-action-info {
+    flex: 1;
+    min-width: 0;
+}
+
+.dash-quick-action-info h3 {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-bottom: 2px;
+    transition: color 0.2s;
+}
+
+.dash-quick-action:hover .dash-quick-action-info h3 {
+    color: var(--primary);
+}
+
+.dash-quick-action-info p {
+    font-size: 11px;
+    color: var(--grey);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.dash-quick-action-arrow {
+    font-size: 13px;
+    color: var(--grey);
+    transition: transform 0.2s ease, color 0.2s;
+    flex-shrink: 0;
+}
+
+.dash-quick-action:hover .dash-quick-action-arrow {
+    transform: translateX(4px);
+    color: var(--primary);
+}
+
+/* ─── Recent Conversations ─────────────────────────────────── */
+.dash-conversation-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 8px;
+    border-radius: 8px;
+    text-decoration: none;
+    color: var(--text-primary);
+    transition: all 0.18s ease;
+    animation: slideUpFade 0.4s ease both;
+    cursor: pointer;
+}
+
+.dash-conversation-item:hover {
+    background: var(--light-grey-bg);
+}
+
+.dash-conversation-item:hover .dash-conv-arrow {
+    transform: translateX(4px);
+    color: var(--primary);
+}
+
+.dash-conv-icon {
+    width: 36px;
+    height: 36px;
+    border-radius: 8px;
+    background: rgba(0, 105, 60, 0.08);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    transition: background 0.2s, transform 0.2s;
+}
+
+.dash-conversation-item:hover .dash-conv-icon {
+    background: rgba(0, 105, 60, 0.15);
+    transform: scale(1.05);
+}
+
+.dash-conv-icon i {
+    font-size: 14px;
+    color: var(--primary);
+}
+
+.dash-conv-content {
+    flex: 1;
+    min-width: 0;
+}
+
+.dash-conv-title {
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--text-primary);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    transition: color 0.2s;
+}
+
+.dash-conversation-item:hover .dash-conv-title {
+    color: var(--primary);
+}
+
+.dash-conv-time {
+    font-size: 11px;
+    color: var(--grey);
+}
+
+.dash-conv-arrow {
+    font-size: 12px;
+    color: var(--grey);
+    flex-shrink: 0;
+    transition: transform 0.2s ease, color 0.2s;
+}
+
+.dash-empty-state {
+    text-align: center;
+    padding: 36px 16px;
+    color: var(--grey);
+}
+
+.dash-empty-state i {
+    font-size: 36px;
+    margin-bottom: 10px;
+    opacity: 0.3;
+    display: block;
+    animation: float 3s ease-in-out infinite;
+}
+
+.dash-empty-state p {
+    font-size: 13px;
+    margin-bottom: 6px;
+}
+
+.dash-empty-state a {
+    font-size: 13px;
+    color: var(--primary);
+    text-decoration: none;
+    font-weight: 500;
+}
+
+.dash-empty-state a:hover {
+    text-decoration: underline;
+}
+
+/* ─── System Status ────────────────────────────────────────── */
+.dash-status-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 12px 14px;
+    background: var(--light-grey-bg);
+    border-radius: 10px;
+    border: 1px solid transparent;
+    transition: all 0.2s ease;
+    animation: slideUpFade 0.5s ease both;
+}
+
+.dash-status-item:hover {
+    border-color: var(--border-color);
+    background: #ffffff;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+}
+
+.dash-status-dot {
+    width: 9px;
+    height: 9px;
+    border-radius: 50%;
+    flex-shrink: 0;
+    position: relative;
+}
+
+.dash-status-dot.online {
+    background: #10B981;
+    box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.15);
+    animation: pulseGlow 2.5s ease-in-out infinite;
+}
+
+.dash-status-dot.offline {
+    background: #EF4444;
+}
+
+.dash-status-name {
+    font-size: 13px;
+    color: var(--text-secondary);
+    flex: 1;
+}
+
+.dash-status-label {
+    font-size: 11px;
+    font-weight: 500;
+    padding: 2px 8px;
+    border-radius: 20px;
+    transition: all 0.2s;
+}
+
+.dash-status-label.online {
+    color: #059669;
+    background: rgba(16, 185, 129, 0.1);
+}
+
+.dash-status-label.offline {
+    color: #DC2626;
+    background: rgba(239, 68, 68, 0.1);
+}
+
+/* ─── Welcome Header ───────────────────────────────────────── */
+.dash-welcome {
+    animation: slideUp 0.4s ease both;
+}
+
+.dash-welcome h1 {
+    font-size: 26px;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin-bottom: 5px;
+    background: linear-gradient(135deg, var(--text-primary) 0%, var(--primary) 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+.dash-welcome p {
+    font-size: 14px;
+    color: var(--grey);
+}
+
+.dash-new-chat-btn {
+    background: var(--primary);
+    color: #fff;
+    border: none;
+    padding: 11px 22px;
+    border-radius: 10px;
+    font-weight: 500;
+    font-size: 14px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    transition: all 0.2s cubic-bezier(0.34, 1.2, 0.64, 1);
+    box-shadow: 0 4px 12px rgba(0, 105, 60, 0.25);
+    text-decoration: none;
+    animation: slideUp 0.4s ease both;
+}
+
+.dash-new-chat-btn:hover {
+    background: var(--primary-hover);
+    transform: translateY(-2px) scale(1.02);
+    box-shadow: 0 6px 18px rgba(0, 105, 60, 0.3);
+}
+
+.dash-new-chat-btn:active {
+    transform: translateY(0) scale(0.99);
+    box-shadow: 0 2px 8px rgba(0, 105, 60, 0.2);
+}
+
+.dash-new-chat-btn i {
+    font-size: 13px;
+    transition: transform 0.2s;
+}
+
+.dash-new-chat-btn:hover i {
+    transform: rotate(90deg);
+}
+
+/* ─── Grid Layout ─────────────────────────────────────────── */
+.dash-stats-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 18px;
+    margin-bottom: 28px;
+}
+
+.dash-two-col {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 18px;
+    margin-bottom: 18px;
+}
+
+/* ─── Dashboard Layout ──────────────────────────────────────── */
+.dashboard-content {
+    flex: 1;
+    overflow-y: auto;
+    padding: 28px 36px;
+    background: linear-gradient(180deg, #ffffff 0%, #f8f9fa 100%);
+}
+
+/* ─── Responsive ───────────────────────────────────────────── */
+@media (max-width: 1200px) {
+    .dash-stats-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+@media (max-width: 900px) {
+    .dash-two-col {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (max-width: 640px) {
+    .dash-stats-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .dashboard-content {
+        padding: 16px;
+    }
+}

@@ -93,33 +93,13 @@ function updateToolPanel(tools) {
         : `<i class="fa-solid fa-circle-xmark tool-error-icon"></i>`;
     const timeLabel = tr.status === 'running' ? 'Running...' : tr.success ? 'Done' : 'Failed';
 
+    // Tool name — no args, no result detail
     const card = document.createElement('div');
     card.className = `tool-execution-card ${statusClass}`;
     card.innerHTML = `<div class="tool-execution-header">
       <div class="tool-execution-status">${spinHtml}<span class="tool-execution-message">${escapeHtml(tr.name)}</span></div>
       <span class="tool-execution-time">${timeLabel}</span>
     </div>`;
-
-    if (tr.args && Object.keys(tr.args).length > 0) {
-      const argsDiv = document.createElement('div');
-      argsDiv.className = 'tool-execution-args';
-      argsDiv.innerHTML = `<pre>${escapeHtml(JSON.stringify(tr.args, null, 2))}</pre>`;
-      card.appendChild(argsDiv);
-    }
-
-    if (tr.result) {
-      const resultDiv = document.createElement('div');
-      resultDiv.className = 'tool-execution-result';
-      resultDiv.innerHTML = `<pre>${escapeHtml(String(tr.result).slice(0, 300))}</pre>`;
-      card.appendChild(resultDiv);
-    }
-
-    if (tr.error) {
-      const errorDiv = document.createElement('div');
-      errorDiv.className = 'tool-execution-error';
-      errorDiv.innerHTML = `<pre>${escapeHtml(tr.error)}</pre>`;
-      card.appendChild(errorDiv);
-    }
 
     container.appendChild(card);
   }

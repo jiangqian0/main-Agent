@@ -178,6 +178,13 @@ class AgentLoop:
                                     "total_lines": total_lines
                                 }
 
+                                # 通知前端刷新 workspace 文件列表
+                                yield {
+                                    "type": "workspace_refresh",
+                                    "file_name": file_name,
+                                    "file_path": file_path
+                                }
+
                             # 发送工具结果
                             yield {
                                 "type": "tool_result",

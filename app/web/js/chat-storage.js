@@ -4,7 +4,6 @@
  */
 
 let conversations = [];
-let currentConversationId = null;
 
 // ─── Load / Save ─────────────────────────────────────────────────────────────
 
@@ -42,7 +41,7 @@ function renderHistory() {
   }
 
   list.innerHTML = conversations.map(conv => {
-    const isActive = conv.id === currentConversationId;
+    const isActive = conv.id === window.currentConversationId;
     const lastMsg = conv.messages && conv.messages.length > 0
       ? conv.messages[conv.messages.length - 1]
       : null;
@@ -76,7 +75,7 @@ function renderHistory() {
 function storageLoadConversation(convId) {
   const conv = conversations.find(c => c.id === convId);
   if (!conv) return;
-  currentConversationId = convId;
+  window.currentConversationId = convId;
   renderHistory();
 
   const container = document.getElementById('chat-container');
@@ -107,8 +106,8 @@ function storageLoadConversation(convId) {
 function storageDeleteConversation(convId) {
   if (!confirm('Delete this conversation?')) return;
   conversations = conversations.filter(c => c.id !== convId);
-  if (currentConversationId === convId) {
-    currentConversationId = null;
+  if (window.currentConversationId === convId) {
+    window.currentConversationId = null;
     clearChat(false);
   }
   saveConversations();
@@ -130,7 +129,7 @@ function storageRenameConversation(convId) {
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
 function getCurrentConversation() {
-  return conversations.find(c => c.id === currentConversationId);
+  return conversations.find(c => c.id === window.currentConversationId);
 }
 
 function persistUserMessage(content) {
@@ -152,10 +151,10 @@ function persistAssistantMessage(content) {
 }
 
 function ensureConversation(msg) {
-  if (!currentConversationId) {
-    currentConversationId = generateId();
+  if (!window.currentConversationId) {
+    window.currentConversationId = generateId();
     conversations.unshift({
-      id: currentConversationId,
+      id: window.currentConversationId,
       title: msg.slice(0, 50) + (msg.length > 50 ? '...' : ''),
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString(),
@@ -175,7 +174,7 @@ function clearChat(clearId = true) {
     <p>Start a conversation to get help with your tasks</p>
   </div>`;
   if (clearId) {
-    currentConversationId = null;
+    window.currentConversationId = null;
     renderHistory();
   }
   window.resetExecutionState();

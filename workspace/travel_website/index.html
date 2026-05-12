@@ -1,0 +1,373 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>探索之旅 - 发现世界的美好</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+    <!-- 导航栏 -->
+    <nav class="navbar">
+        <div class="container">
+            <div class="logo">
+                <i class="fas fa-plane-departure"></i>
+                <span>探索之旅</span>
+            </div>
+            <ul class="nav-links">
+                <li><a href="#home" class="active">首页</a></li>
+                <li><a href="#destinations">目的地</a></li>
+                <li><a href="#packages">旅游套餐</a></li>
+                <li><a href="#reviews">客户评价</a></li>
+                <li><a href="#contact">联系我们</a></li>
+            </ul>
+            <div class="hamburger">
+                <i class="fas fa-bars"></i>
+            </div>
+        </div>
+    </nav>
+
+    <!-- 英雄区域 -->
+    <section class="hero" id="home">
+        <div class="hero-overlay"></div>
+        <div class="hero-content">
+            <h1>探索世界的每一个角落</h1>
+            <p>发现最美的风景，体验最独特的文化</p>
+            <div class="search-box">
+                <input type="text" placeholder="搜索目的地...">
+                <button><i class="fas fa-search"></i> 搜索</button>
+            </div>
+        </div>
+    </section>
+
+    <!-- 目的地推荐 -->
+    <section class="destinations" id="destinations">
+        <div class="container">
+            <div class="section-title">
+                <h2>热门目的地</h2>
+                <p>精选全球最受欢迎的旅游胜地</p>
+            </div>
+            <div class="destinations-grid">
+                <div class="destination-card">
+                    <img src="https://images.unsplash.com/photo-1506929562872-bb421503ef21?w=600" alt="巴黎">
+                    <div class="card-content">
+                        <h3>巴黎，法国</h3>
+                        <p><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i></p>
+                        <p class="price">¥8,999 起</p>
+                        <a href="#" class="btn">查看详情</a>
+                    </div>
+                </div>
+                <div class="destination-card">
+                    <img src="https://images.unsplash.com/photo-1506973035872-a4ec16b8e8d9?w=600" alt="马尔代夫">
+                    <div class="card-content">
+                        <h3>马尔代夫</h3>
+                        <p><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star-half-alt"></i></p>
+                        <p class="price">¥12,999 起</p>
+                        <a href="#" class="btn">查看详情</a>
+                    </div>
+                </div>
+                <div class="destination-card">
+                    <img src="https://images.unsplash.com/photo-1501785888041-af3ef285b470?w=600" alt="日本">
+                    <div class="card-content">
+                        <h3>京都，日本</h3>
+                        <p><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i></p>
+                        <p class="price">¥9,999 起</p>
+                        <a href="#" class="btn">查看详情</a>
+                    </div>
+                </div>
+                <div class="destination-card">
+                    <img src="https://images.unsplash.com/photo-1503376780353-7e6692767b70?w=600" alt="意大利">
+                    <div class="card-content">
+                        <h3>罗马，意大利</h3>
+                        <p><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i></p>
+                        <p class="price">¥10,999 起</p>
+                        <a href="#" class="btn">查看详情</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- 旅游套餐 -->
+    <section class="packages" id="packages">
+        <div class="container">
+            <div class="section-title">
+                <h2>精选旅游套餐</h2>
+                <p>为您量身定制的完美旅行方案</p>
+            </div>
+            <div class="packages-grid">
+                <div class="package-card">
+                    <div class="package-header">
+                        <h3>经典欧洲7日游</h3>
+                        <span class="badge">热门</span>
+                    </div>
+                    <div class="package-features">
+                        <div class="feature">
+                            <i class="fas fa-calendar-alt"></i>
+                            <span>7天6晚</span>
+                        </div>
+                        <div class="feature">
+                            <i class="fas fa-hotel"></i>
+                            <span>4星级酒店</span>
+                        </div>
+                        <div class="feature">
+                            <i class="fas fa-utensils"></i>
+                            <span>含早餐</span>
+                        </div>
+                        <div class="feature">
+                            <i class="fas fa-plane"></i>
+                            <span>往返机票</span>
+                        </div>
+                    </div>
+                    <div class="package-price">
+                        <span class="original">¥15,999</span>
+                        <span class="current">¥12,999</span>
+                    </div>
+                    <button class="btn package-btn">立即预订</button>
+                </div>
+                <div class="package-card">
+                    <div class="package-header">
+                        <h3>海岛度假5日游</h3>
+                        <span class="badge">特价</span>
+                    </div>
+                    <div class="package-features">
+                        <div class="feature">
+                            <i class="fas fa-calendar-alt"></i>
+                            <span>5天4晚</span>
+                        </div>
+                        <div class="feature">
+                            <i class="fas fa-hotel"></i>
+                            <span>5星度假村</span>
+                        </div>
+                        <div class="feature">
+                            <i class="fas fa-utensils"></i>
+                            <span>全包餐</span>
+                        </div>
+                        <div class="feature">
+                            <i class="fas fa-plane"></i>
+                            <span>往返机票</span>
+                        </div>
+                    </div>
+                    <div class="package-price">
+                        <span class="original">¥18,999</span>
+                        <span class="current">¥14,999</span>
+                    </div>
+                    <button class="btn package-btn">立即预订</button>
+                </div>
+                <div class="package-card">
+                    <div class="package-header">
+                        <h3>文化探索10日游</h3>
+                    </div>
+                    <div class="package-features">
+                        <div class="feature">
+                            <i class="fas fa-calendar-alt"></i>
+                            <span>10天9晚</span>
+                        </div>
+                        <div class="feature">
+                            <i class="fas fa-hotel"></i>
+                            <span>特色民宿</span>
+                        </div>
+                        <div class="feature">
+                            <i class="fas fa-utensils"></i>
+                            <span>当地美食</span>
+                        </div>
+                        <div class="feature">
+                            <i class="fas fa-plane"></i>
+                            <span>往返机票</span>
+                        </div>
+                    </div>
+                    <div class="package-price">
+                        <span class="original">¥22,999</span>
+                        <span class="current">¥19,999</span>
+                    </div>
+                    <button class="btn package-btn">立即预订</button>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- 客户评价 -->
+    <section class="reviews" id="reviews">
+        <div class="container">
+            <div class="section-title">
+                <h2>客户评价</h2>
+                <p>听听他们怎么说</p>
+            </div>
+            <div class="reviews-slider">
+                <div class="review-card">
+                    <div class="review-header">
+                        <div class="reviewer">
+                            <img src="https://randomuser.me/api/portraits/women/44.jpg" alt="张女士">
+                            <div>
+                                <h4>张女士</h4>
+                                <p>北京</p>
+                            </div>
+                        </div>
+                        <div class="rating">
+                            <i class="fas fa-star"></i>
+                            <i class="fas fa-star"></i>
+                            <i class="fas fa-star"></i>
+                            <i class="fas fa-star"></i>
+                            <i class="fas fa-star"></i>
+                        </div>
+                    </div>
+                    <p class="review-text">"这次的巴黎之旅非常完美！导游很专业，行程安排得很合理，让我充分感受到了浪漫之都的魅力。强烈推荐！"</p>
+                </div>
+                <div class="review-card">
+                    <div class="review-header">
+                        <div class="reviewer">
+                            <img src="https://randomuser.me/api/portraits/men/32.jpg" alt="李先生">
+                            <div>
+                                <h4>李先生</h4>
+                                <p>上海</p>
+                            </div>
+                        </div>
+                        <div class="rating">
+                            <i class="fas fa-star"></i>
+                            <i class="fas fa-star"></i>
+                            <i class="fas fa-star"></i>
+                            <i class="fas fa-star"></i>
+                            <i class="fas fa-star"></i>
+                        </div>
+                    </div>
+                    <p class="review-text">"马尔代夫的海水真的太美了！酒店服务一流，浮潜体验超棒。这次旅行让我彻底放松，下次还会选择你们！"</p>
+                </div>
+                <div class="review-card">
+                    <div class="review-header">
+                        <div class="reviewer">
+                            <img src="https://randomuser.me/api/portraits/women/68.jpg" alt="王小姐">
+                            <div>
+                                <h4>王小姐</h4>
+                                <p>广州</p>
+                            </div>
+                        </div>
+                        <div class="rating">
+                            <i class="fas fa-star"></i>
+                            <i class="fas fa-star"></i>
+                            <i class="fas fa-star"></i>
+                            <i class="fas fa-star"></i>
+                            <i class="fas fa-star-half-alt"></i>
+                        </div>
+                    </div>
+                    <p class="review-text">"京都的文化之旅让我印象深刻，看到了很多美丽的寺庙和传统建筑。导游讲解很详细，学到了很多日本文化知识。"</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- 联系我们 -->
+    <section class="contact" id="contact">
+        <div class="container">
+            <div class="section-title">
+                <h2>联系我们</h2>
+                <p>有任何问题？随时联系我们</p>
+            </div>
+            <div class="contact-grid">
+                <div class="contact-info">
+                    <div class="info-item">
+                        <i class="fas fa-map-marker-alt"></i>
+                        <div>
+                            <h4>地址</h4>
+                            <p>北京市朝阳区建国路88号</p>
+                        </div>
+                    </div>
+                    <div class="info-item">
+                        <i class="fas fa-phone"></i>
+                        <div>
+                            <h4>电话</h4>
+                            <p>+86 10 8888 9999</p>
+                        </div>
+                    </div>
+                    <div class="info-item">
+                        <i class="fas fa-envelope"></i>
+                        <div>
+                            <h4>邮箱</h4>
+                            <p>info@exploretravel.com</p>
+                        </div>
+                    </div>
+                    <div class="info-item">
+                        <i class="fas fa-clock"></i>
+                        <div>
+                            <h4>营业时间</h4>
+                            <p>周一至周五 9:00-18:00</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="contact-form">
+                    <form id="inquiryForm">
+                        <div class="form-group">
+                            <label for="name">姓名</label>
+                            <input type="text" id="name" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="email">邮箱</label>
+                            <input type="email" id="email" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="phone">电话</label>
+                            <input type="tel" id="phone">
+                        </div>
+                        <div class="form-group">
+                            <label for="message">留言</label>
+                            <textarea id="message" rows="5" required></textarea>
+                        </div>
+                        <button type="submit" class="btn">发送消息</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- 页脚 -->
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-grid">
+                <div class="footer-col">
+                    <h3>探索之旅</h3>
+                    <p>专业的旅游服务提供商，为您打造难忘的旅行体验。</p>
+                    <div class="social-links">
+                        <a href="#"><i class="fab fa-weixin"></i></a>
+                        <a href="#"><i class="fab fa-weibo"></i></a>
+                        <a href="#"><i class="fab fa-facebook"></i></a>
+                        <a href="#"><i class="fab fa-instagram"></i></a>
+                    </div>
+                </div>
+                <div class="footer-col">
+                    <h3>快速链接</h3>
+                    <ul>
+                        <li><a href="#home">首页</a></li>
+                        <li><a href="#destinations">目的地</a></li>
+                        <li><a href="#packages">旅游套餐</a></li>
+                        <li><a href="#reviews">客户评价</a></li>
+                        <li><a href="#contact">联系我们</a></li>
+                    </ul>
+                </div>
+                <div class="footer-col">
+                    <h3>热门目的地</h3>
+                    <ul>
+                        <li><a href="#">巴黎</a></li>
+                        <li><a href="#">马尔代夫</a></li>
+                        <li><a href="#">京都</a></li>
+                        <li><a href="#">罗马</a></li>
+                        <li><a href="#">巴厘岛</a></li>
+                    </ul>
+                </div>
+                <div class="footer-col">
+                    <h3>订阅我们的新闻</h3>
+                    <p>获取最新优惠和旅游资讯</p>
+                    <div class="newsletter">
+                        <input type="email" placeholder="您的邮箱">
+                        <button><i class="fas fa-paper-plane"></i></button>
+                    </div>
+                </div>
+            </div>
+            <div class="copyright">
+                <p>&copy; 2024 探索之旅. 保留所有权利.</p>
+            </div>
+        </div>
+    </footer>
+
+    <script src="script.js"></script>
+</body>
+</html>

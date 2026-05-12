@@ -79,66 +79,64 @@ async function renderDashboard() {
     } catch (_) {}
 
     container.innerHTML = `
-        <div style="padding:24px 32px;background:var(--light-grey-bg);flex:1;overflow-y:auto;">
+        <div class="dashboard-content">
             <!-- Welcome -->
-            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:24px;">
+            <div class="dash-welcome" style="display:flex;justify-content:space-between;align-items:center;margin-bottom:28px;">
                 <div>
-                    <h1 style="font-size:24px;font-weight:700;color:var(--text-primary);margin-bottom:4px;">
-                        Good ${greeting}, ${escHtml(name)}
-                    </h1>
-                    <p style="font-size:14px;color:var(--grey);">Here's an overview of your agent activity.</p>
+                    <h1>Good ${greeting}, ${escHtml(name)}</h1>
+                    <p>Here's an overview of your agent activity.</p>
                 </div>
-                <a href="/chat" style="background:var(--primary);color:#fff;border:none;padding:10px 20px;border-radius:8px;font-weight:500;display:flex;align-items:center;gap:8px;text-decoration:none;">
+                <a href="/chat" class="dash-new-chat-btn">
                     <i class="fa-solid fa-plus"></i> New Chat
                 </a>
             </div>
 
             <!-- Stats -->
-            <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:16px;margin-bottom:24px;">
-                <div style="background:#fff;border:1px solid var(--border-color);border-radius:10px;padding:20px;display:flex;align-items:center;gap:16px;">
-                    <div style="width:48px;height:48px;background:rgba(0,105,60,0.1);border-radius:12px;display:flex;align-items:center;justify-content:center;">
-                        <i class="fa-solid fa-comment-dots" style="color:var(--primary);font-size:20px;"></i>
+            <div class="dash-stats-grid">
+                <div class="dash-stat-card">
+                    <div class="dash-stat-icon icon-green">
+                        <i class="fa-solid fa-comment-dots" style="color:var(--primary);"></i>
                     </div>
                     <div>
-                        <div style="font-size:28px;font-weight:700;color:var(--text-primary);">${convCount}</div>
-                        <div style="font-size:13px;color:var(--grey);">Conversations</div>
+                        <div class="dash-stat-value" data-target="${convCount}">${convCount}</div>
+                        <div class="dash-stat-label">Conversations</div>
                     </div>
                 </div>
-                <div style="background:#fff;border:1px solid var(--border-color);border-radius:10px;padding:20px;display:flex;align-items:center;gap:16px;">
-                    <div style="width:48px;height:48px;background:rgba(0,45,98,0.1);border-radius:12px;display:flex;align-items:center;justify-content:center;">
-                        <i class="fa-solid fa-code" style="color:#002D62;font-size:20px;"></i>
+                <div class="dash-stat-card">
+                    <div class="dash-stat-icon icon-blue">
+                        <i class="fa-solid fa-code" style="color:#002D62;"></i>
                     </div>
                     <div>
-                        <div style="font-size:28px;font-weight:700;color:var(--text-primary);">${skillCount}</div>
-                        <div style="font-size:13px;color:var(--grey);">Active Skills</div>
+                        <div class="dash-stat-value" data-target="${skillCount}">${skillCount}</div>
+                        <div class="dash-stat-label">Active Skills</div>
                     </div>
                 </div>
-                <div style="background:#fff;border:1px solid var(--border-color);border-radius:10px;padding:20px;display:flex;align-items:center;gap:16px;">
-                    <div style="width:48px;height:48px;background:rgba(16,185,129,0.1);border-radius:12px;display:flex;align-items:center;justify-content:center;">
-                        <i class="fa-solid fa-folder-open" style="color:#10B981;font-size:20px;"></i>
+                <div class="dash-stat-card">
+                    <div class="dash-stat-icon icon-emerald">
+                        <i class="fa-solid fa-folder-open" style="color:#10B981;"></i>
                     </div>
                     <div>
-                        <div style="font-size:28px;font-weight:700;color:var(--text-primary);">${fileCount}</div>
-                        <div style="font-size:13px;color:var(--grey);">Workspace Files</div>
+                        <div class="dash-stat-value" data-target="${fileCount}">${fileCount}</div>
+                        <div class="dash-stat-label">Workspace Files</div>
                     </div>
                 </div>
-                <div style="background:#fff;border:1px solid var(--border-color);border-radius:10px;padding:20px;display:flex;align-items:center;gap:16px;">
-                    <div style="width:48px;height:48px;background:rgba(245,158,11,0.1);border-radius:12px;display:flex;align-items:center;justify-content:center;">
-                        <i class="fa-solid fa-puzzle-piece" style="color:#F59E0B;font-size:20px;"></i>
+                <div class="dash-stat-card">
+                    <div class="dash-stat-icon icon-amber">
+                        <i class="fa-solid fa-puzzle-piece" style="color:#F59E0B;"></i>
                     </div>
                     <div>
-                        <div style="font-size:28px;font-weight:700;color:var(--text-primary);">6</div>
-                        <div style="font-size:13px;color:var(--grey);">Built-in Tools</div>
+                        <div class="dash-stat-value" data-target="6">6</div>
+                        <div class="dash-stat-label">Built-in Tools</div>
                     </div>
                 </div>
             </div>
 
             <!-- Quick Actions + Recent -->
-            <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px;">
-                <div style="background:#fff;border:1px solid var(--border-color);border-radius:10px;padding:20px;">
-                    <h2 style="font-size:15px;font-weight:600;color:var(--text-primary);margin-bottom:16px;display:flex;align-items:center;gap:8px;">
+            <div class="dash-two-col">
+                <div class="dash-section-card">
+                    <div class="dash-section-title">
                         <i class="fa-solid fa-bolt" style="color:var(--primary);"></i> Quick Actions
-                    </h2>
+                    </div>
                     <div style="display:flex;flex-direction:column;gap:8px;">
                         ${quickAction('/chat', 'fa-code', 'Code Development', 'Generate, review, and refactor code', 'var(--primary)')}
                         ${quickAction('/workspace', 'fa-folder-open', 'Browse Workspace', 'View and edit project files', '#10B981')}
@@ -149,10 +147,10 @@ async function renderDashboard() {
                     </div>
                 </div>
 
-                <div style="background:#fff;border:1px solid var(--border-color);border-radius:10px;padding:20px;">
-                    <h2 style="font-size:15px;font-weight:600;color:var(--text-primary);margin-bottom:16px;display:flex;align-items:center;gap:8px;">
+                <div class="dash-section-card">
+                    <div class="dash-section-title">
                         <i class="fa-solid fa-clock-rotate-left" style="color:var(--primary);"></i> Recent Conversations
-                    </h2>
+                    </div>
                     <div id="recent-list">
                         ${renderRecentConversations(convs)}
                     </div>
@@ -160,11 +158,11 @@ async function renderDashboard() {
             </div>
 
             <!-- System Status -->
-            <div style="background:#fff;border:1px solid var(--border-color);border-radius:10px;padding:20px;">
-                <h2 style="font-size:15px;font-weight:600;color:var(--text-primary);margin-bottom:16px;display:flex;align-items:center;gap:8px;">
+            <div class="dash-section-card" style="animation-delay:0.1s;">
+                <div class="dash-section-title">
                     <i class="fa-solid fa-circle-check" style="color:#10B981;"></i> System Status
-                </h2>
-                <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px;">
+                </div>
+                <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px;">
                     ${systemStatusItem('API Service', true)}
                     ${systemStatusItem('Skill Engine', true)}
                     ${systemStatusItem('Workspace Storage', true)}
@@ -173,50 +171,78 @@ async function renderDashboard() {
             </div>
         </div>
     `;
+
+    // Trigger counter animation after cards appear
+    setTimeout(animateCounters, 400);
+}
+
+function animateCounters() {
+    document.querySelectorAll('.dash-stat-value[data-target]').forEach(el => {
+        const target = parseInt(el.dataset.target, 10);
+        const duration = 800;
+        const start = performance.now();
+        const initial = 0;
+
+        function update(now) {
+            const elapsed = now - start;
+            const progress = Math.min(elapsed / duration, 1);
+            const eased = 1 - Math.pow(1 - progress, 3);
+            const current = Math.round(initial + (target - initial) * eased);
+            el.textContent = current;
+            if (progress < 1) requestAnimationFrame(update);
+        }
+        requestAnimationFrame(update);
+    });
 }
 
 function quickAction(href, icon, title, desc, color) {
-    return `<a href="${href}" style="display:flex;align-items:center;gap:12px;padding:12px;border:1px solid var(--border-color);border-radius:8px;text-decoration:none;color:var(--text-primary);transition:border-color 0.2s,background 0.2s;" onmouseover="this.style.borderColor='var(--primary)';this.style.background='var(--primary-bg)'" onmouseout="this.style.borderColor='var(--border-color)';this.style.background='transparent'">
-        <i class="fa-solid ${icon}" style="width:20px;text-align:center;color:${color};"></i>
-        <div style="flex:1;">
-            <div style="font-weight:500;font-size:13px;">${title}</div>
-            <div style="font-size:11px;color:var(--grey);">${desc}</div>
+    return `<a href="${href}" class="dash-quick-action">
+        <div class="dash-quick-action-icon" style="background:linear-gradient(135deg,${color}18 0%,${color}08 100%);">
+            <i class="fa-solid ${icon}" style="color:${color};"></i>
         </div>
-        <i class="fa-solid fa-arrow-right" style="color:var(--grey);font-size:12px;"></i>
+        <div class="dash-quick-action-info">
+            <h3>${title}</h3>
+            <p>${desc}</p>
+        </div>
+        <i class="fa-solid fa-arrow-right dash-quick-action-arrow"></i>
     </a>`;
 }
 
 function systemStatusItem(name, operational) {
     const color = operational ? '#10B981' : '#EF4444';
     const label = operational ? 'Operational' : 'Offline';
-    return `<div style="display:flex;align-items:center;gap:10px;padding:12px;background:var(--light-grey-bg);border-radius:8px;">
-        <div style="width:8px;height:8px;background:${color};border-radius:50%;flex-shrink:0;"></div>
-        <span style="font-size:13px;color:var(--text-secondary);">${name}</span>
-        <span style="font-size:11px;color:${color};margin-left:auto;font-weight:500;">${label}</span>
+    const dotClass = operational ? 'online' : 'offline';
+    const labelClass = operational ? 'online' : 'offline';
+    return `<div class="dash-status-item">
+        <div class="dash-status-dot ${dotClass}"></div>
+        <span class="dash-status-name">${name}</span>
+        <span class="dash-status-label ${labelClass}">${label}</span>
     </div>`;
 }
 
 function renderRecentConversations(convs) {
     if (!convs || convs.length === 0) {
-        return `<div style="text-align:center;padding:32px;color:var(--grey);">
-            <i class="fa-solid fa-comment-dots" style="font-size:32px;margin-bottom:8px;opacity:0.3;display:block;"></i>
-            <div style="font-size:13px;margin-bottom:8px;">No conversations yet</div>
-            <a href="/chat" style="color:var(--primary);font-size:13px;">Start chatting →</a>
+        return `<div class="dash-empty-state">
+            <i class="fa-solid fa-comment-dots"></i>
+            <p>No conversations yet</p>
+            <a href="/chat">Start chatting →</a>
         </div>`;
     }
-    return convs.slice(0, 5).map(c => {
+    return convs.slice(0, 5).map((c, i) => {
         const d = new Date(c.updated_at);
         const diff = Date.now() - d;
         const days = Math.floor(diff / 86400000);
         let timeStr = d.toLocaleTimeString('en-US', {hour:'2-digit', minute:'2-digit'});
         if (days === 0) {} else if (days === 1) timeStr = 'Yesterday'; else timeStr = `${days}d ago`;
-        return `<a href="/chat" style="display:flex;align-items:center;gap:12px;padding:10px 8px;border-radius:6px;text-decoration:none;color:var(--text-primary);transition:background 0.15s;" onmouseover="this.style.background='var(--light-grey-bg)'" onmouseout="this.style.background='transparent'">
-            <i class="fa-solid fa-comment-dots" style="width:20px;text-align:center;color:var(--primary);flex-shrink:0;"></i>
-            <div style="flex:1;min-width:0;">
-                <div style="font-size:13px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${escHtml(c.title || 'Untitled')}</div>
-                <div style="font-size:11px;color:var(--grey);">${timeStr}</div>
+        return `<a href="/chat" class="dash-conversation-item" style="animation-delay:${i * 60}ms;">
+            <div class="dash-conv-icon">
+                <i class="fa-solid fa-comment-dots"></i>
             </div>
-            <i class="fa-solid fa-arrow-right" style="color:var(--grey);font-size:12px;flex-shrink:0;"></i>
+            <div class="dash-conv-content">
+                <div class="dash-conv-title">${escHtml(c.title || 'Untitled')}</div>
+                <div class="dash-conv-time">${timeStr}</div>
+            </div>
+            <i class="fa-solid fa-arrow-right dash-conv-arrow"></i>
         </a>`;
     }).join('');
 }
