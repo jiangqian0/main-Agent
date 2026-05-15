@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Monitoring Panel - Agent Hub</title>
-    <link rel="stylesheet" href="/static/css/style.css">
+    <link rel="stylesheet" href="/alicloud-main-agent/web/static/css/style.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 </head>
@@ -145,7 +145,7 @@
                         <div>
                             <div style="display:flex;justify-content:space-between;margin-bottom:6px;">
                                 <span style="font-size:13px;color:var(--text-secondary);">CPU Usage</span>
-                                <span style="font-size:13px;font-weight:600;color:var(--text-primary);" id="cpu-val">â€”</span>
+                                <span style="font-size:13px;font-weight:600;color:var(--text-primary);" id="cpu-val">â€?/span>
                             </div>
                             <div style="height:8px;background:var(--light-grey-bg);border-radius:4px;overflow:hidden;">
                                 <div id="cpu-bar" style="height:100%;background:#3B82F6;border-radius:4px;width:0%;transition:width 0.5s;"></div>
@@ -154,7 +154,7 @@
                         <div>
                             <div style="display:flex;justify-content:space-between;margin-bottom:6px;">
                                 <span style="font-size:13px;color:var(--text-secondary);">Memory Usage</span>
-                                <span style="font-size:13px;font-weight:600;color:var(--text-primary);" id="mem-val">â€”</span>
+                                <span style="font-size:13px;font-weight:600;color:var(--text-primary);" id="mem-val">â€?/span>
                             </div>
                             <div style="height:8px;background:var(--light-grey-bg);border-radius:4px;overflow:hidden;">
                                 <div id="mem-bar" style="height:100%;background:#10B981;border-radius:4px;width:0%;transition:width 0.5s;"></div>
@@ -163,7 +163,7 @@
                         <div>
                             <div style="display:flex;justify-content:space-between;margin-bottom:6px;">
                                 <span style="font-size:13px;color:var(--text-secondary);">Disk Usage</span>
-                                <span style="font-size:13px;font-weight:600;color:var(--text-primary);" id="disk-val">â€”</span>
+                                <span style="font-size:13px;font-weight:600;color:var(--text-primary);" id="disk-val">â€?/span>
                             </div>
                             <div style="height:8px;background:var(--light-grey-bg);border-radius:4px;overflow:hidden;">
                                 <div id="disk-bar" style="height:100%;background:#F59E0B;border-radius:4px;width:0%;transition:width 0.5s;"></div>
@@ -172,7 +172,7 @@
                         <div>
                             <div style="display:flex;justify-content:space-between;margin-bottom:6px;">
                                 <span style="font-size:13px;color:var(--text-secondary);">API Latency</span>
-                                <span style="font-size:13px;font-weight:600;color:var(--text-primary);" id="latency-val">â€”</span>
+                                <span style="font-size:13px;font-weight:600;color:var(--text-primary);" id="latency-val">â€?/span>
                             </div>
                             <div style="height:8px;background:var(--light-grey-bg);border-radius:4px;overflow:hidden;">
                                 <div id="latency-bar" style="height:100%;background:#7C3AED;border-radius:4px;width:0%;transition:width 0.5s;"></div>
@@ -184,6 +184,7 @@
         </div>
     </div>
 
-    <script src="/static/js/monitoring.js"></script>
+    <script src="/alicloud-main-agent/web/static/js/monitoring.js"></script>
 </body>
 </html>
+

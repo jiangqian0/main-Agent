@@ -28,7 +28,12 @@ app.include_router(config.router, prefix="/api/config", tags=["Config"])
 app.include_router(agents_api.router, prefix="/api/agents", tags=["Agents"])
 app.include_router(deploy.router, prefix="/api/system", tags=["System"])
 
-app.mount("/static", StaticFiles(directory="app/web"), name="static")
+import sys
+import os
+
+app.mount("/alicloud-main-agent/web/static", StaticFiles(directory="app/web"), name="static")
+
+app.root_path = os.getenv("ROOT_PATH", "/alicloud-main-agent/web")
 
 
 def read_html(filename: str) -> str:
