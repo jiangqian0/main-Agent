@@ -291,7 +291,8 @@ function streamHandleEvent(json) {
           startTime: Date.now()
         });
         // Store the terminal panel id in the tool result
-        if (tr) tr._tpId = tpId;
+        const existingTr = streamState.toolResults.find(r => r.tool_call_id === json.tool_call_id || r._id === toolId);
+        if (existingTr) existingTr._tpId = tpId;
       }
 
       // Only log if not a file write operation

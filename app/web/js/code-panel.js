@@ -481,8 +481,8 @@
     get state() { return _state; },
   };
 
-  // Listen for external file events (from chat-stream.js)
-  window.addEventListener('code:file_added', function (e) { addFile(e.detail); });
+  // Listen for external file events (from other components)
+  // Note: code:file_added is NOT re-dispatched to avoid infinite loop
   window.addEventListener('code:file_updated', function (e) { updateFile(e.detail.path, e.detail.content); });
   window.addEventListener('code:file_deleted', function (e) { deleteFile(e.detail.path); });
   window.addEventListener('code:session_clear', function () { clearAll(); });
