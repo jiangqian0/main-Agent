@@ -369,7 +369,7 @@ function newConversation() {
 function logout() {
   localStorage.removeItem('agent_session');
   sessionStorage.removeItem('agent_session');
-  window.location.href = '/login';
+  window.navigateTo('/login');
 }
 
 // ─── Panel Switching ─────────────────────────────────────────────────────────

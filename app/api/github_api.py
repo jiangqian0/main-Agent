@@ -45,7 +45,7 @@ async def sync_to_github(req: SyncRequest):
 
     results = []
 
-    async with httpx.AsyncClient(timeout=30.0) as client:
+    async with httpx.AsyncClient(timeout=30.0, verify=False) as client:
         for file_info in req.files:
             file_path = file_info["path"]
             content = file_info["content"]
@@ -123,7 +123,7 @@ async def list_branches(token: str, repo: str):
         "X-GitHub-Api-Version": "2022-11-28",
     }
 
-    async with httpx.AsyncClient(timeout=15.0) as client:
+    async with httpx.AsyncClient(timeout=15.0, verify=False) as client:
         resp = await client.get(
             f"https://api.github.com/repos/{owner}/{repo_name}/branches",
             headers=headers,
@@ -145,7 +145,7 @@ async def get_github_user(token: str):
         "Accept": "application/vnd.github+json",
         "X-GitHub-Api-Version": "2022-11-28",
     }
-    async with httpx.AsyncClient(timeout=15.0) as client:
+    async with httpx.AsyncClient(timeout=15.0, verify=False) as client:
         resp = await client.get("https://api.github.com/user", headers=headers)
 
     if resp.status_code != 200:

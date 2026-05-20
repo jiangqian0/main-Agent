@@ -13,7 +13,8 @@ BLOCKED_PATTERNS = [
 ALLOWED_COMMANDS = [
     'ls', 'dir', 'pwd', 'cd', 'mkdir', 'rmdir', 'cat', 'head', 'tail',
     'grep', 'find', 'wc', 'echo', 'type', 'tree', 'cp', 'mv',
-    'npm', 'pip', 'python', 'node', 'git', 'uvicorn', 'fastapi',
+    'npm', 'pip', 'python', 'python3', 'node', 'git', 'uvicorn', 'fastapi',
+    'curl', 'wget',
 ]
 
 

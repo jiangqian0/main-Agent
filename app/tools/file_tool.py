@@ -2,12 +2,6 @@ from pathlib import Path
 from typing import Dict, List, Optional, Any
 from .base import BaseTool, ToolResult
 
-try:
-    from pypdf import PdfReader
-    HAS_PYPDF = True
-except ImportError:
-    HAS_PYPDF = False
-
 
 WORKSPACE_DIR = Path(__file__).parent.parent.parent / "workspace"
 WORKSPACE_DIR.mkdir(parents=True, exist_ok=True)
@@ -15,7 +9,7 @@ WORKSPACE_DIR.mkdir(parents=True, exist_ok=True)
 
 class ReadTool(BaseTool):
     name = "Read"
-    description = "读取文件内容（支持文本文件和PDF）。用于查看文件时使用。参数：file_path (文件路径)"
+    description = "读取文件内容。用于查看文件时使用。参数：file_path (文件路径)"
     input_schema = {
         "type": "object",
         "properties": {
@@ -26,19 +20,6 @@ class ReadTool(BaseTool):
         },
         "required": ["file_path"]
     }
-
-    def _extract_pdf_text(self, path: Path) -> str:
-        """从 PDF 文件中提取文本内容"""
-        try:
-            reader = PdfReader(path)
-            text_parts = []
-            for i, page in enumerate(reader.pages):
-                page_text = page.extract_text()
-                if page_text:
-                    text_parts.append(f"--- Page {i+1} ---\n{page_text}")
-            return "\n\n".join(text_parts) if text_parts else "PDF中没有提取到文本内容（可能是扫描图片PDF）"
-        except Exception as e:
-            raise Exception(f"PDF解析失败: {str(e)}")
 
     async def execute(self, file_path: str, **kwargs) -> ToolResult:
         try:
@@ -58,25 +39,9 @@ class ReadTool(BaseTool):
             if not path.is_file():
                 return ToolResult(success=False, error=f"不是文件: {file_path}")
 
-            file_ext = path.suffix.lower()
-
-            # 处理 PDF 文件
-            if file_ext == '.pdf':
-                if not HAS_PYPDF:
-                    return ToolResult(success=False, error="PDF 解析库未安装，请运行: pip install pypdf")
-                content = self._extract_pdf_text(path)
-                # 如果内容太长，进行截断
-                max_chars = 80000
-                if len(content) > max_chars:
-                    content = content[:max_chars] + f"\n\n... (内容已截断，原文件共 {len(content)} 字符)"
-                return ToolResult(success=True, result=content)
-
-            # 处理其他文件
             with open(path, "r", encoding="utf-8") as f:
                 content = f.read()
             return ToolResult(success=True, result=content)
-        except UnicodeDecodeError:
-            return ToolResult(success=False, error=f"无法以文本方式读取此文件（可能是二进制文件）: {file_path}")
         except Exception as e:
             return ToolResult(success=False, error=str(e))
 

@@ -83,7 +83,7 @@
     if (!btn) return;
     btn.addEventListener('click', function () {
       if (window.location.pathname !== '/chat') {
-        window.location.href = '/chat';
+        window.navigateTo('/chat');
         return;
       }
       if (typeof window.newConversation === 'function') {
@@ -195,7 +195,7 @@
         localStorage.removeItem('agent_username');
         localStorage.removeItem('agent_session');
         sessionStorage.removeItem('agent_session');
-        window.location.href = '/login';
+        window.navigateTo('/login');
       });
     });
   }
@@ -237,7 +237,7 @@
     const session = localStorage.getItem('agent_session') || sessionStorage.getItem('agent_session');
     // Allow no redirect on login page
     if (!session && !window.location.pathname.includes('/login')) {
-      window.location.href = '/login';
+      window.navigateTo('/login');
     }
   }
 

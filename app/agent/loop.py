@@ -299,7 +299,7 @@ class AgentLoop:
         in_thinking = False
 
         try:
-            async with httpx.AsyncClient(timeout=120.0, follow_redirects=True, trust_env=False) as client:
+            async with httpx.AsyncClient(timeout=120.0, follow_redirects=True, trust_env=False, verify=False) as client:
                 async with client.stream("POST", url, headers=headers, json=data) as resp:
                     resp.raise_for_status()
                     async for line in resp.aiter_lines():
@@ -409,7 +409,7 @@ class AgentLoop:
             async with httpx.AsyncClient(
                 timeout=120.0, follow_redirects=True,
                 limits=httpx.Limits(max_keepalive_connections=5, max_connections=10),
-                trust_env=False
+                trust_env=False, verify=False
             ) as client:
                 async with client.stream("POST", url, headers=headers, json=data) as resp:
                     resp.raise_for_status()

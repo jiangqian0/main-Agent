@@ -56,7 +56,7 @@ async function handleLogin(event) {
         }
 
         // Redirect to dashboard
-        window.location.href = '/dashboard';
+        window.navigateTo('/dashboard');
 
     } catch (error) {
         showError('Login failed. Please try again.');
@@ -77,7 +77,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const session = localStorage.getItem('agent_session') || sessionStorage.getItem('agent_session');
     if (session) {
         // Already logged in, redirect to dashboard
-        window.location.href = '/dashboard';
+        window.navigateTo('/dashboard');
     }
 });
 

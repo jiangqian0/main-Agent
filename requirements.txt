@@ -1,8 +1,29 @@
-fastapi==0.104.1
-uvicorn==0.24.0
-python-dotenv==1.0.0
+
+fastapi==0.120.1
+uvicorn==0.35.0
+aiofiles==24.1.0
+pytest==8.4.2
+pytest-asyncio==1.2.0
+pytest-cov==6.3.0
+
 httpx==0.25.2
-pydantic==2.5.2
-python-multipart==0.0.6
-pypdf==4.0.1
-python-pptx==1.0.2
+
+# ---- Alibaba Cloud SDK (Bills module) ----
+alibabacloud-bssopenapi20171214>=1.0.0
+alibabacloud-credentials>=1.0.7
+alibabacloud-tea-openapi>=0.3.9
+alibabacloud-tea-util>=0.3.12
+alibabacloud-resourcecenter20221201>=1.0.0
+alibabacloud-tag20180828>=1.0.0
+alibabacloud-openapi-util>=0.2.0
+
+# ---- Bills backend dependencies ----
+python-dotenv>=1.0.0
+orjson>=3.9.10
+openpyxl>=3.1.0
+pymysql>=1.1.0
+python-multipart>=0.0.6
+
+# ---- Bill allocation system dependencies ----
+jinja2>=3.1.5
+pyyaml>=6.0.2

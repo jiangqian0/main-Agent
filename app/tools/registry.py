@@ -3,6 +3,7 @@ from .base import BaseTool, ToolResult
 from .file_tool import ReadTool, WriteTool, EditTool
 from .bash_tool import BashTool
 from .search_tool import GlobTool, GrepTool
+from .http_tool import HttpRequestTool
 
 
 class ToolRegistry:
@@ -22,7 +23,7 @@ class ToolRegistry:
         self._register_default_tools()
 
     def _register_default_tools(self):
-        tools = [ReadTool(), WriteTool(), EditTool(), BashTool(), GlobTool(), GrepTool()]
+        tools = [ReadTool(), WriteTool(), EditTool(), BashTool(), GlobTool(), GrepTool(), HttpRequestTool()]
         for tool in tools:
             self.register(tool)
 

@@ -1,0 +1,7 @@
+pipelineAliPythonAckCI([
+    pipelineRepository: "git@github.com:mfc-innersource/ETS-Alicloud-AIOps-MainAgent.git",
+    pipelinePropertiesFolder: "pipeline",
+    pipelineRepoBranches: [[name:"feature/AIOps-MainAgent-JQ"]],
+    commonPropertiesFileName: "pipeline/jenkins/common.properties",
+    propertiesFileName: "pipeline/jenkins/dev/ci.properties"
+])

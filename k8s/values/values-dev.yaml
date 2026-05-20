@@ -1,0 +1,138 @@
+replicaCount: 1
+
+appName: alicloud-main-agent
+version: v1
+appSystem: hk
+revisionHistoryLimit: "2"
+appVersion: 2.0.0-SNAPSHOT
+
+env: dev
+release: 2.0.0-SNAPSHOT
+tier: frontend
+country: hkg
+budev: ato
+bu: hk
+track: core
+costcenter: 3126
+
+containersSecurityContext: {
+  readOnlyRootFilesystem: false
+}
+
+additionalLables: {
+  aliyun.com/app-language: "python",
+  armsPilotAutoEnable: "on",
+  armsPilotCreateAppName: "alicloud-main-agent"
+}
+
+container:
+  env:
+    - name: APSARA_APM_AGENT_WORKSPACE_DIR
+      value: "/home/pyuser/app"
+    - name: PYTHONPATH
+      value: "/home/pyuser/app/dist-packages/"
+    - name: ENVIRONMENT
+      value: "dev"
+    - name: ROOT_PATH
+      value: "/alicloud-main-agent/web"
+    - name: ALI_PREFIX_STR
+      value: "/alicloud-main-agent/web"
+    - name: FRONTEND_API_BASE_URL
+      value: "/alicloud-main-agent/backend"
+    - name: API_BASE_URL
+      value: "https://ep-t4nib338c8a2c7ea619-vpc-ap-southeast-1.dashscope.aliyuncs.com/compatible-mode/v1"
+    - name: DASHSCOPE_API_KEY
+      value: "sk-4e5396dc72174ddf81dfe6614e6faebc"
+  ports:
+    - name: http
+      containerPort: 8080
+      protocol: TCP
+  livenessProbe:
+    failureThreshold: 3
+    tcpSocket: null
+    httpGet:
+      path: /api/v1/health/live
+      port: http
+      scheme: HTTP
+    initialDelaySeconds: 180
+    periodSeconds: 20
+    successThreshold: 1
+    timeoutSeconds: 10
+  readinessProbe:
+    failureThreshold: 3
+    tcpSocket: null
+    httpGet:
+      path: /api/v1/health/live
+      port: http
+      scheme: HTTP
+    initialDelaySeconds: 30
+    periodSeconds: 20
+    successThreshold: 1
+    timeoutSeconds: 10
+
+service:
+  type: ClusterIP
+  port: 8080
+  targetPort: 8080
+
+virtualService:
+  hosts:
+    - alicloud-main-agent.ns-hkg-alicloud-system
+  https:
+    - httpName: alicloud-main-agent
+      destinations:
+        - targetSubset: v1
+          weight: 100
+      timeout: 5m
+      retries:
+        attempts: 3
+        perTryTimeout: 10s
+        retryOn: 5xx,retriable-4xx,connect-failure,refused-stream,503,504
+
+destinationRule:
+  trafficPolicy:
+      connectionPool:
+        tcp:
+          maxConnections: 50
+        http:
+          http1MaxPendingRequests: 100
+          maxRequestsPerConnection: 10
+      outlierDetection:
+        consecutiveGatewayErrors: 3
+        consecutive5xxErrors: 3
+        interval: 1m
+        baseEjectionTime: 5m
+        maxEjectionPercent: 100
+      tls:
+        mode: ISTIO_MUTUAL
+      loadBalancer:
+        simple: LEAST_REQUEST
+  subsets:
+    - name: v1
+      labels:
+        version: v1
+
+ingress:
+  enabled: false
+
+resources:
+  limits:
+    cpu: "2"
+    memory: "2Gi"
+  requests:
+    cpu: "1"
+    memory: "1Gi"
+
+autoscaling:
+  enabled: false
+
+hpa:
+  enabled: false
+  maxReplicas: 2
+  cpu: 70
+  memory: 70
+
+serviceAccount:
+  annotations: {
+    pod-identity.alibabacloud.com/role-name: ""
+  }

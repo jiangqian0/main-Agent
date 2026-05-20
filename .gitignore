@@ -1,34 +1,44 @@
-# Backend sensitive files
-backend/app/data/config.json
-backend/app/data/conversations.json
-backend/.env
-
-# Python
+# Python-generated files
 __pycache__/
-*.pyc
-*.pyo
-*.pyd
-.Python
-*.so
-*.egg
-*.egg-info/
-dist/
+*.py[oc]
 build/
+dist/
+wheels/
+*.egg-info
 
-# Node (if in root)
-node_modules/
-package-lock.json
+# Virtual environments
+.venv
+<<<<<<< HEAD
+venv
+=======
+>>>>>>> origin/feature/gaoang-test
 
-# OS
-.DS_Store
-Thumbs.db
-
-# IDE
-.idea/
+# IDE and editor files
 .vscode/
+.idea/
 *.swp
 *.swo
+<<<<<<< HEAD
+.env
+=======
+>>>>>>> origin/feature/gaoang-test
 
-# Logs
-*.log
-logs/
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+package/
+<<<<<<< HEAD
+.cache_ggshield
+.gitignore
+=======
+.env
+.cache_ggshield
+
+#data
+data/
+>>>>>>> origin/feature/gaoang-test

@@ -1,5 +1,5 @@
 // ========================================
-// Engineer Agent - Main Application
+// Alicloud Agent - Main Application
 // ========================================
 
 const API_BASE_URL = '/api';
@@ -504,7 +504,7 @@ function appendMessage(role, content) {
             <i class="fa-solid fa-${role === 'user' ? 'user' : 'robot'}"></i>
         </div>
         <div class="message-content">
-            <div class="markdown-content">${renderMarkdown(content)}</div>
+            <div class="message-body"></div>
         </div>
     `;
     container.appendChild(div);
@@ -544,7 +544,7 @@ function renderThinkingUpdate(botMessageDiv, container, thinking, content, isStr
     }
 
     if (content) {
-        html += `<div class="markdown-content">${renderMarkdown(content)}</div>`;
+        html += `<div class="message-body">${renderMarkdown(content)}</div>`;
     }
 
     body.innerHTML = html;
@@ -577,13 +577,19 @@ function renderMarkdown(content) {
     // Escape HTML first
     result = escapeHtml(result);
 
-    // Code blocks
+    // Process code blocks (preserve newlines and indentation)
     result = result.replace(/```(\w+)?\n([\s\S]*?)```/g, (match, lang, code) => {
-        return `<div class="code-block"><pre>${code.trim()}</pre></div>`;
+        const language = lang ? lang.trim() : 'text';
+        return `<div class="code-block"><pre><code class="language-${language}">${code.trim()}</code></pre></div>`;
     });
 
     // Inline code
     result = result.replace(/`([^`]+)`/g, '<code>$1</code>');
+
+    // Headers
+    result = result.replace(/^### (.+)$/gm, '<h3>$1</h3>');
+    result = result.replace(/^## (.+)$/gm, '<h2>$1</h2>');
+    result = result.replace(/^# (.+)$/gm, '<h1>$1</h1>');
 
     // Bold
     result = result.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
@@ -593,20 +599,62 @@ function renderMarkdown(content) {
     result = result.replace(/\*([^*]+)\*/g, '<em>$1</em>');
     result = result.replace(/_([^_]+)_/g, '<em>$1</em>');
 
-    // Headers
-    result = result.replace(/^### (.+)$/gm, '<h3>$1</h3>');
-    result = result.replace(/^## (.+)$/gm, '<h2>$1</h2>');
-    result = result.replace(/^# (.+)$/gm, '<h1>$1</h1>');
+    // Links
+    result = result.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank">$1</a>');
 
-    // Lists
-    result = result.replace(/^- (.+)$/gm, '<li>$1</li>');
-    result = result.replace(/(<li>.*<\/li>\n?)+/g, '<ul>$&</ul>');
+    // Unordered lists
+    result = result.replace(/^\s*-\s+(.+)$/gm, '<li>$1</li>');
+    result = result.replace(/(<li>.*<\/li>\n?)+/g, '<ul class="markdown-list">$&</ul>');
 
-    // Line breaks
-    result = result.replace(/\n\n/g, '</p><p>');
+    // Ordered lists
+    result = result.replace(/^\s*\d+\.\s+(.+)$/gm, '<li class="ordered">$1</li>');
+    result = result.replace(/(<li class="ordered">.*<\/li>\n?)+/g, '<ol class="markdown-list">$&</ol>');
+
+    // Blockquotes
+    result = result.replace(/^> (.+)$/gm, '<blockquote>$1</blockquote>');
+
+    // Horizontal rule
+    result = result.replace(/^\s*---\s*$/gm, '<hr>');
+    result = result.replace(/^\s*\*\*\*\s*$/gm, '<hr>');
+    result = result.replace(/^\s*___\s*$/gm, '<hr>');
+
+    // Paragraphs (convert double line breaks to paragraphs)
+    result = result.replace(/\n\s*\n/g, '</p><p>');
+    
+    // Convert single line breaks to <br> within paragraphs
     result = result.replace(/\n/g, '<br>');
+    
+    // Wrap in paragraph tags and clean up
+    result = `<p>${result}</p>`;
+    
+    // Clean up extra paragraph tags
+    result = result.replace(/<\/p><p>(<h[1-6]|<ul|<ol|<blockquote|<hr)/g, '</p>$1');
+    result = result.replace(/(<\/h[1-6]|<\/ul>|<\/ol>|<\/blockquote>|<hr)[^>]*><\/p>/g, '$1');
+    
+    // Remove empty paragraphs
+    result = result.replace(/<p><\/p>/g, '');
+    
+    return `<div class="message-body">${result}</div>`;
+}
 
-    return `<p>${result}</p>`;
+// Function to re-render markdown content in existing elements
+function refreshMarkdownFormatting() {
+    // Find all elements with markdown-content class and re-render their content
+    document.querySelectorAll('.message-body').forEach(element => {
+        // Get the raw text content
+        const rawContent = element.getAttribute('data-raw-content') || element.textContent;
+        if (rawContent) {
+            // Re-render the markdown
+            const renderedContent = renderMarkdown(rawContent);
+            // Create a temporary element to extract the inner content
+            const tempDiv = document.createElement('div');
+            tempDiv.innerHTML = renderedContent;
+            
+            // Replace the content while preserving the markdown-content class
+            element.innerHTML = tempDiv.firstElementChild ? tempDiv.firstElementChild.innerHTML : tempDiv.innerHTML;
+            element.setAttribute('data-raw-content', rawContent);
+        }
+    });
 }
 
 // ========================================

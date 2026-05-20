@@ -8,7 +8,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
 function checkAuth() {
     const session = localStorage.getItem('agent_session') || sessionStorage.getItem('agent_session');
-    if (!session) window.location.href = '/login';
+    if (!session) window.navigateTo('/login');
 }
 
 function loadUserInfo() {
@@ -26,7 +26,7 @@ function setGreeting() {
 function logout() {
     localStorage.removeItem('agent_session');
     sessionStorage.removeItem('agent_session');
-    window.location.href = '/login';
+    window.navigateTo('/login');
 }
 
 async function renderDashboard() {
@@ -56,6 +56,9 @@ async function renderDashboard() {
         }
     } catch (_) {}
 
+    const chatTarget = typeof window.prefixPath === 'function' ? window.prefixPath('/chat') : '/chat';
+    const monitoringTarget = typeof window.prefixPath === 'function' ? window.prefixPath('/monitoring') : '/monitoring';
+
     container.innerHTML = `
         <div class="dashboard-content">
             <!-- Welcome -->
@@ -64,7 +67,7 @@ async function renderDashboard() {
                     <h1>Good ${greeting}, ${escHtml(name)}</h1>
                     <p>Here's an overview of your agent activity.</p>
                 </div>
-                <a href="/chat" class="dash-new-chat-btn">
+                <a href="${chatTarget}" class="dash-new-chat-btn">
                     <i class="fa-solid fa-plus"></i> New Chat
                 </a>
             </div>
@@ -107,7 +110,7 @@ async function renderDashboard() {
                         <div class="dash-stat-label">Built-in Tools</div>
                     </div>
                 </div>
-                <div class="dash-stat-card" onclick="window.location.href='/monitoring'" style="cursor:pointer;" title="View full monitoring">
+                <div class="dash-stat-card" onclick="window.navigateTo('/monitoring')" style="cursor:pointer;" title="View full monitoring">
                     <div class="dash-stat-icon icon-purple">
                         <i class="fa-solid fa-chart-line" style="color:#7C3AED;"></i>
                     </div>
@@ -116,7 +119,7 @@ async function renderDashboard() {
                         <div class="dash-stat-label">Sessions Today</div>
                     </div>
                 </div>
-                <div class="dash-stat-card" onclick="window.location.href='/monitoring'" style="cursor:pointer;" title="View full monitoring">
+                <div class="dash-stat-card" onclick="window.navigateTo('/monitoring')" style="cursor:pointer;" title="View full monitoring">
                     <div class="dash-stat-icon icon-teal">
                         <i class="fa-solid fa-bolt" style="color:#0D9488;"></i>
                     </div>
@@ -131,7 +134,7 @@ async function renderDashboard() {
             <div class="dash-section-card" style="margin-top:16px; animation-delay:0.05s;">
                 <div class="dash-section-title" style="display:flex;justify-content:space-between;align-items:center;">
                     <span><i class="fa-solid fa-chart-line" style="color:#7C3AED;"></i> Monitoring Snapshot</span>
-                    <a href="/monitoring" style="font-size:12px;color:var(--primary);text-decoration:none;font-weight:500;">View full monitoring →</a>
+                    <a href="${monitoringTarget}" style="font-size:12px;color:var(--primary);text-decoration:none;font-weight:500;">View full monitoring →</a>
                 </div>
                 <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-top:12px;">
                     <div class="monitoring-mini-card">
@@ -222,7 +225,8 @@ function animateCounters() {
 }
 
 function quickAction(href, icon, title, desc, color) {
-    return `<a href="${href}" class="dash-quick-action">
+    const target = typeof window.prefixPath === 'function' ? window.prefixPath(href) : href;
+    return `<a href="${target}" class="dash-quick-action">
         <div class="dash-quick-action-icon" style="background:linear-gradient(135deg,${color}18 0%,${color}08 100%);">
             <i class="fa-solid ${icon}" style="color:${color};"></i>
         </div>
@@ -247,11 +251,12 @@ function systemStatusItem(name, operational) {
 }
 
 function renderRecentConversations(convs) {
+    const chatTarget = typeof window.prefixPath === 'function' ? window.prefixPath('/chat') : '/chat';
     if (!convs || convs.length === 0) {
         return `<div class="dash-empty-state">
             <i class="fa-solid fa-comment-dots"></i>
             <p>No conversations yet</p>
-            <a href="/chat">Start chatting →</a>
+            <a href="${chatTarget}">Start chatting →</a>
         </div>`;
     }
     return convs.slice(0, 5).map((c, i) => {
@@ -260,7 +265,8 @@ function renderRecentConversations(convs) {
         const days = Math.floor(diff / 86400000);
         let timeStr = d.toLocaleTimeString('en-US', {hour:'2-digit', minute:'2-digit'});
         if (days === 0) {} else if (days === 1) timeStr = 'Yesterday'; else timeStr = `${days}d ago`;
-        return `<a href="/chat" class="dash-conversation-item" style="animation-delay:${i * 60}ms;">
+        const target = typeof window.prefixPath === 'function' ? window.prefixPath('/chat') : '/chat';
+        return `<a href="${target}" class="dash-conversation-item" style="animation-delay:${i * 60}ms;">
             <div class="dash-conv-icon">
                 <i class="fa-solid fa-comment-dots"></i>
             </div>

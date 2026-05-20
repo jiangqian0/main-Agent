@@ -10,7 +10,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
 function checkAuth() {
     const session = localStorage.getItem('agent_session') || sessionStorage.getItem('agent_session');
-    if (!session) window.location.href = '/login';
+    if (!session) window.navigateTo('/login');
     const username = localStorage.getItem('agent_username') || sessionStorage.getItem('agent_username');
     if (username) {
         const el = document.getElementById('display-username');
@@ -208,7 +208,7 @@ function togglePassword() {
 function logout() {
     localStorage.removeItem('agent_session');
     sessionStorage.removeItem('agent_session');
-    window.location.href = '/login';
+    window.navigateTo('/login');
 }
 
 function showToast(msg, type = 'success') {
