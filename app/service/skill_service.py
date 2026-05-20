@@ -32,10 +32,12 @@ class SkillService:
         self._custom_skills: List[Skill] = []
         self._all_skills: List[Skill] = []
 
+        print(f"[SkillService] _skills_dir = {self._skills_dir}, exists={self._skills_dir.exists()}")
         self._register_builtin_tools()
         self._load_builtin_skills_from_folders()
         self._load_custom_skills()
         self._rebuild_all()
+        print(f"[SkillService] init complete: {len(self._all_skills)} skills loaded, {len(self._builtin_skills)} builtin, {len(self._custom_skills)} custom")
 
     # ── Frontmatter parser ───────────────────────────────────────────────
 
@@ -58,9 +60,12 @@ class SkillService:
         """Scan app/skills/ and load every skill-folder/SKILL.md."""
         self._builtin_skills = []
         if not self._skills_dir.is_dir():
+            print(f"[SkillService] _skills_dir {self._skills_dir} is not a directory!")
             return
 
-        for skill_dir in sorted(self._skills_dir.iterdir()):
+        found_dirs = [d for d in sorted(self._skills_dir.iterdir()) if d.is_dir()]
+        print(f"[SkillService] Found {len(found_dirs)} subdirs in {self._skills_dir}: {[d.name for d in found_dirs]}")
+        for skill_dir in found_dirs:
             if not skill_dir.is_dir():
                 continue
             md_path = skill_dir / "SKILL.md"
@@ -69,8 +74,26 @@ class SkillService:
 
             fm, body = self._parse_skills_md(md_path)
 
+            skill_id = str(fm.get("name", skill_dir.name).lower().replace(" ", "-"))
+
+            trigger_keywords = fm.get("trigger_keywords", [])
+            if isinstance(trigger_keywords, str):
+                trigger_keywords = [trigger_keywords]
+
+            allowed_tools = fm.get("allowed_tools", ["Read", "Write", "Edit", "Bash", "Glob", "Grep"])
+            if isinstance(allowed_tools, str):
+                allowed_tools = [allowed_tools]
+
+            tags = fm.get("tags", [])
+            if isinstance(tags, str):
+                tags = [tags]
+
+            system_prompt_addition = fm.get("system_prompt_addition", "")
+            if isinstance(system_prompt_addition, list):
+                system_prompt_addition = "\n".join(system_prompt_addition)
+
             skill = Skill(
-                id=str(fm.get("name", skill_dir.name).lower().replace(" ", "-")),
+                id=skill_id,
                 name=str(fm.get("name", skill_dir.name)),
                 description=str(fm.get("description", "")),
                 enabled=bool(fm.get("enabled", True)),
@@ -78,21 +101,13 @@ class SkillService:
                 version=str(fm.get("version", "1.0.0")),
                 icon=str(fm.get("icon", "fa-gear")),
                 is_builtin=True,
-                trigger_keywords=["写代码", "写个", "帮我写", "生成代码", "code", "build", "debug", "implement", "create file"],
-                system_prompt_addition="""你是一个专业的代码开发助手。当用户需要编写代码时：
-- 优先使用 Write 工具创建完整文件，确保代码可运行
-- 使用 Read 工具查看现有代码上下文
-- 使用 Edit 工具进行精确修改，不要重写整个文件
-- 使用 Bash 工具执行命令（安装依赖、运行测试等）
-- 使用 Glob/Grep 工具搜索代码和文件
-- 生成代码时遵循最佳实践，包含必要的错误处理""",
-                allowed_tools=["Read", "Write", "Edit", "Bash", "Glob", "Grep"],
-                tags=["coding", "development", "files", "terminal"]
+                trigger_keywords=trigger_keywords,
+                system_prompt_addition=system_prompt_addition,
+                allowed_tools=allowed_tools,
+                tags=tags
             )
             self._builtin_skills.append(skill)
-
-        # Builtin skills are now loaded from individual app/skills/*/SKILL.md folders.
-        self._all_skills = list(self._builtin_skills)
+            print(f"[SkillService]   Loaded skill: {skill.name} (id={skill.id})")
 
     # ── 内置工具定义 ──────────────────────────────────────
 

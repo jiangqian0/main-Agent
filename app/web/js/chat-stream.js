@@ -29,7 +29,6 @@ let streamState = {
   codeBlockInfo: null,
   currentTool: null,
   toolResults: [],
-  processLogs: [],
   $streamingMsg: null,     // 助手消息 DOM 根元素
   $thinkingBlock: null,    // Thinking 块 DOM
   $codeBlock: null,        // 代码块 DOM
@@ -202,7 +201,6 @@ function streamReset() {
   streamState.codeBlockInfo = null;
   streamState.currentTool = null;
   streamState.toolResults = [];
-  streamState.processLogs = [];
   streamState.$streamingMsg = null;
   streamState.$thinkingBlock = null;
   streamState.$codeBlock = null;
@@ -210,7 +208,6 @@ function streamReset() {
   streamState.thinkingVisible = false;
   streamState.pendingText = '';
   streamState._switchedToTerminal = false;
-  streamState._lastAnalyzingState = null;
   if (streamState._analyzingTimer) {
     clearInterval(streamState._analyzingTimer);
     streamState._analyzingTimer = null;
@@ -221,19 +218,6 @@ function resetStreamState() {
   streamReset();
 }
 
-function streamAppendProcessLog(text) {
-  if (!text) return;
-  const line = String(text).trim();
-  if (!line) return;
-  streamState.processLogs.push(line);
-  if (streamState.processLogs.length > 20) {
-    streamState.processLogs.shift();
-  }
-  if (streamState.$streamingMsg) {
-    streamRenderThinking();
-  }
-}
-
 // ─── SSE Event Router ────────────────────────────────────────────────────────
 
 function streamHandleEvent(json) {
@@ -242,18 +226,10 @@ function streamHandleEvent(json) {
   switch (t) {
     case 'thinking':
       streamState.thinkingBuffer = json.content || '';
-      streamState.thinkingVisible = streamState.thinkingBuffer.length > 0 || streamState.processLogs.length > 0;
+      streamState.thinkingVisible = streamState.thinkingBuffer.length > 0;
       streamRenderThinking();
       execSetStep(2, 'running');
       execUpdatePhase('thinking');
-      break;
-
-    case 'thinking_step':
-      streamAppendProcessLog(`Step: ${json.content || 'working...'}`);
-      streamState.thinkingVisible = true;
-      streamRenderThinking();
-      execSetStep(2, 'running');
-      execAddLog('info', json.content || 'Processing step');
       break;
 
     case 'thinking_end':
@@ -271,9 +247,6 @@ function streamHandleEvent(json) {
       break;
 
     case 'tool_call':
-      streamAppendProcessLog(`Tool call: ${json.tool}${json.args ? ' ' + JSON.stringify(json.args) : ''}`);
-      streamState.thinkingVisible = true;
-      streamRenderThinking();
       execSetStep(3, 'running');
       execUpdatePhase('executing');
 
@@ -349,7 +322,6 @@ function streamHandleEvent(json) {
           error: json.error
         });
       }
-      streamAppendProcessLog(`Tool result: ${json.tool} ${json.success ? 'succeeded' : 'failed'}${json.error ? ' - ' + json.error : ''}`);
       execUpdateTools(streamState.toolResults);
 
       // Show result in Terminal panel
@@ -386,7 +358,7 @@ function streamHandleEvent(json) {
         });
       }
 
-      // Update the log entry with result status - only update if not already updated
+      // Update the log entry with result status
       if (!['Write', 'write_file', 'create_file'].includes(json.tool)) {
         const toolId = json.tool_call_id || json.tool;
         const logId = 'tool-' + toolId;
@@ -398,7 +370,6 @@ function streamHandleEvent(json) {
         if (!json.success) {
           logMsg += ' (failed)';
         }
-        // Only add log if it's not a duplicate
         execAddLog(json.success ? 'success' : 'error', logMsg, logId);
       }
       break;
@@ -481,28 +452,14 @@ function streamHandleEvent(json) {
       break;
 
     case 'bash_output':
-      streamAppendProcessLog(`Bash output: ${json.content || ''}`);
+    case 'bash_command':
       // Terminal panel integration
       if (window.TerminalPanel) {
         const cmdId = window.TerminalPanel.getActiveCmdId();
         if (cmdId) {
           window.TerminalPanel.appendOutput(cmdId, {
-            type: 'stdout',
-            content: json.content || '',
-          });
-        }
-      }
-      execAddLog('info', `Terminal: ${json.command || json.content}`);
-      break;
-
-    case 'bash_command':
-      streamAppendProcessLog(`Bash command: ${json.command || ''}`);
-      if (window.TerminalPanel) {
-        const cmdId = window.TerminalPanel.getActiveCmdId();
-        if (cmdId) {
-          window.TerminalPanel.appendOutput(cmdId, {
-            type: 'info',
-            content: json.command || '',
+            type: json.type === 'bash_output' ? 'stdout' : 'info',
+            content: json.content || json.command || '',
           });
         }
       }
@@ -521,7 +478,6 @@ function streamHandleEvent(json) {
       break;
 
     case 'terminal_output':
-      streamAppendProcessLog(`Terminal output: ${json.content || ''}`);
       if (window.TerminalPanel) {
         window.TerminalPanel.appendOutput(json.id || window.TerminalPanel.getActiveCmdId(), {
           type: json.stream === 'stderr' ? 'stderr' : 'stdout',
@@ -531,7 +487,6 @@ function streamHandleEvent(json) {
       break;
 
     case 'terminal_end':
-      streamAppendProcessLog(`Terminal ${json.exitCode === 0 ? 'completed' : 'failed'} (exit ${json.exitCode})`);
       if (window.TerminalPanel) {
         window.TerminalPanel.finishCommand(json.id || window.TerminalPanel.getActiveCmdId(), {
           exitCode: json.exitCode,
@@ -629,13 +584,9 @@ function streamRenderAnalyzingState() {
     // 更新右侧面板同步显示（如果右侧日志可见）
     const execLogsEl = msgBody.querySelector('.exec-scroll-wrapper');
     if (!execLogsEl) {
-      // 同步到右侧面板（仅在状态变更时写入一次）
+      // 同步到右侧面板
       if (window.execAddLog) {
-        const currentState = ANALYZING_STATES[stateIndex];
-        if (streamState._lastAnalyzingState !== currentState) {
-          window.execAddLog('info', currentState, 'analyzing-state');
-          streamState._lastAnalyzingState = currentState;
-        }
+        window.execAddLog('info', ANALYZING_STATES[stateIndex]);
       }
     }
   }, 500);
@@ -669,7 +620,7 @@ function streamFinalize() {
         msgContent.insertAdjacentHTML('beforeend', `
           <div class="message-actions">
             <button class="msg-action-btn" onclick="retryLastMessage()" title="重新生成回复">
-              <i class="fa-solid fa-rotate-right"></i> 重新回答
+              <i class="fa-solid fa-rotate-right"></i>
             </button>
             <button class="msg-action-btn" onclick="copyMessageContent(this)" title="复制内容">
               <i class="fa-solid fa-copy"></i>
@@ -708,7 +659,7 @@ function streamFinalize() {
       msgContent.insertAdjacentHTML('beforeend', `
         <div class="message-actions">
           <button class="msg-action-btn" onclick="retryLastMessage()" title="重新生成回复">
-            <i class="fa-solid fa-rotate-right"></i> 重新回答
+            <i class="fa-solid fa-rotate-right"></i>
           </button>
           <button class="msg-action-btn" onclick="copyMessageContent(this)" title="复制内容">
             <i class="fa-solid fa-copy"></i>
@@ -766,22 +717,13 @@ function streamRenderThinking() {
 
   const thinkingEl = msgBody.querySelector('.thinking-area');
 
-  if (!streamState.thinkingVisible && streamState.processLogs.length === 0) {
+  if (!streamState.thinkingVisible || !streamState.thinkingBuffer) {
     if (thinkingEl) thinkingEl.remove();
     return;
   }
 
   // Add streaming cursor animation indicator
   const cursorHtml = '<span class="thinking-cursor"></span>';
-  const processHtml = streamState.processLogs.length > 0
-    ? `<div class="thinking-area-process">
-         <div class="thinking-area-process-title">Process log</div>
-         <div class="thinking-area-process-content">
-           ${streamState.processLogs.map(line => `<div class="thinking-area-process-item">${escapeHtml(line)}</div>`).join('')}
-         </div>
-       </div>`
-    : '';
-
   const html = `<div class="thinking-area">
     <div class="thinking-area-header" onclick="streamToggleThinking(this.parentElement)">
       <div class="thinking-area-header-left">
@@ -797,7 +739,6 @@ function streamRenderThinking() {
     </div>
     <div class="thinking-area-body ${streamState.thinkingExpanded ? '' : 'hidden'}">
       <div class="thinking-area-content">${escapeHtml(streamState.thinkingBuffer)}${cursorHtml}</div>
-      ${processHtml}
     </div>
   </div>`;
 
@@ -820,37 +761,33 @@ function streamToggleThinking(el) {
 // ─── Text Rendering ───────────────────────────────────────────────────────────
 
 function streamRenderText() {
-  if (!streamState.$streamingMsg) return;
+  const container = document.getElementById('chat-container');
+  if (!container) return;
+
+  if (!streamState.$streamingMsg) {
+    streamState.$streamingMsg = streamCreateAssistantMessage();
+  }
 
   const msgBody = streamState.$streamingMsg.querySelector('.message-body');
   if (!msgBody) return;
 
-  // Clear analyzing state if present
+  // 清除"分析中"状态 + 定时器
   msgBody.querySelectorAll('.analyzing-state').forEach(el => el.remove());
   if (streamState._analyzingTimer) {
     clearInterval(streamState._analyzingTimer);
     streamState._analyzingTimer = null;
   }
 
-  // Remove existing response area if it exists
-  const existingResp = msgBody.querySelector('.response-area');
-  if (existingResp) {
-    existingResp.remove();
+  // 渲染回复区域（永久内容）
+  let responseEl = msgBody.querySelector('.response-area');
+  if (!responseEl) {
+    responseEl = document.createElement('div');
+    responseEl.className = 'response-area';
+    msgBody.appendChild(responseEl);
   }
+  responseEl.innerHTML = renderMarkdown(streamState.textBuffer) + '<span class="cursor-blink"></span>';
 
-  // Create new response area with rendered markdown
-  const responseArea = document.createElement('div');
-  responseArea.className = 'response-area';
-  
-  // Use the updated renderMarkdown function to get formatted content
-  const renderedContent = renderMarkdown(streamState.textBuffer);
-  responseArea.innerHTML = renderedContent;
-
-  msgBody.appendChild(responseArea);
-
-  // Scroll to bottom
-  const container = document.getElementById('chat-container');
-  if (container) container.scrollTop = container.scrollHeight;
+  container.scrollTop = container.scrollHeight;
 }
 
 // ─── Message DOM ──────────────────────────────────────────────────────────────
@@ -892,7 +829,7 @@ function appendAssistantMessage(content, persist = true) {
       <div class="message-body"><div class="response-area"><div class="markdown-content">${renderMarkdown(content)}</div></div></div>
       <div class="message-actions">
         <button class="msg-action-btn" onclick="retryLastMessage()" title="重新生成回复">
-          <i class="fa-solid fa-rotate-right"></i> 重新回答
+          <i class="fa-solid fa-rotate-right"></i>
         </button>
         <button class="msg-action-btn" onclick="copyMessageContent(this)" title="复制内容">
           <i class="fa-solid fa-copy"></i>
@@ -1254,3 +1191,14 @@ if (typeof window.showToast === 'undefined') {
     setTimeout(() => t.remove(), 3000);
   };
 }
+
+window.renderMarkdown      = renderMarkdown;
+window.escapeHtml          = escapeHtml;
+window.ensureConversation  = ensureConversation;
+window.persistUserMessage  = persistUserMessage;
+window.persistAssistantMessage = persistAssistantMessage;
+window.getCurrentConversation = getCurrentConversation;
+window.currentConversationId = null;
+window.selectedSkillId     = '';
+window.selectedKbIds       = new Set();
+window.toggleCodeBlock    = toggleCodeBlock;

@@ -257,32 +257,70 @@ function initDropdownCloseHandlers() {
 // ─── Skill Dropdown ──────────────────────────────────────────────────────────
 function loadSkills() {
   fetch('/api/skills')
-    .then(r => r.ok ? r.json() : [])
+    .then(r => {
+      if (!r.ok) throw new Error('HTTP ' + r.status);
+      return r.json();
+    })
     .then(data => {
-      skills = Array.isArray(data) ? data : (data.skills || []);
+      console.log('[Skills API raw response]:', JSON.stringify(data));
+      // Normalize: API returns a flat array directly
+      if (Array.isArray(data)) {
+        skills = data;
+      } else if (data && Array.isArray(data.skills)) {
+        skills = data.skills;
+      } else {
+        skills = [];
+      }
+      console.log('[Skills loaded]:', skills.length, 'items');
+      console.log('[Skills enabled values]:', skills.map(s => ({ id: s.id, name: s.name, enabled: s.enabled, type: typeof s.enabled })));
       renderSkillDropdown();
-    }).catch(() => { skills = []; renderSkillDropdown(); });
+    })
+    .catch(err => {
+      console.error('loadSkills failed:', err);
+      skills = [];
+      renderSkillDropdown();
+    });
 }
 
 function renderSkillDropdown() {
   const list = document.getElementById('skill-dropdown-list');
-  if (!list) return;
-  const enabled = skills.filter(s => s.enabled);
-  list.innerHTML = enabled.map(s => `
-    <div class="dropdown-skill-item ${window.selectedSkillId === s.id ? 'active' : ''}" onclick="selectSkill('${s.id}', '${s.name.replace(/'/g, "\\'")}')">
+  if (!list) {
+    console.warn('[renderSkillDropdown] skill-dropdown-list not found in DOM');
+    return;
+  }
+  // Show ALL skills — let the user decide what's visible; no filtering by enabled
+  // Backend already respects enabled flag when matching skills to user messages
+  console.log('[renderSkillDropdown] rendering', skills.length, 'skills');
+  if (skills.length === 0) {
+    list.innerHTML = '<div class="dropdown-empty" style="padding:12px 16px;text-align:center;font-size:12px;color:#9ca3af;">No skills available</div>';
+    return;
+  }
+  list.innerHTML = skills.map(s => `
+    <div class="dropdown-skill-item" onclick="selectSkill('${s.id}', '${(s.name || '').replace(/'/g, "\\'")}')">
       <i class="${s.icon || 'fa-solid fa-puzzle-piece'}"></i>
       <div class="skill-text">
-        <span class="skill-name">${escapeHtml(s.name)}</span>
+        <span class="skill-name">${escapeHtml(s.name || 'Unnamed')}</span>
         <span class="skill-desc">${escapeHtml(s.description || '')}</span>
       </div>
-      ${window.selectedSkillId === s.id ? '<i class="fa-solid fa-check skill-check"></i>' : ''}
+      ${window.selectedSkillId === s.id ? '<i class="fa-solid fa-check" style="color:var(--primary);font-size:12px;"></i>' : ''}
     </div>`).join('');
+
+  // Update badge count on toolbar button
+  const badge = document.getElementById('skill-count-badge');
+  if (badge) {
+    badge.textContent = skills.length;
+    badge.style.display = skills.length > 0 ? 'inline-block' : 'none';
+  }
 }
 
 function toggleSkillDropdown() {
   skillDropdownOpen = !skillDropdownOpen;
   const dd = document.getElementById('skill-dropdown');
+  const container = document.getElementById('skill-dropdown-container');
+  console.log('[toggleSkillDropdown] open:', skillDropdownOpen, 'dropdown:', dd, 'container:', container);
   if (dd) dd.classList.toggle('show', skillDropdownOpen);
+  // If opening, force re-render to make sure content is fresh
+  if (skillDropdownOpen) renderSkillDropdown();
 }
 
 function closeSkillDropdown() {

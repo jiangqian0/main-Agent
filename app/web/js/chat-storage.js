@@ -316,16 +316,44 @@ function ensureConversation(msg) {
 function clearChat(clearId = true) {
   const container = document.getElementById('chat-container');
   if (!container) return;
-  container.innerHTML = `<div class="welcome-message" id="welcome-message">
+
+  if (clearId) {
+    window.currentConversationId = null;
+  }
+
+  // Only show welcome message when there is no active conversation
+  const hasActiveConv = !clearId && window.currentConversationId;
+  if (hasActiveConv) {
+    // Reload the conversation messages
+    const conv = conversations.find(c => c.id === window.currentConversationId);
+    if (conv) {
+      container.innerHTML = '';
+      const msgs = conv.messages || [];
+      for (const msg of msgs) {
+        if (msg.role === 'user') {
+          appendUserMessage(msg.content, false);
+        } else if (msg.role === 'assistant') {
+          appendAssistantMessage(msg.content, false);
+        }
+      }
+      container.scrollTop = container.scrollHeight;
+    } else {
+      container.innerHTML = _welcomeHtml();
+    }
+  } else {
+    container.innerHTML = _welcomeHtml();
+    renderHistory(historySearchQuery);
+  }
+
+  window.resetExecutionState();
+}
+
+function _welcomeHtml() {
+  return `<div class="welcome-message" id="welcome-message">
     <div class="welcome-icon"><i class="fa-solid fa-robot"></i></div>
     <h2>AliCloud Agent Hub</h2>
     <p>Start a conversation to get help with your tasks</p>
   </div>`;
-  if (clearId) {
-    window.currentConversationId = null;
-    renderHistory(historySearchQuery);
-  }
-  window.resetExecutionState();
 }
 
 // ─── Utils ────────────────────────────────────────────────────────────────────
