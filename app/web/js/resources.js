@@ -5,7 +5,6 @@ let editingId = null;
 
 document.addEventListener('DOMContentLoaded', () => {
     checkAuth();
-    initSidebarResize();
     loadResources();
 });
 
@@ -18,27 +17,6 @@ function logout() {
     localStorage.removeItem('agent_session');
     sessionStorage.removeItem('agent_session');
     window.location.href = '/login';
-}
-
-function initSidebarResize() {
-    const sidebar = document.getElementById('sidebar');
-    const handle = document.getElementById('sidebar-resize-handle');
-    let dragging = false;
-    handle && handle.addEventListener('mousedown', e => {
-        dragging = true;
-        document.body.style.cursor = 'col-resize';
-        document.body.style.userSelect = 'none';
-        e.preventDefault();
-    });
-    document.addEventListener('mousemove', e => {
-        if (!dragging) return;
-        sidebar.style.width = Math.min(400, Math.max(200, e.clientX)) + 'px';
-    });
-    document.addEventListener('mouseup', () => {
-        dragging = false;
-        document.body.style.cursor = '';
-        document.body.style.userSelect = '';
-    });
 }
 
 async function loadResources() {

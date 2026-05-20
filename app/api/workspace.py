@@ -74,10 +74,10 @@ async def delete_file(file_path: str):
 
 
 @router.post("/upload")
-async def upload_file(file: UploadFile = File(...)):
+async def upload_file(file: UploadFile = File(...), path: str = None):
     try:
         service = WorkspaceService()
-        service.save_uploaded_file(file)
-        return {"message": "File uploaded successfully"}
+        result = service.save_uploaded_file(file, path)
+        return {"message": "File uploaded successfully", "path": result}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))

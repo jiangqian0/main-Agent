@@ -18,7 +18,7 @@ class AgentLoop:
         model: str,
         system_prompt: str = "",
         allowed_tools: Optional[List[str]] = None,
-        max_iterations: int = 15,
+        max_iterations: int = 999999,
         base_url: Optional[str] = None,
         skill_system_prompt: str = "",
         kb_context: str = "",

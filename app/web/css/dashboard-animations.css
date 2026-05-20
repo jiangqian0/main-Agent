@@ -208,14 +208,18 @@
     box-shadow: 0 4px 12px rgba(245, 158, 11, 0.15);
 }
 
-.dash-stat-value {
-    font-size: 30px;
-    font-weight: 700;
-    color: var(--text-primary);
-    line-height: 1.1;
-    animation: countUp 0.6s ease both;
-    animation-delay: inherit;
+.dash-stat-icon.icon-purple {
+    background: linear-gradient(135deg, rgba(124, 58, 237, 0.12) 0%, rgba(124, 58, 237, 0.06) 100%);
+    box-shadow: 0 4px 12px rgba(124, 58, 237, 0.15);
 }
+
+.dash-stat-icon.icon-teal {
+    background: linear-gradient(135deg, rgba(13, 148, 136, 0.12) 0%, rgba(13, 148, 136, 0.06) 100%);
+    box-shadow: 0 4px 12px rgba(13, 148, 136, 0.15);
+}
+
+.dash-stat-card:nth-child(5) { animation-delay: 320ms; --card-accent: #7C3AED; }
+.dash-stat-card:nth-child(6) { animation-delay: 400ms; --card-accent: #0D9488; }
 
 .dash-stat-label {
     font-size: 13px;

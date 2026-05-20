@@ -31,7 +31,6 @@ const KNOWLEDGE_BASES = [
 // ========================================
 
 document.addEventListener('DOMContentLoaded', () => {
-    initSidebarResize();
     initMenuNavigation();
     loadSettings();
     loadSkills();

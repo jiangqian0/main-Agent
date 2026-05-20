@@ -1,0 +1,62 @@
+{
+  "agents": [
+    {
+      "id": "builtin-code-agent",
+      "name": "Code Development Agent",
+      "description": "Specialized in writing, reviewing, and debugging code across multiple languages.",
+      "type": "assistant",
+      "skills": [
+        "builtin-code-dev"
+      ],
+      "system_prompt": "You are a code development specialist focused on clean, maintainable code.",
+      "model": "qwen3-max",
+      "enabled": false,
+      "is_builtin": true,
+      "created_at": "2026-05-19T12:53:22.019091",
+      "updated_at": "2026-05-19T12:54:56.168924"
+    },
+    {
+      "id": "builtin-devops-agent",
+      "name": "DevOps Agent",
+      "description": "Handles deployment, CI/CD pipelines, Docker, and server management.",
+      "type": "assistant",
+      "skills": [
+        "builtin-terminal-master"
+      ],
+      "system_prompt": "You are a DevOps and infrastructure specialist.",
+      "model": "qwen3-max",
+      "enabled": false,
+      "is_builtin": true,
+      "created_at": "2026-05-19T12:53:22.019091",
+      "updated_at": "2026-05-19T12:55:02.404845"
+    },
+    {
+      "id": "builtin-security-agent",
+      "name": "Security Agent",
+      "description": "Monitors code for security vulnerabilities and compliance issues.",
+      "type": "security",
+      "skills": [
+        "builtin-code-review"
+      ],
+      "system_prompt": "You are a security expert focused on vulnerability detection.",
+      "model": "qwen3-max",
+      "enabled": false,
+      "is_builtin": true,
+      "created_at": "2026-05-19T12:53:22.019091"
+    },
+    {
+      "id": "builtin-quickfix-agent",
+      "name": "Quick Fix Agent",
+      "description": "Fast bug diagnosis and targeted fixes with minimal changes.",
+      "type": "assistant",
+      "skills": [
+        "builtin-quick-fix"
+      ],
+      "system_prompt": "You are a quick-fix specialist focused on minimal, targeted changes.",
+      "model": "qwen3-max",
+      "enabled": false,
+      "is_builtin": true,
+      "created_at": "2026-05-19T12:53:22.019091"
+    }
+  ]
+}

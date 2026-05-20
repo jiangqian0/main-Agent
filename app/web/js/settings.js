@@ -3,7 +3,6 @@ const API_BASE = '/api';
 
 document.addEventListener('DOMContentLoaded', () => {
     checkAuth();
-    initSidebarResize();
     loadSettings();
     loadStats();
     loadAvailableModels();
@@ -21,27 +20,6 @@ function checkAuth() {
     }
 }
 
-function initSidebarResize() {
-    const sidebar = document.getElementById('sidebar');
-    const handle = document.getElementById('sidebar-resize-handle');
-    let isDragging = false;
-    handle && handle.addEventListener('mousedown', e => {
-        isDragging = true;
-        document.body.style.cursor = 'col-resize';
-        document.body.style.userSelect = 'none';
-        e.preventDefault();
-    });
-    document.addEventListener('mousemove', e => {
-        if (!isDragging) return;
-        sidebar.style.width = Math.min(400, Math.max(200, e.clientX)) + 'px';
-    });
-    document.addEventListener('mouseup', () => {
-        isDragging = false;
-        document.body.style.cursor = '';
-        document.body.style.userSelect = '';
-    });
-}
-
 async function loadSettings() {
     try {
         const resp = await fetch(`${API_BASE}/config`);
@@ -52,8 +30,8 @@ async function loadSettings() {
             document.getElementById('sidebar-width').value = cfg.sidebar_width || '260';
             // Username
             const username = localStorage.getItem('agent_username') || cfg.username || 'User';
-            document.getElementById('display-username').textContent = username;
-            document.getElementById('username').value = username;
+            const usernameInput = document.getElementById('username');
+            if (usernameInput) usernameInput.value = username;
             // API Key (from server-side config, then localStorage)
             const savedKey = localStorage.getItem('agent_api_key');
             if (cfg.api_key && cfg.api_key !== '***') {
@@ -63,6 +41,11 @@ async function loadSettings() {
             }
         }
     } catch {}
+    // GitHub settings
+    document.getElementById('gh-token').value = localStorage.getItem('gh_token') || '';
+    document.getElementById('gh-repo').value = localStorage.getItem('gh_repo') || '';
+    document.getElementById('gh-branch').value = localStorage.getItem('gh_branch') || 'main';
+    document.getElementById('gh-auto-sync').checked = localStorage.getItem('gh_auto_sync') === 'true';
 }
 
 async function loadAvailableModels() {
@@ -115,19 +98,42 @@ async function saveSettings() {
     localStorage.setItem('agent_sidebar_width', sidebarWidth);
     localStorage.setItem('agent_api_url', apiUrl);
     if (username) localStorage.setItem('agent_username', username);
-    // Save API key to localStorage
     if (apiKey) localStorage.setItem('agent_api_key', apiKey);
+
+    // Save GitHub settings to localStorage
+    const ghToken = document.getElementById('gh-token')?.value?.trim();
+    const ghRepo = document.getElementById('gh-repo')?.value?.trim();
+    const ghBranch = document.getElementById('gh-branch')?.value?.trim() || 'main';
+    const ghAutoSync = document.getElementById('gh-auto-sync')?.checked;
+    localStorage.setItem('gh_token', ghToken);
+    localStorage.setItem('gh_repo', ghRepo);
+    localStorage.setItem('gh_branch', ghBranch);
+    localStorage.setItem('gh_auto_sync', ghAutoSync ? 'true' : 'false');
 
     // Save API key to server-side config
     if (apiKey) {
         localStorage.setItem('agent_api_key', apiKey);
+        let apiKeySaved = false;
         try {
-            await fetch(`${API_BASE}/config/api-key`, {
+            const res = await fetch(`${API_BASE}/config/api-key`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ api_key: apiKey }),
             });
-        } catch {}
+            if (res.ok) {
+                apiKeySaved = true;
+            } else {
+                const err = await res.json().catch(() => ({}));
+                showToast('API key (local) saved — server error: ' + (err.detail || res.status), 'error');
+            }
+        } catch (err) {
+            showToast('API key (local) saved — server unreachable', 'error');
+        }
+        if (apiKeySaved) {
+            showToast('API key saved successfully');
+        }
+    } else {
+        showToast('Settings saved (API key unchanged)', 'success');
     }
 
     try {
@@ -146,7 +152,6 @@ async function saveSettings() {
     // Apply theme immediately
     applyTheme(theme);
     applySidebarWidth(sidebarWidth);
-    document.getElementById('display-username').textContent = username || 'User';
 
     showToast('Settings saved');
 }
@@ -213,4 +218,32 @@ function showToast(msg, type = 'success') {
     t.innerHTML = `<i class="fa-solid fa-${type === 'success' ? 'check' : 'xmark'}"></i>${msg}`;
     container.appendChild(t);
     setTimeout(() => t.remove(), 3000);
+}
+
+async function testGhConnection() {
+    const token = document.getElementById('gh-token')?.value?.trim();
+    const repo = document.getElementById('gh-repo')?.value?.trim();
+    const statusEl = document.getElementById('gh-conn-status');
+    if (!token || !repo) {
+        statusEl.innerHTML = '<span style="color:#ef4444">Please fill in token and repository</span>';
+        return;
+    }
+    statusEl.innerHTML = '<span style="color:#6b7280"><i class="fa-solid fa-spinner fa-spin"></i> Testing...</span>';
+    try {
+        const resp = await fetch(`https://api.github.com/repos/${repo}`, {
+            headers: { Authorization: `Bearer ${token}`, Accept: 'application/vnd.github.v3+json' }
+        });
+        if (resp.ok) {
+            const data = await resp.json();
+            statusEl.innerHTML = `<span style="color:#10b981"><i class="fa-solid fa-check-circle"></i> Connected — ${data.full_name}</span>`;
+        } else if (resp.status === 401) {
+            statusEl.innerHTML = '<span style="color:#ef4444"><i class="fa-solid fa-xmark-circle"></i> Invalid token</span>';
+        } else if (resp.status === 404) {
+            statusEl.innerHTML = '<span style="color:#f59e0b"><i class="fa-solid fa-xmark-circle"></i> Repository not found</span>';
+        } else {
+            statusEl.innerHTML = `<span style="color:#ef4444"><i class="fa-solid fa-xmark-circle"></i> Error ${resp.status}</span>`;
+        }
+    } catch {
+        statusEl.innerHTML = '<span style="color:#ef4444"><i class="fa-solid fa-xmark-circle"></i> Network error</span>';
+    }
 }

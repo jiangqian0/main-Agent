@@ -1,1 +1,12 @@
-/* Dashboard Responsive overrides */
+/* Dashboard Page Layout */
+
+/*
+ * The .page-content div has inline style: flex:1; overflow-y:auto
+ * (same pattern used by monitoring, deploy, docs, agents, resources pages).
+ * The only extra rule needed here: give .sidebar an explicit 100vh height
+ * so .main-content gets proper cross-axis stretch from the app-container.
+ */
+
+.page-dashboard > .app-container > .sidebar {
+    height: 100vh;
+}

@@ -1,0 +1,15 @@
+{
+  "id": "builtin-security",
+  "name": "Security & Hardening",
+  "description": "OWASP Top 10 prevention, auth patterns, secrets management, dependency auditing, and three-tier boundary validation.",
+  "category": "Security",
+  "version": "1.0.0",
+  "icon": "fa-shield-halved",
+  "is_builtin": true,
+  "enabled": false,
+  "trigger_keywords": [
+    "security", "安全", "auth", "权限", "密码", "加密",
+    "owasp", "vulnerability", "xss", "sql注入", "注入攻击"
+  ],
+  "tags": ["security", "owasp", "auth", "hardening"]
+}

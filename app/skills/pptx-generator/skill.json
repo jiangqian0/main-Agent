@@ -1,0 +1,15 @@
+{
+  "name": "pptx-generator",
+  "description": "将 HTML 网页 PPT 转换为传统的 PowerPoint 格式（.pptx）。当用户需要下载可以用 PowerPoint、WPS 或 Google Slides 打开的 PPT 文件时使用。",
+  "trigger_keywords": [
+    "下载pptx",
+    "下载PPT",
+    "转pptx",
+    "转PPTX",
+    "导出pptx",
+    "导出PPT",
+    "下载幻灯片",
+    "convert to pptx",
+    "export to powerpoint"
+  ]
+}

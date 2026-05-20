@@ -4,57 +4,60 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Resources - Agent Hub</title>
-    <link rel="stylesheet" href="/alicloud-main-agent/web/static/css/style.css">
+    <link rel="stylesheet" href="/static/css/style.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 </head>
 <body>
     <div class="app-container">
         <div class="sidebar" id="sidebar">
-            <div class="sidebar-menu">
-                <div class="sidebar-logo">
-                    <div class="sidebar-logo-header">
-                        <div class="sidebar-logo-icon"><i class="fa-solid fa-robot"></i></div>
-                        <div class="sidebar-logo-text"><h2>Agent Hub</h2><p>Enterprise Edition</p></div>
-                    </div>
-                    <button class="btn-new-chat" onclick="window.location.href='/chat'">
-                        <i class="fa-solid fa-plus"></i><span>New Conversation</span>
-                    </button>
+            <div class="sidebar-resize-handle" id="sidebar-resize-handle"></div>
+
+            <div class="sidebar-logo">
+                <div class="sidebar-logo-header">
+                    <div class="sidebar-logo-icon"><i class="fa-solid fa-robot"></i></div>
+                    <div class="sidebar-logo-text"><h2>Agent Hub</h2><p>Enterprise Edition</p></div>
                 </div>
+                <button class="btn-new-chat" onclick="window.location.href='/chat'">
+                    <i class="fa-solid fa-plus"></i><span>New Chat</span>
+                </button>
+            </div>
+
+            <div class="sidebar-menu">
                 <div class="menu-section">
                     <div class="menu-section-header"><div class="menu-section-dot"></div><span class="menu-section-title">Core Functions</span></div>
                     <a href="/dashboard" class="menu-item"><i class="fa-solid fa-gauge-high"></i><span>Dashboard</span></a>
-                    <a href="/chat" class="menu-item"><i class="fa-solid fa-code"></i><span>Code Development</span></a>
-                    <a href="/chat?type=fc" class="menu-item"><i class="fa-solid fa-bolt"></i><span>Function Compute</span></a>
-                    <a href="/resources" class="menu-item active"><i class="fa-solid fa-server"></i><span>Resource Management</span></a>
-                    <a href="/deploy" class="menu-item"><i class="fa-solid fa-rocket"></i><span>Deployment & Ops</span></a>
+                    <a href="/chat" class="menu-item"><i class="fa-solid fa-code"></i><span>AI Chat</span></a>
+                    <a href="/resources" class="menu-item"><i class="fa-solid fa-server"></i><span>Resource Management</span></a>
+                    <a href="/deploy" class="menu-item"><i class="fa-solid fa-rocket"></i><span>Deployment &amp; Ops</span></a>
                 </div>
                 <div class="menu-section">
                     <div class="menu-section-header"><div class="menu-section-dot"></div><span class="menu-section-title">Management Center</span></div>
-                    <a href="/skills" class="menu-item"><i class="fa-solid fa-puzzle-piece"></i><span>Skill Center</span></a>
-                    <a href="/knowledge" class="menu-item"><i class="fa-solid fa-book-open"></i><span>Knowledge Base</span></a>
+                    <a href="/skills" class="menu-item"><i class="fa-solid fa-puzzle-piece"></i><span>Plugin Center</span></a>
+                    <a href="/knowledge" class="menu-item"><i class="fa-solid fa-book-open"></i><span>Knowledge &amp; Docs</span></a>
                     <a href="/agents" class="menu-item"><i class="fa-solid fa-robot"></i><span>Agent Center</span></a>
                 </div>
                 <div class="menu-section">
                     <div class="menu-section-header"><div class="menu-section-dot"></div><span class="menu-section-title">Auxiliary Tools</span></div>
-                    <a href="/docs" class="menu-item"><i class="fa-solid fa-file-lines"></i><span>Documents & Reports</span></a>
-                    <a href="/monitoring" class="menu-item"><i class="fa-solid fa-chart-line"></i><span>Monitoring Panel</span></a>
+                    <a href="/monitoring" class="menu-item"><i class="fa-solid fa-chart-line"></i><span>Monitoring</span></a>
                     <a href="/settings" class="menu-item"><i class="fa-solid fa-gear"></i><span>Settings</span></a>
                 </div>
             </div>
+
             <div class="sidebar-user">
                 <div class="user-info">
                     <div class="user-avatar"><i class="fa-solid fa-user"></i></div>
-                    <div class="user-details"><p class="user-name" id="sidebar-username">User</p><div class="user-status"><div class="user-status-dot"></div><span class="user-status-text">Online</span></div></div>
+                    <div class="user-details">
+                        <p class="user-name" id="sidebar-username">User</p>
+                        <div class="user-status"><div class="user-status-dot"></div><span class="user-status-text">Online</span></div>
+                    </div>
                 </div>
                 <div class="sidebar-user-actions">
                     <a href="/settings" title="Settings" class="sidebar-action-btn"><i class="fa-solid fa-gear"></i></a>
                     <a href="/settings" title="Logout" onclick="logout()" class="sidebar-action-btn logout"><i class="fa-solid fa-right-from-bracket"></i></a>
                 </div>
             </div>
-            <div class="sidebar-resize-handle" id="sidebar-resize-handle"></div>
         </div>
-
         <div class="main-content">
             <header class="header">
                 <div class="header-left"><div class="header-logo"><span>AI</span></div><span class="header-title">Resource Management</span></div>
@@ -133,7 +136,8 @@
         </div>
     </div>
 
-    <script src="/alicloud-main-agent/web/static/js/resources.js"></script>
+    <script src="/static/js/shared-sidebar.js"></script>
+    <script src="/static/js/resources.js"></script>
 </body>
 </html>
 

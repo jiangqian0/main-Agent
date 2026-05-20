@@ -18,6 +18,8 @@ async def chat_stream(request: ChatRequest):
             enable_tools=request.enable_tools,
             model=request.model,
             knowledge_bases=request.knowledge_bases,
+            mode=request.mode or "agent",
+            plan_confirmed=request.plan_confirmed or False,
         )
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
@@ -35,6 +37,8 @@ async def chat(request: ChatRequest):
             enable_tools=request.enable_tools,
             model=request.model,
             knowledge_bases=request.knowledge_bases,
+            mode=request.mode or "agent",
+            plan_confirmed=request.plan_confirmed or False,
         )
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))

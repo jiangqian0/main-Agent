@@ -5,7 +5,6 @@ let isDirty = false;
 
 document.addEventListener('DOMContentLoaded', () => {
     checkAuth();
-    initSidebarResize();
     initEditorResize();
     loadFiles();
 });
@@ -19,27 +18,6 @@ function logout() {
     localStorage.removeItem('agent_session');
     sessionStorage.removeItem('agent_session');
     window.location.href = '/login';
-}
-
-function initSidebarResize() {
-    const sidebar = document.getElementById('sidebar');
-    const handle = document.getElementById('sidebar-resize-handle');
-    let dragging = false;
-    handle && handle.addEventListener('mousedown', e => {
-        dragging = true;
-        document.body.style.cursor = 'col-resize';
-        document.body.style.userSelect = 'none';
-        e.preventDefault();
-    });
-    document.addEventListener('mousemove', e => {
-        if (!dragging) return;
-        sidebar.style.width = Math.min(400, Math.max(200, e.clientX)) + 'px';
-    });
-    document.addEventListener('mouseup', () => {
-        dragging = false;
-        document.body.style.cursor = '';
-        document.body.style.userSelect = '';
-    });
 }
 
 function initEditorResize() {
@@ -73,15 +51,19 @@ function initEditorResize() {
 function loadFiles() {
     document.getElementById('file-tree').innerHTML = '<div class="loading-state"><i class="fa-solid fa-spinner fa-spin"></i> Loading...</div>';
     fetch(`${API_BASE_URL}/workspace/files`)
-        .then(r => r.ok ? r.json() : [])
-        .then(files => {
-            files = Array.isArray(files) ? files : [];
+        .then(r => {
+            if (!r.ok) throw new Error(`HTTP ${r.status}`);
+            return r.json();
+        })
+        .then(data => {
+            const files = Array.isArray(data) ? data : [];
             const tree = buildTree(files);
             document.getElementById('file-tree').innerHTML = renderTree(tree);
             updateFileCount(files.length);
         })
-        .catch(() => {
-            document.getElementById('file-tree').innerHTML = '<div class="loading-state"><i class="fa-solid fa-exclamation-circle"></i> Failed to load</div>';
+        .catch(err => {
+            console.error('loadFiles error:', err);
+            document.getElementById('file-tree').innerHTML = '<div class="loading-state"><i class="fa-solid fa-exclamation-circle"></i> Failed to load files</div>';
         });
 }
 
@@ -184,6 +166,7 @@ function getFileIcon(name) {
         php: 'fa-brands fa-php',
         xml: 'fa-solid fa-file-code',
         txt: 'fa-solid fa-file-lines',
+        pdf: 'fa-solid fa-file-pdf',
     };
     return icons[ext] || 'fa-solid fa-file';
 }
@@ -292,6 +275,127 @@ function deleteFile() {
 
 function refreshFiles() { loadFiles(); }
 
+// Export PPT to PPTX
+function showExportDialog() {
+    const pptFiles = getPptFiles();
+    if (pptFiles.length === 0) {
+        showToast('No HTML PPT files found to export', 'error');
+        return;
+    }
+
+    let options = pptFiles.map(f =>
+        `<option value="${escapeHtml(f.path)}">${escapeHtml(f.name)}</option>`
+    ).join('');
+
+    document.getElementById('dialog-title').textContent = 'Export to PPTX';
+    document.getElementById('dialog-body').innerHTML = `
+        <div class="form-group">
+            <label>Select HTML PPT File</label>
+            <select id="export-file" style="width:100%;padding:8px;border:1px solid var(--border-color);border-radius:6px;">
+                ${options}
+            </select>
+        </div>
+        <div class="form-group">
+            <label>Output Name (optional)</label>
+            <input type="text" id="export-name" placeholder="Leave empty to use original name" style="width:100%;padding:10px;border:1px solid var(--border-color);border-radius:6px;box-sizing:border-box;">
+        </div>
+        <p style="font-size:12px;color:var(--grey);margin-top:8px;">
+            <i class="fa-solid fa-info-circle"></i> The exported PPTX can be opened in PowerPoint, WPS, or Google Slides.
+        </p>
+    `;
+    document.getElementById('dialog-confirm').textContent = 'Export';
+    document.getElementById('dialog-confirm').onclick = exportToPptx;
+    document.getElementById('dialog-overlay').classList.add('show');
+}
+
+function getPptFiles() {
+    // This will be populated when files are loaded
+    return window._pptFiles || [];
+}
+
+function exportToPptx() {
+    const filePath = document.getElementById('export-file')?.value;
+    const outputName = document.getElementById('export-name')?.value?.trim();
+
+    if (!filePath) {
+        showToast('Please select a file', 'error');
+        return;
+    }
+
+    document.getElementById('dialog-confirm').disabled = true;
+    document.getElementById('dialog-confirm').textContent = 'Exporting...';
+
+    fetch(`${API_BASE_URL}/workspace/export-pptx`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+            html_path: filePath,
+            output_name: outputName || null
+        })
+    })
+        .then(r => {
+            if (!r.ok) return r.json().then(err => Promise.reject(err)).catch(() => Promise.reject({ detail: `HTTP ${r.status}` }));
+            return r.json();
+        })
+        .then(data => {
+            hideDialog();
+            showToast(`PPTX exported! ${data.slide_count} slides generated.`);
+            // Auto download
+            downloadFile(data.download_path, data.filename);
+        })
+        .catch(err => {
+            console.error('Export error:', err);
+            showToast('Export failed: ' + (err.detail || err.message || 'Unknown error'), 'error');
+        })
+        .finally(() => {
+            document.getElementById('dialog-confirm').disabled = false;
+            document.getElementById('dialog-confirm').textContent = 'Export';
+        });
+}
+
+function downloadFile(url, filename) {
+    fetch(url)
+        .then(r => r.blob())
+        .then(blob => {
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = filename;
+            document.body.appendChild(a);
+            a.click();
+            window.URL.revokeObjectURL(url);
+            document.body.removeChild(a);
+        })
+        .catch(err => {
+            console.error('Download error:', err);
+            showToast('Download failed', 'error');
+        });
+}
+
+// Override loadFiles to collect PPT files
+const originalLoadFiles = loadFiles;
+loadFiles = function() {
+    document.getElementById('file-tree').innerHTML = '<div class="loading-state"><i class="fa-solid fa-spinner fa-spin"></i> Loading...</div>';
+    fetch(`${API_BASE_URL}/workspace/files`)
+        .then(r => {
+            if (!r.ok) throw new Error(`HTTP ${r.status}`);
+            return r.json();
+        })
+        .then(data => {
+            const files = Array.isArray(data) ? data : [];
+            window._pptFiles = files.filter(f =>
+                f.name.endsWith('.html') && f.name.toLowerCase().includes('index')
+            );
+            const tree = buildTree(files);
+            document.getElementById('file-tree').innerHTML = renderTree(tree);
+            updateFileCount(files.length);
+        })
+        .catch(err => {
+            console.error('loadFiles error:', err);
+            document.getElementById('file-tree').innerHTML = '<div class="loading-state"><i class="fa-solid fa-exclamation-circle"></i> Failed to load files</div>';
+        });
+};
+
 function showUploadDialog() {
     document.getElementById('dialog-title').textContent = 'Upload File';
     document.getElementById('dialog-body').innerHTML = `
@@ -311,13 +415,37 @@ function showUploadDialog() {
 
 function uploadFile() {
     const file = document.getElementById('upload-file').files[0];
-    if (!file) { showToast('Select a file', 'error'); return; }
+    if (!file) { showToast('Please select a file', 'error'); return; }
+
+    const destPath = document.getElementById('upload-dest')?.value?.trim();
     const formData = new FormData();
     formData.append('file', file);
-    fetch(`${API_BASE_URL}/workspace/upload`, { method: 'POST', body: formData })
-        .then(r => r.ok ? null : Promise.reject())
-        .then(() => { hideDialog(); loadFiles(); showToast('File uploaded'); })
-        .catch(() => showToast('Upload failed', 'error'));
+    if (destPath) formData.append('path', destPath);
+
+    document.getElementById('dialog-confirm').disabled = true;
+    document.getElementById('dialog-confirm').textContent = 'Uploading...';
+
+    fetch(`${API_BASE_URL}/workspace/upload`, {
+        method: 'POST',
+        body: formData
+    })
+        .then(r => {
+            if (!r.ok) return r.json().then(err => Promise.reject(err)).catch(() => Promise.reject({ detail: `HTTP ${r.status}` }));
+            return r.json();
+        })
+        .then(data => {
+            hideDialog();
+            loadFiles();
+            showToast(`File "${file.name}" uploaded successfully`);
+        })
+        .catch(err => {
+            console.error('Upload error:', err);
+            showToast('Upload failed: ' + (err.detail || err.message || 'Unknown error'), 'error');
+        })
+        .finally(() => {
+            document.getElementById('dialog-confirm').disabled = false;
+            document.getElementById('dialog-confirm').textContent = 'Upload';
+        });
 }
 
 function showNewFileDialog() {

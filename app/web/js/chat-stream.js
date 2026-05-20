@@ -5,6 +5,12 @@
 
 const API_BASE_URL = '/api';
 
+// getAttachmentContext may be defined in chat.js (loaded after this script)
+// Provide a safe fallback so sendMessage doesn't crash on page load
+if (typeof window.getAttachmentContext !== 'function') {
+  window.getAttachmentContext = function() { return ''; };
+}
+
 // STEPS map (used in execution logging)
 const STEPS = {
   1: 'Understanding Intent',
@@ -31,6 +37,11 @@ let streamState = {
   pendingText: '',         // 流式中的文字（未永久）
 };
 
+// Plan mode state
+window.currentMode = 'agent';      // 'agent' | 'plan' | 'ask'
+window.planConfirmed = false;
+window.pendingPlanMessage = '';    // 保留 Plan 阶段的用户消息用于确认后重发
+
 // ─── Core: Send Request ───────────────────────────────────────────────────────
 
 async function sendMessage() {
@@ -38,6 +49,9 @@ async function sendMessage() {
   if (!input) return;
   const msg = input.value.trim();
   if (!msg || isStreaming) return;
+  const attachmentsContext = getAttachmentContext();
+  const fullMessage = msg + (attachmentsContext ? attachmentsContext : '');
+
   input.value = '';
   input.style.height = 'auto';
 
@@ -45,7 +59,7 @@ async function sendMessage() {
   document.getElementById('welcome-message')?.remove();
   document.getElementById('send-btn')?.classList.add('loading');
   document.getElementById('stop-btn')?.classList.remove('hidden');
-  switchPanel('execution');
+  switchRightPanel('execution');
 
   streamReset();
   resetStreamState();
@@ -54,8 +68,17 @@ async function sendMessage() {
   // 确保对话已创建（自动标题）
   ensureConversation(msg);
 
-  // UI: 添加用户消息
+  // UI: 添加用户消息（显示原始消息，不含附件说明）
   appendUserMessage(msg, true);
+
+  // 清空附件
+  clearAttachments();
+
+  // Plan 模式：先保存用户消息用于确认后重发
+  if (window.currentMode === 'plan') {
+    window.pendingPlanMessage = msg;
+    persistPlanMessage();
+  }
 
   // 立即创建助手消息占位符，显示 "分析中..." 状态
   streamState.$streamingMsg = streamCreateAssistantMessage();
@@ -66,37 +89,60 @@ async function sendMessage() {
   execSetStep(2, 'running');
   execAddLog('info', 'AI 正在分析请求...');
 
-  // 自动匹配 Skill（异步，不阻塞）
+  // 自动匹配 Skill（同步等待，确保匹配完成后再发送）
   let effectiveSkillId = window.selectedSkillId || '';
+  let skillName = null;
+
   if (!effectiveSkillId) {
-    fetch(`${API_BASE_URL}/skills/match?message=${encodeURIComponent(msg)}`)
-      .then(r => r.ok ? r.json() : null)
-      .then(match => {
+    try {
+      const resp = await fetch(`${API_BASE_URL}/skills/match?message=${encodeURIComponent(msg)}`);
+      if (resp.ok) {
+        const match = await resp.json();
         if (match && match.id) {
+          effectiveSkillId = match.id;
+          skillName = match.name || match.id;
           window.selectedSkillId = match.id;
         }
-      }).catch(() => {});
+      }
+    } catch (e) {
+      console.warn('Skill match failed:', e);
+    }
+  } else {
+    // 用户已手动选择技能
+    skillName = document.getElementById('skill-btn-label')?.textContent || effectiveSkillId;
+  }
+
+  // 在 Execution Panel 显示使用的技能
+  if (skillName) {
+    execAddLog('info', `使用技能: ${skillName}`, 'skill-used');
+  } else if (effectiveSkillId) {
+    execAddLog('info', `技能: ${effectiveSkillId}`, 'skill-used');
   }
 
   abortController = new AbortController();
-  await streamFetch(msg, effectiveSkillId);
+  await streamFetch(fullMessage, effectiveSkillId);
 }
 
-async function streamFetch(message, skillId) {
+async function streamFetch(message, skillId, opts = {}) {
   const model = document.getElementById('model-select')?.value || 'qwen3-max';
   const kbIds = window.selectedKbIds.size > 0 ? [...window.selectedKbIds] : undefined;
+  // Append answer style suffix from profile settings
+  const styleSuffix = (typeof window.getAnswerStyleSuffix === 'function') ? window.getAnswerStyleSuffix() : '';
+  const styledMessage = message + styleSuffix;
 
   try {
     const resp = await fetch(`${API_BASE_URL}/chat/stream`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        message,
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+        message: styledMessage,
         conversation_id: window.currentConversationId,
         skill_id: skillId || null,
         enable_tools: true,
         model,
         knowledge_bases: kbIds,
+        mode: opts.mode || window.currentMode,
+        plan_confirmed: opts.plan_confirmed || false,
       }),
       signal: abortController.signal
     });
@@ -161,6 +207,7 @@ function streamReset() {
   streamState.thinkingExpanded = true;
   streamState.thinkingVisible = false;
   streamState.pendingText = '';
+  streamState._switchedToTerminal = false;
   if (streamState._analyzingTimer) {
     clearInterval(streamState._analyzingTimer);
     streamState._analyzingTimer = null;
@@ -181,6 +228,8 @@ function streamHandleEvent(json) {
       streamState.thinkingBuffer = json.content || '';
       streamState.thinkingVisible = streamState.thinkingBuffer.length > 0;
       streamRenderThinking();
+      execSetStep(2, 'running');
+      execUpdatePhase('thinking');
       break;
 
     case 'thinking_end':
@@ -193,12 +242,22 @@ function streamHandleEvent(json) {
       streamState.pendingText += json.content || '';
       streamState.textBuffer += json.content || '';
       streamRenderText();
+      execSetStep(4, 'running');
+      execUpdatePhase('generating');
       break;
 
     case 'tool_call':
-      if (!['Write', 'write_file', 'create_file'].includes(json.tool)) {
-        execAddLog('info', `Calling tool: ${json.tool}`);
+      execSetStep(3, 'running');
+      execUpdatePhase('executing');
+
+      // Auto-switch to terminal panel on first tool call
+      if (!streamState._switchedToTerminal) {
+        streamState._switchedToTerminal = true;
+        switchRightPanel('terminal');
       }
+
+      // Use tool_call_id as unique ID for deduplication
+      const toolId = json.tool_call_id || json.tool;
       streamState.toolResults.push({
         name: json.tool,
         tool_call_id: json.tool_call_id,
@@ -206,10 +265,50 @@ function streamHandleEvent(json) {
         status: 'running',
         success: null,
         result: null,
-        error: null
+        error: null,
+        _id: toolId
       });
       execUpdateTools(streamState.toolResults);
-      execSetStep(3, 'running');
+
+      // Add to Terminal panel for visualization
+      if (window.TerminalPanel) {
+        let cmdText = json.tool;
+        if (json.args) {
+          if (json.args.file_path) {
+            cmdText = `${json.tool}: ${json.args.file_path.split('/').pop().split('\\').pop()}`;
+          } else if (json.args.command) {
+            cmdText = `${json.tool}: ${json.args.command}`;
+          } else if (json.args.path) {
+            cmdText = `${json.tool}: ${json.args.path}`;
+          } else if (json.args.query) {
+            cmdText = `${json.tool}: ${json.args.query}`;
+          }
+        }
+        const tpId = window.TerminalPanel.addCommand({
+          id: 'tool-' + toolId,
+          cmd: cmdText,
+          type: 'tool',
+          startTime: Date.now()
+        });
+        // Store the terminal panel id in the tool result
+        if (tr) tr._tpId = tpId;
+      }
+
+      // Only log if not a file write operation
+      if (!['Write', 'write_file', 'create_file'].includes(json.tool)) {
+        // Show brief description in log
+        let logMsg = json.tool;
+        if (json.args) {
+          if (json.args.file_path) {
+            const fileName = json.args.file_path.split('/').pop().split('\\').pop();
+            logMsg = `${json.tool}: ${fileName}`;
+          } else if (json.args.command) {
+            const cmd = json.args.command.length > 50 ? json.args.command.substring(0, 50) + '...' : json.args.command;
+            logMsg = `${json.tool}: ${cmd}`;
+          }
+        }
+        execAddLog('tool', logMsg, 'tool-' + toolId);
+      }
       break;
 
     case 'tool_result': {
@@ -223,8 +322,54 @@ function streamHandleEvent(json) {
         });
       }
       execUpdateTools(streamState.toolResults);
+
+      // Show result in Terminal panel
+      if (window.TerminalPanel) {
+        const tpId = 'tool-' + (json.tool_call_id || json.tool);
+        let resultContent = '';
+
+        if (json.success && json.result) {
+          // Show truncated result
+          if (typeof json.result === 'string') {
+            resultContent = json.result.length > 500
+              ? json.result.substring(0, 500) + '\n... (truncated)'
+              : json.result;
+          } else if (typeof json.result === 'object') {
+            resultContent = JSON.stringify(json.result, null, 2);
+            if (resultContent.length > 500) {
+              resultContent = resultContent.substring(0, 500) + '\n... (truncated)';
+            }
+          }
+        } else if (json.error) {
+          resultContent = 'Error: ' + json.error;
+        }
+
+        if (resultContent) {
+          window.TerminalPanel.appendOutput(tpId, {
+            type: json.success ? 'stdout' : 'stderr',
+            content: resultContent
+          });
+        }
+
+        window.TerminalPanel.finishCommand(tpId, {
+          exitCode: json.success ? 0 : 1,
+          duration: 0
+        });
+      }
+
+      // Update the log entry with result status
       if (!['Write', 'write_file', 'create_file'].includes(json.tool)) {
-        execAddLog(json.success ? 'success' : 'error', `Tool ${json.tool} ${json.success ? 'done' : 'failed'}`);
+        const toolId = json.tool_call_id || json.tool;
+        const logId = 'tool-' + toolId;
+        let logMsg = json.tool;
+        if (json.args && json.args.file_path) {
+          const fileName = json.args.file_path.split('/').pop().split('\\').pop();
+          logMsg = `${json.tool}: ${fileName}`;
+        }
+        if (!json.success) {
+          logMsg += ' (failed)';
+        }
+        execAddLog(json.success ? 'success' : 'error', logMsg, logId);
       }
       break;
     }
@@ -235,19 +380,120 @@ function streamHandleEvent(json) {
       streamState.codeBlockInfo = {
         file_name: json.file_name,
         language: json.language,
-        total_lines: json.total_lines
+        total_lines: json.total_lines,
+        file_path: json.file_path
       };
       streamRenderCodeStart();
+      execUpdatePhase('writing');
+      execAddLog('info', `Writing: ${json.file_name}`);
+      // Real-time sync to Code Panel
+      if (window.CodePanel && json.file_name) {
+        window.CodePanel.startFile(json.file_name, json.language || 'text');
+      }
       break;
 
     case 'code_output':
       streamState.codeBlockBuffer += json.content || '';
       streamCodeProgress(json.progress, json.written, json.total);
+      // Stream content to Code Panel as it arrives (for real-time preview)
+      if (streamState.codeBlockActive && window.CodePanel && streamState.codeBlockInfo) {
+        // Use appendContent for efficient streaming updates
+        window.CodePanel.appendContent(streamState.codeBlockBuffer);
+        // Also update the file directly for smooth preview
+        const path = streamState.codeBlockInfo.file_name;
+        if (path) {
+          const file = window.CodePanel.getFile(path);
+          if (file) {
+            file.content = streamState.codeBlockBuffer;
+            file.updatedAt = new Date().toISOString();
+            // Incrementally update preview DOM
+            const previewContainer = document.getElementById('cp-preview-area');
+            if (previewContainer && window.CodePanel.state.selectedPath === path) {
+              const body = previewContainer.querySelector('#cp-preview-body');
+              if (body) {
+                const lang = file.language || 'text';
+                const lines = streamState.codeBlockBuffer.split('\n');
+                const lineNumberWidth = String(lines.length).length;
+                const linesHtml = lines.map(function (line, i) {
+                  const num = String(i + 1).padStart(lineNumberWidth, ' ');
+                  return '<div class="cp-code-line"><span class="cp-line-num">' + num + '</span><span class="cp-line-content">' + escapeHtml(line || ' ') + '</span></div>';
+                }).join('');
+                const container = body.querySelector('.cp-code-container');
+                if (container) {
+                  container.innerHTML = linesHtml;
+                  container.className = 'cp-code-container lang-' + lang;
+                }
+                const footer = previewContainer.querySelector('.cp-preview-footer');
+                if (footer) {
+                  footer.innerHTML = '<span>' + lines.length + ' lines</span><span>' + streamState.codeBlockBuffer.length + ' chars</span><span>Streaming...</span>';
+                }
+              }
+            }
+          }
+        }
+      }
       break;
 
     case 'code_block_end':
       streamState.codeBlockActive = false;
       streamCodeEnd();
+      if (streamState.codeBlockInfo && streamState.codeBlockBuffer) {
+        const info = streamState.codeBlockInfo;
+        const filePath = info.file_name || 'output.' + (info.language || 'txt');
+        if (window.CodePanel) {
+          window.CodePanel.addFile({
+            path: filePath,
+            content: streamState.codeBlockBuffer,
+            language: info.language,
+          });
+        }
+      }
+      break;
+
+    case 'bash_output':
+    case 'bash_command':
+      // Terminal panel integration
+      if (window.TerminalPanel) {
+        const cmdId = window.TerminalPanel.getActiveCmdId();
+        if (cmdId) {
+          window.TerminalPanel.appendOutput(cmdId, {
+            type: json.type === 'bash_output' ? 'stdout' : 'info',
+            content: json.content || json.command || '',
+          });
+        }
+      }
+      execAddLog('info', `Terminal: ${json.command || json.content}`);
+      break;
+
+    case 'terminal_start':
+      if (window.TerminalPanel) {
+        window.TerminalPanel.addCommand({
+          cmd: json.command,
+          type: json.tool || 'bash',
+          startTime: json.startTime || Date.now(),
+        });
+      }
+      execAddLog('info', `Executing: ${json.command}`);
+      break;
+
+    case 'terminal_output':
+      if (window.TerminalPanel) {
+        window.TerminalPanel.appendOutput(json.id || window.TerminalPanel.getActiveCmdId(), {
+          type: json.stream === 'stderr' ? 'stderr' : 'stdout',
+          content: json.content || '',
+        });
+      }
+      break;
+
+    case 'terminal_end':
+      if (window.TerminalPanel) {
+        window.TerminalPanel.finishCommand(json.id || window.TerminalPanel.getActiveCmdId(), {
+          exitCode: json.exitCode,
+          duration: json.duration,
+        });
+      }
+      execAddLog(json.exitCode === 0 ? 'success' : 'error',
+        `Command ${json.exitCode === 0 ? 'completed' : 'failed'} (exit ${json.exitCode})`);
       break;
 
     case 'done':
@@ -255,6 +501,9 @@ function streamHandleEvent(json) {
       break;
 
     case 'workspace_refresh':
+      if (window.CodePanel && json.files) {
+        window.CodePanel.syncState(json.files);
+      }
       if (typeof window.refreshWorkspacePanel === 'function') {
         window.refreshWorkspacePanel();
       }
@@ -268,6 +517,17 @@ function streamHandleEvent(json) {
 
 // ─── Analyzing State ─────────────────────────────────────────────────────────────
 
+// 分析阶段的文字描述（循环显示）
+const ANALYZING_STATES = [
+  '正在理解你的需求',
+  '正在匹配技能',
+  '正在规划执行步骤',
+  '正在读取工具定义',
+  '正在构建提示词',
+  '正在调用模型',
+  '正在处理响应',
+];
+
 function streamRenderAnalyzingState() {
   const container = document.getElementById('chat-container');
   if (!container || !streamState.$streamingMsg) return;
@@ -278,26 +538,56 @@ function streamRenderAnalyzingState() {
   // 移除已有的 thinking / response 区域
   msgBody.querySelectorAll('.thinking-area, .response-area').forEach(el => el.remove());
 
+  // 创建带状态指示器的分析中界面
   const html = `<div class="response-area analyzing-state">
     <div class="analyzing-indicator">
-      <div class="analyzing-dots">
-        <span class="dot"></span>
-        <span class="dot"></span>
-        <span class="dot"></span>
+      <div class="analyzing-spinner">
+        <div class="spinner-ring"></div>
+        <div class="spinner-ring"></div>
+        <div class="spinner-ring"></div>
       </div>
-      <span class="analyzing-text">正在分析请求</span>
+      <div class="analyzing-content">
+        <span class="analyzing-status">AI 思考中</span>
+        <span class="analyzing-text">正在分析请求</span>
+      </div>
+    </div>
+    <div class="analyzing-progress">
+      <div class="progress-dots">
+        <span class="progress-dot"></span>
+        <span class="progress-dot"></span>
+        <span class="progress-dot"></span>
+      </div>
     </div>
   </div>`;
   msgBody.insertAdjacentHTML('beforeend', html);
   container.scrollTop = container.scrollHeight;
 
-  // 文字 "正在分析请求" 后面的点动画
-  const dots = ['.', '.', '..', '...'];
-  let di = 0;
+  // 循环显示不同状态 + 点动画
+  let stateIndex = 0;
+  let dotCount = 0;
   streamState._analyzingTimer = setInterval(() => {
     const textEl = msgBody.querySelector('.analyzing-text');
-    if (textEl) textEl.textContent = '正在分析请求' + dots[di % dots.length];
-    di++;
+    const statusEl = msgBody.querySelector('.analyzing-status');
+
+    if (textEl) {
+      dotCount++;
+      const dots = dotCount % 4;
+      textEl.textContent = ANALYZING_STATES[stateIndex] + '.'.repeat(dots);
+    }
+
+    // 每 2.5 秒切换一个状态
+    if (dotCount % 5 === 0) {
+      stateIndex = (stateIndex + 1) % ANALYZING_STATES.length;
+    }
+
+    // 更新右侧面板同步显示（如果右侧日志可见）
+    const execLogsEl = msgBody.querySelector('.exec-scroll-wrapper');
+    if (!execLogsEl) {
+      // 同步到右侧面板
+      if (window.execAddLog) {
+        window.execAddLog('info', ANALYZING_STATES[stateIndex]);
+      }
+    }
   }, 500);
 }
 
@@ -309,10 +599,59 @@ function streamFinalize() {
   document.getElementById('send-btn')?.classList.remove('loading');
   document.getElementById('stop-btn')?.classList.add('hidden');
 
-  // 永久化消息到 storage
   const text = streamState.textBuffer;
+
+  // Plan 模式：流结束后显示确认栏，不直接持久化
+  if (window.currentMode === 'plan' && !window.planConfirmed) {
+    const confirmBar = document.getElementById('plan-confirm-bar');
+    if (confirmBar) confirmBar.classList.add('visible');
+    // 持久化 Plan 消息但不显示 "complete" 状态
+    if (text) persistAssistantMessage(text);
+    execSetStep(4, 'completed');
+    execAddLog('success', 'Plan ready — review and confirm to execute');
+    const container = document.getElementById('chat-container');
+    if (container) container.scrollTop = container.scrollHeight;
+    if (streamState.$streamingMsg) streamState.$streamingMsg.classList.remove('streaming');
+    // 添加操作按钮
+    if (streamState.$streamingMsg) {
+      const msgContent = streamState.$streamingMsg.querySelector('.message-content');
+      if (msgContent && !msgContent.querySelector('.message-actions')) {
+        msgContent.insertAdjacentHTML('beforeend', `
+          <div class="message-actions">
+            <button class="msg-action-btn" onclick="retryLastMessage()" title="重新生成回复">
+              <i class="fa-solid fa-rotate-right"></i> 重新回答
+            </button>
+            <button class="msg-action-btn" onclick="copyMessageContent(this)" title="复制内容">
+              <i class="fa-solid fa-copy"></i>
+            </button>
+          </div>
+        `);
+      }
+    }
+    streamState.$streamingMsg = null;
+    return;
+  }
+
+  // Ask / Agent 模式：正常持久化
   if (text) {
     persistAssistantMessage(text);
+  }
+
+  // 添加操作按钮到流式消息
+  if (streamState.$streamingMsg) {
+    const msgContent = streamState.$streamingMsg.querySelector('.message-content');
+    if (msgContent && !msgContent.querySelector('.message-actions')) {
+      msgContent.insertAdjacentHTML('beforeend', `
+        <div class="message-actions">
+          <button class="msg-action-btn" onclick="retryLastMessage()" title="重新生成回复">
+            <i class="fa-solid fa-rotate-right"></i> 重新回答
+          </button>
+          <button class="msg-action-btn" onclick="copyMessageContent(this)" title="复制内容">
+            <i class="fa-solid fa-copy"></i>
+          </button>
+        </div>
+      `);
+    }
   }
 
   execSetStep(4, 'completed');
@@ -368,18 +707,23 @@ function streamRenderThinking() {
     return;
   }
 
+  // Add streaming cursor animation indicator
+  const cursorHtml = '<span class="thinking-cursor"></span>';
   const html = `<div class="thinking-area">
     <div class="thinking-area-header" onclick="streamToggleThinking(this.parentElement)">
       <div class="thinking-area-header-left">
         <div class="thinking-area-icon"><i class="fa-solid fa-brain"></i></div>
         <span class="thinking-area-label">Thinking</span>
+        <span class="thinking-area-streaming">
+          <span class="thinking-dots"></span>
+        </span>
       </div>
       <div class="thinking-area-toggle ${streamState.thinkingExpanded ? 'expanded' : ''}">
         <i class="fa-solid fa-chevron-down"></i>
       </div>
     </div>
     <div class="thinking-area-body ${streamState.thinkingExpanded ? '' : 'hidden'}">
-      <div class="thinking-area-content">${escapeHtml(streamState.thinkingBuffer)}</div>
+      <div class="thinking-area-content">${escapeHtml(streamState.thinkingBuffer)}${cursorHtml}</div>
     </div>
   </div>`;
 
@@ -466,11 +810,90 @@ function appendAssistantMessage(content, persist = true) {
   const div = document.createElement('div');
   div.className = 'message assistant';
   div.innerHTML = `<div class="message-avatar"><i class="fa-solid fa-robot"></i></div>
-    <div class="message-content"><div class="message-body"><div class="response-area"><div class="markdown-content">${renderMarkdown(content)}</div></div></div></div>`;
+    <div class="message-content">
+      <div class="message-body"><div class="response-area"><div class="markdown-content">${renderMarkdown(content)}</div></div></div>
+      <div class="message-actions">
+        <button class="msg-action-btn" onclick="retryLastMessage()" title="重新生成回复">
+          <i class="fa-solid fa-rotate-right"></i> 重新回答
+        </button>
+        <button class="msg-action-btn" onclick="copyMessageContent(this)" title="复制内容">
+          <i class="fa-solid fa-copy"></i>
+        </button>
+      </div>
+    </div>`;
   container.appendChild(div);
   container.scrollTop = container.scrollHeight;
 
   if (persist) persistAssistantMessage(content);
+}
+
+// Retry last message
+let lastUserMessage = '';
+
+function retryLastMessage() {
+  // Find the last user message in the current conversation
+  const conv = getCurrentConversation();
+  if (!conv || !conv.messages || conv.messages.length === 0) {
+    showToast('没有可重试的消息', 'warning');
+    return;
+  }
+
+  // Find last user message
+  let lastUserMsg = null;
+  for (let i = conv.messages.length - 1; i >= 0; i--) {
+    if (conv.messages[i].role === 'user') {
+      lastUserMsg = conv.messages[i].content;
+      break;
+    }
+  }
+
+  if (!lastUserMsg) {
+    showToast('没有可重试的消息', 'warning');
+    return;
+  }
+
+  // Remove the last assistant message if exists
+  if (conv.messages.length > 0 && conv.messages[conv.messages.length - 1].role === 'assistant') {
+    conv.messages.pop();
+    saveConversations();
+  }
+
+  // Remove the last assistant message from UI
+  const container = document.getElementById('chat-container');
+  const messages = container.querySelectorAll('.message.assistant');
+  if (messages.length > 0) {
+    messages[messages.length - 1].remove();
+  }
+
+  // Re-send the message
+  const input = document.getElementById('chat-input');
+  if (input) {
+    input.value = lastUserMsg;
+    input.dispatchEvent(new Event('input'));
+  }
+
+  // Trigger submit
+  const form = document.querySelector('.chat-input-form');
+  if (form) {
+    form.dispatchEvent(new Event('submit', { bubbles: true, cancelable: true }));
+  }
+}
+
+function copyMessageContent(btn) {
+  const msgContent = btn.closest('.message-content').querySelector('.markdown-content');
+  if (!msgContent) return;
+
+  const text = msgContent.innerText || msgContent.textContent;
+  navigator.clipboard.writeText(text).then(() => {
+    showToast('已复制到剪贴板', 'success');
+    // Brief visual feedback
+    btn.innerHTML = '<i class="fa-solid fa-check"></i>';
+    setTimeout(() => {
+      btn.innerHTML = '<i class="fa-solid fa-copy"></i>';
+    }, 1500);
+  }).catch(() => {
+    showToast('复制失败', 'error');
+  });
 }
 
 function streamAppendError(msg) {
@@ -691,6 +1114,9 @@ function execAddLog(type, message) {
 function execUpdateTools(tools) {
   if (typeof window.updateToolPanel === 'function') window.updateToolPanel(tools);
 }
+function execUpdatePhase(phase) {
+  if (typeof window.updatePhase === 'function') window.updatePhase(phase);
+}
 
 // ─── Code Block Toggle ─────────────────────────────────────────────────────────
 
@@ -735,6 +1161,22 @@ window.streamRenderText    = streamRenderText;
 window.streamRenderAnalyzingState = streamRenderAnalyzingState;
 window.appendUserMessage   = appendUserMessage;
 window.appendAssistantMessage = appendAssistantMessage;
+window.retryLastMessage = retryLastMessage;
+window.copyMessageContent = copyMessageContent;
+
+// Fallback showToast if not defined elsewhere
+if (typeof window.showToast === 'undefined') {
+  window.showToast = function(msg, type = 'success') {
+    const c = document.getElementById('toast-container');
+    if (!c) return;
+    const t = document.createElement('div');
+    t.className = `toast ${type}`;
+    t.innerHTML = `<i class="fa-solid fa-${type === 'success' ? 'check' : 'xmark'}"></i>${escapeHtml(msg)}`;
+    c.appendChild(t);
+    setTimeout(() => t.remove(), 3000);
+  };
+}
+
 window.renderMarkdown      = renderMarkdown;
 window.escapeHtml          = escapeHtml;
 window.ensureConversation  = ensureConversation;

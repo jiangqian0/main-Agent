@@ -3,16 +3,17 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Skills - Engineer Agent</title>
-    <link rel="stylesheet" href="/alicloud-main-agent/web/static/css/style.css">
+    <title>Plugin Center - Agent Hub</title>
+    <link rel="stylesheet" href="/static/css/style.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 </head>
-<body>
+<body class="page-skills">
     <div class="app-container">
+        <!-- Sidebar -->
         <div class="sidebar" id="sidebar">
+            <div class="sidebar-resize-handle" id="sidebar-resize-handle"></div>
+
             <div class="sidebar-logo">
                 <div class="sidebar-logo-header">
                     <div class="sidebar-logo-icon"><i class="fa-solid fa-robot"></i></div>
@@ -23,79 +24,36 @@
                 </div>
                 <button class="btn-new-chat" onclick="window.location.href='/chat'">
                     <i class="fa-solid fa-plus"></i>
-                    <span>New Conversation</span>
+                    <span>New Chat</span>
                 </button>
             </div>
+
             <div class="sidebar-menu">
-                <!-- Core Functions -->
                 <div class="menu-section">
-                    <div class="menu-section-header">
-                        <div class="menu-section-dot"></div>
-                        <span class="menu-section-title">Core Functions</span>
-                    </div>
+                    <div class="menu-section-header"><div class="menu-section-dot"></div><span class="menu-section-title">Core Functions</span></div>
                     <a href="/dashboard" class="menu-item"><i class="fa-solid fa-gauge-high"></i><span>Dashboard</span></a>
-                    <a href="/chat" class="menu-item"><i class="fa-solid fa-code"></i><span>Code Development</span></a>
-                    <a href="/chat?type=fc" class="menu-item"><i class="fa-solid fa-bolt"></i><span>Function Compute</span></a>
+                    <a href="/chat" class="menu-item"><i class="fa-solid fa-code"></i><span>AI Chat</span></a>
                     <a href="/resources" class="menu-item"><i class="fa-solid fa-server"></i><span>Resource Management</span></a>
                     <a href="/deploy" class="menu-item"><i class="fa-solid fa-rocket"></i><span>Deployment & Ops</span></a>
                 </div>
-
-                <!-- Intelligent Agents -->
                 <div class="menu-section">
-                    <div class="menu-section-header">
-                        <div class="menu-section-dot"></div>
-                        <span class="menu-section-title">Intelligent Agents</span>
-                    </div>
-                    <a href="/agents/security" class="menu-item"><i class="fa-solid fa-shield-halved"></i><span>Security Governance</span></a>
-                    <a href="/agents/cost" class="menu-item"><i class="fa-solid fa-dollar-sign"></i><span>Cost Optimization</span></a>
-                    <a href="/agents/create" class="menu-item"><i class="fa-solid fa-plus"></i><span>Create Agent</span></a>
-                </div>
-
-                <!-- Management Center -->
-                <div class="menu-section">
-                    <div class="menu-section-header">
-                        <div class="menu-section-dot"></div>
-                        <span class="menu-section-title">Management Center</span>
-                    </div>
-                    <a href="/skills" class="menu-item active"><i class="fa-solid fa-gear"></i><span>Skill Center</span></a>
-                    <a href="/knowledge" class="menu-item"><i class="fa-solid fa-book"></i><span>Knowledge Base</span></a>
+                    <div class="menu-section-header"><div class="menu-section-dot"></div><span class="menu-section-title">Management Center</span></div>
+                    <a href="/skills" class="menu-item active"><i class="fa-solid fa-puzzle-piece"></i><span>Plugin Center</span></a>
+                    <a href="/knowledge" class="menu-item"><i class="fa-solid fa-book-open"></i><span>Knowledge & Docs</span></a>
                     <a href="/agents" class="menu-item"><i class="fa-solid fa-robot"></i><span>Agent Center</span></a>
                 </div>
-
-                <!-- Auxiliary Tools -->
                 <div class="menu-section">
-                    <div class="menu-section-header">
-                        <div class="menu-section-dot"></div>
-                        <span class="menu-section-title">Auxiliary Tools</span>
-                    </div>
-                    <a href="/docs" class="menu-item"><i class="fa-solid fa-file-lines"></i><span>Documents & Reports</span></a>
-                    <a href="/monitoring" class="menu-item"><i class="fa-solid fa-chart-line"></i><span>Monitoring Panel</span></a>
+                    <div class="menu-section-header"><div class="menu-section-dot"></div><span class="menu-section-title">Auxiliary Tools</span></div>
+                    <a href="/monitoring" class="menu-item"><i class="fa-solid fa-chart-line"></i><span>Monitoring</span></a>
                     <a href="/settings" class="menu-item"><i class="fa-solid fa-gear"></i><span>Settings</span></a>
                 </div>
-
-                <!-- History Section -->
-                <div class="history-section">
-                    <div class="history-header" onclick="toggleHistory()">
-                        <div class="history-header-left">
-                            <div class="history-dot"></div>
-                            <span class="history-title">History</span>
-                        </div>
-                        <div class="history-toggle" id="history-toggle">
-                            <i class="fa-solid fa-chevron-down"></i>
-                        </div>
-                    </div>
-                    <div class="history-list" id="history-list">
-                        <div class="empty-state" id="history-empty">
-                            <p class="text-muted" style="padding: 10px 16px; font-size: 13px;">No conversations yet</p>
-                        </div>
-                    </div>
-                </div>
             </div>
+
             <div class="sidebar-user">
                 <div class="user-info">
                     <div class="user-avatar"><i class="fa-solid fa-user"></i></div>
                     <div class="user-details">
-                        <p class="user-name">User</p>
+                        <p class="user-name" id="sidebar-username">User</p>
                         <div class="user-status"><div class="user-status-dot"></div><span class="user-status-text">Online</span></div>
                     </div>
                 </div>
@@ -105,48 +63,181 @@
                 </div>
             </div>
         </div>
-        <div class="sidebar-resize-handle" id="sidebar-resize-handle"></div>
 
+        <!-- Main Content -->
         <div class="main-content">
             <header class="header">
                 <div class="header-left">
                     <div class="header-logo"><span>AI</span></div>
-                    <span class="header-title">Skill Center</span>
+                    <span class="header-title">Plugin Center</span>
                 </div>
                 <div class="header-right">
-                    <button class="header-btn" onclick="showCreateDialog()"><i class="fa-solid fa-plus"></i></button>
-                    <button class="header-btn" onclick="location.reload()"><i class="fa-solid fa-rotate"></i></button>
+                    <button class="header-btn" onclick="location.reload()" title="Refresh"><i class="fa-solid fa-rotate"></i></button>
                 </div>
             </header>
 
-            <div class="page-content">
-                <div class="page-header">
-                    <div>
-                        <h1>Skill Center</h1>
-                        <p>Manage and customize agent capabilities</p>
-                    </div>
-                    <button class="btn btn-primary" onclick="showCreateDialog()">
-                        <i class="fa-solid fa-plus"></i> Create Skill
+            <!-- Page Content -->
+            <div class="page-content" style="flex:1;overflow-y:auto;padding:28px 32px;background:var(--light-grey-bg);">
+                <!-- Page Tabs -->
+                <div class="page-tabs" id="page-tabs">
+                    <button class="page-tab active" data-tab="skills" onclick="(function(btn){document.querySelectorAll('.page-tab').forEach(function(t){t.classList.remove('active')});btn.classList.add('active');document.querySelectorAll('.tab-content').forEach(function(c){c.classList.remove('active')});document.getElementById('tab-skills').classList.add('active')})(this)">
+                        <i class="fa-solid fa-puzzle-piece"></i>
+                        Skills
+                    </button>
+                    <button class="page-tab" data-tab="mcp" onclick="(function(btn){document.querySelectorAll('.page-tab').forEach(function(t){t.classList.remove('active')});btn.classList.add('active');document.querySelectorAll('.tab-content').forEach(function(c){c.classList.remove('active')});document.getElementById('tab-mcp').classList.add('active')})(this)">
+                        <i class="fa-solid fa-plug"></i>
+                        MCP Servers
+                    </button>
+                    <button class="page-tab" data-tab="tools" onclick="(function(btn){document.querySelectorAll('.page-tab').forEach(function(t){t.classList.remove('active')});btn.classList.add('active');document.querySelectorAll('.tab-content').forEach(function(c){c.classList.remove('active')});document.getElementById('tab-tools').classList.add('active')})(this)">
+                        <i class="fa-solid fa-toolbox"></i>
+                        Builtin Tools
+                    </button>
+                    <button class="page-tab" data-tab="discover" onclick="(function(btn){document.querySelectorAll('.page-tab').forEach(function(t){t.classList.remove('active')});btn.classList.add('active');document.querySelectorAll('.tab-content').forEach(function(c){c.classList.remove('active')});document.getElementById('tab-discover').classList.add('active')})(this)">
+                        <i class="fa-solid fa-wand-magic-sparkles"></i>
+                        Skill Discovery
                     </button>
                 </div>
 
-                <div class="skills-grid" id="skills-grid">
-                    <div class="loading-state"><i class="fa-solid fa-spinner fa-spin"></i> Loading skills...</div>
+                <!-- Skills Tab -->
+                <div class="tab-content active" id="tab-skills">
+                    <div class="tab-header">
+                        <div>
+                            <h2>Skills</h2>
+                            <p>Manage and customize agent capabilities. Skills are automatically matched based on your message content.</p>
+                        </div>
+                        <button class="btn btn-primary" onclick="showSkillDialog()">
+                            <i class="fa-solid fa-plus"></i> Create Skill
+                        </button>
+                    </div>
+                    <div class="skills-grid" id="skills-grid">
+                        <div class="loading-state"><i class="fa-solid fa-spinner fa-spin"></i> Loading skills...</div>
+                    </div>
+                </div>
+
+                <!-- MCP Tab -->
+                <div class="tab-content" id="tab-mcp">
+                    <div class="tab-header">
+                        <div>
+                            <h2>MCP Servers</h2>
+                            <p>Extend the agent with real tools and services. Click any card to expand — see install commands, usage, and GitHub links only when you need them.</p>
+                        </div>
+                    </div>
+
+                    <!-- Category: Official -->
+                    <div class="mcp-cat-label"><i class="fa-solid fa-star"></i> Official — MCP Protocol</div>
+                    <div class="mcp-cards-grid" id="mcp-official-grid"></div>
+
+                    <!-- Category: Browser & Web -->
+                    <div class="mcp-cat-label" style="margin-top:28px;"><i class="fa-solid fa-globe"></i> Browser &amp; Web Automation</div>
+                    <div class="mcp-cards-grid" id="mcp-browser-grid"></div>
+
+                    <!-- Category: Charts & Drawing -->
+                    <div class="mcp-cat-label" style="margin-top:28px;"><i class="fa-solid fa-chart-bar"></i> Charts &amp; Visualization</div>
+                    <div class="mcp-cards-grid" id="mcp-charts-grid"></div>
+
+                    <!-- Category: Cloud & DevOps -->
+                    <div class="mcp-cat-label" style="margin-top:28px;"><i class="fa-solid fa-cloud"></i> Cloud &amp; DevOps</div>
+                    <div class="mcp-cards-grid" id="mcp-cloud-grid"></div>
+
+                    <!-- Category: Search & Knowledge -->
+                    <div class="mcp-cat-label" style="margin-top:28px;"><i class="fa-solid fa-magnifying-glass"></i> Search &amp; Knowledge</div>
+                    <div class="mcp-cards-grid" id="mcp-search-grid"></div>
+
+                    <!-- Your Custom Servers -->
+                    <div class="mcp-cat-label" style="margin-top:28px;"><i class="fa-solid fa-user-gear"></i> Your Custom Servers</div>
+                    <div class="tab-empty-state" id="mcp-empty">
+                        <div class="tab-empty-icon"><i class="fa-solid fa-plug"></i></div>
+                        <h3>No Custom MCP Servers</h3>
+                        <p>Add your own servers below. They are stored in localStorage and take effect on the next session.</p>
+                        <div class="tab-empty-actions">
+                            <button class="btn btn-primary" onclick="showMcpDialog()"><i class="fa-solid fa-plus"></i> Add Custom Server</button>
+                        </div>
+                    </div>
+                    <div class="mcp-list" id="mcp-list" style="display:none;"></div>
+                    <div style="margin-top:12px;">
+                        <button class="btn btn-outline" onclick="showMcpDialog()" style="font-size:12px;padding:6px 14px;">
+                            <i class="fa-solid fa-plus"></i> Add Custom Server
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Skills Discovery Tab -->
+                <div class="tab-content" id="tab-discover">
+                    <div class="tab-header">
+                        <div>
+                            <h2>Skill Discovery</h2>
+                            <p>Curated real skills from GitHub — click any card to preview the prompt, then use it as a template when creating your own skill in the <strong>Skills</strong> tab. Prompts are loaded progressively, only when you expand them.</p>
+                        </div>
+                        <div class="discover-search-wrap">
+                            <i class="fa-solid fa-magnifying-glass" style="color:var(--grey);font-size:13px;"></i>
+                            <input type="text" id="discover-search" placeholder="Filter skills..." oninput="filterDiscoverSkills(this.value)" style="border:none;background:none;outline:none;font-size:13px;width:180px;">
+                        </div>
+                    </div>
+                    <div class="discover-hint-banner">
+                        <i class="fa-solid fa-lightbulb"></i>
+                        <span>These are reference templates from open-source GitHub repositories. Click <strong>Expand</strong> to preview the full prompt, then go to <strong>Skills</strong> tab and create your own skill based on it.</span>
+                    </div>
+                    <div class="discover-grid" id="discover-grid"></div>
+                </div>
+
+                <!-- Tools Tab -->
+                <div class="tab-content" id="tab-tools">
+                    <div class="tab-header">
+                        <div>
+                            <h2>Builtin Tools</h2>
+                            <p>Core tools available to all agents by default. These tools are sandboxed to the workspace directory for security.</p>
+                        </div>
+                    </div>
+                    <div class="tools-list" id="tools-list"></div>
                 </div>
             </div>
         </div>
     </div>
 
-    <div class="dialog-overlay" id="dialog-overlay">
+    <!-- Skill Create/Edit Dialog -->
+    <div class="dialog-overlay" id="skill-dialog-overlay">
         <div class="dialog">
             <div class="dialog-header">
-                <h3 id="dialog-title">Create Skill</h3>
-                <button class="dialog-close" onclick="hideDialog()">&times;</button>
+                <h3 id="skill-dialog-title">Create Skill</h3>
+                <button class="dialog-close" onclick="closeSkillDialog()">&times;</button>
             </div>
-            <div class="dialog-body" id="dialog-body"></div>
+            <div class="dialog-body" id="skill-dialog-body"></div>
             <div class="dialog-footer">
-                <button class="btn btn-outline" onclick="hideDialog()">Cancel</button>
-                <button class="btn btn-primary" id="dialog-confirm" onclick="confirmDialog()">Create</button>
+                <button class="btn btn-outline" onclick="closeSkillDialog()">Cancel</button>
+                <button class="btn btn-primary" id="skill-dialog-confirm" onclick="confirmSkillDialog()">Create</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MCP Add Dialog -->
+    <div class="dialog-overlay" id="mcp-dialog-overlay">
+        <div class="dialog">
+            <div class="dialog-header">
+                <h3>Add MCP Server</h3>
+                <button class="dialog-close" onclick="closeMcpDialog()">&times;</button>
+            </div>
+            <div class="dialog-body">
+                <div class="form-group">
+                    <label>Server Name *</label>
+                    <input type="text" id="mcp-name" placeholder="e.g., my-git-server">
+                </div>
+                <div class="form-group">
+                    <label>Command *</label>
+                    <input type="text" id="mcp-command" placeholder="e.g., npx, uvx, python">
+                </div>
+                <div class="form-group">
+                    <label>Arguments</label>
+                    <input type="text" id="mcp-args" placeholder="e.g., -y @server/fetch">
+                    <p class="form-hint">Space-separated arguments</p>
+                </div>
+                <div class="form-group">
+                    <label>Description</label>
+                    <textarea id="mcp-desc" rows="2" placeholder="What does this server provide?"></textarea>
+                </div>
+            </div>
+            <div class="dialog-footer">
+                <button class="btn btn-outline" onclick="closeMcpDialog()">Cancel</button>
+                <button class="btn btn-primary" onclick="saveMcpServer()">Add Server</button>
             </div>
         </div>
     </div>
@@ -154,62 +245,1055 @@
     <div class="toast-container" id="toast-container"></div>
 
     <style>
-        .page-content { flex: 1; overflow-y: auto; padding: 24px 32px; background: var(--light-grey-bg); }
-        .page-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 24px; }
-        .page-header h1 { font-size: 20px; font-weight: 600; color: var(--text-primary); margin-bottom: 4px; }
-        .page-header p { font-size: 13px; color: var(--grey); }
-        .skills-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(340px, 1fr)); gap: 16px; }
-        .skill-card { background: #FFFFFF; border: 1px solid var(--border-color); padding: 20px; transition: box-shadow 0.2s, border-color 0.2s; }
+        /* ── Page Tabs ──────────────────────────────────────── */
+        .page-tabs { display: flex; gap: 2px; border-bottom: 1px solid var(--border-color); margin-bottom: 24px; }
+        .page-tab {
+            display: flex; align-items: center; gap: 8px;
+            padding: 10px 20px; border: none; background: none;
+            font-size: 14px; font-weight: 500; color: var(--grey);
+            cursor: pointer; border-bottom: 2px solid transparent;
+            margin-bottom: -1px; transition: color 0.15s, border-color 0.15s;
+            font-family: "Inter", sans-serif;
+        }
+        .page-tab:hover { color: var(--text-secondary); }
+        .page-tab.active { color: var(--primary); border-bottom-color: var(--primary); }
+        .page-tab i { font-size: 14px; }
+
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+        .tab-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 20px; }
+        .tab-header h2 { font-size: 18px; font-weight: 600; color: var(--text-primary); margin: 0 0 4px; }
+        .tab-header p { font-size: 13px; color: var(--grey); margin: 0; max-width: 600px; }
+
+        /* ── Skills Grid ───────────────────────────────────── */
+        .skills-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 16px; }
+        .skill-card { background: #ffffff; border: 1px solid var(--border-color); padding: 18px; transition: border-color 0.15s, box-shadow 0.15s; border-radius: 10px; }
         .skill-card:hover { border-color: var(--primary); box-shadow: 0 2px 12px rgba(0,105,67,0.08); }
-        .skill-card-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 12px; }
-        .skill-card-title-row { display: flex; align-items: center; }
+        .skill-card-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px; }
+        .skill-card-title-row { display: flex; align-items: center; gap: 8px; }
+        .skill-card-icon { font-size: 18px; color: var(--primary); }
         .skill-card h3 { font-size: 15px; font-weight: 600; color: var(--text-primary); }
-        .skill-badge { padding: 2px 8px; font-size: 11px; font-weight: 500; border: 1px solid; }
-        .skill-badge.enabled { background: var(--success-bg); color: var(--success-text); border-color: var(--success-border); }
-        .skill-badge.disabled { background: var(--error-bg); color: var(--error-text); border-color: var(--error-border); }
+        .skill-badge { font-size: 11px; padding: 2px 8px; border-radius: 4px; font-weight: 500; }
+        .skill-badge.enabled { background: rgba(0,105,67,0.1); color: var(--primary); }
+        .skill-badge.disabled { background: rgba(239,68,68,0.1); color: #dc2626; }
         .skill-card-desc { font-size: 13px; color: var(--grey); line-height: 1.5; margin-bottom: 10px; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
         .skill-card-tags { display: flex; gap: 4px; flex-wrap: wrap; margin-bottom: 10px; }
         .skill-tag { font-size: 11px; padding: 2px 6px; background: var(--light-grey-bg); color: var(--grey); border-radius: 3px; }
         .skill-card-tools { display: flex; gap: 4px; flex-wrap: wrap; margin-bottom: 12px; }
-        .tool-chip { font-size: 10px; padding: 2px 6px; background: var(--primary-bg); color: var(--primary); border-radius: 3px; display: flex; align-items: center; gap: 3px; }
-        .tool-chip i { font-size: 9px; }
-        .skill-card-footer { display: flex; justify-content: space-between; align-items: center; font-size: 11px; color: var(--grey); padding-top: 12px; border-top: 1px solid var(--border-color); }
-        .skill-card-actions { display: flex; gap: 8px; }
-        .skill-card-actions button { background: none; border: none; color: var(--grey); cursor: pointer; padding: 4px 6px; border-radius: 4px; transition: background 0.15s, color 0.15s; }
+        .tool-chip { font-size: 10px; padding: 2px 6px; background: rgba(0,105,67,0.08); color: var(--primary); border-radius: 3px; display: flex; align-items: center; gap: 3px; }
+        .skill-card-footer { display: flex; justify-content: space-between; align-items: center; font-size: 11px; color: var(--grey); padding-top: 10px; border-top: 1px solid var(--border-color); }
+        .skill-card-actions { display: flex; gap: 6px; }
+        .skill-card-actions button { background: none; border: none; color: var(--grey); cursor: pointer; padding: 4px 6px; border-radius: 4px; transition: background 0.12s, color 0.12s; }
         .skill-card-actions button:hover { background: var(--light-grey-bg); color: var(--primary); }
         .loading-state { grid-column: 1 / -1; text-align: center; padding: 48px; color: var(--grey); }
+        .empty-state { grid-column: 1 / -1; text-align: center; padding: 48px; color: var(--grey); }
+        .empty-state i { font-size: 40px; opacity: 0.3; display: block; margin-bottom: 12px; }
+
+        /* ── MCP Progressive Disclosure ─────────────────────── */
+        .mcp-cat-label { font-size: 12px; font-weight: 700; color: var(--grey); text-transform: uppercase; letter-spacing: 0.6px; margin-bottom: 10px; display: flex; align-items: center; gap: 6px; }
+        .mcp-cat-label i { font-size: 11px; }
+
+        .mcp-cards-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 12px; }
+
+        .mcp-card {
+            background: #fff; border: 1px solid var(--border-color);
+            border-radius: 12px; padding: 0;
+            transition: border-color 0.15s, box-shadow 0.15s;
+            cursor: pointer;
+        }
+        .mcp-card:hover { border-color: var(--primary); box-shadow: 0 3px 14px rgba(0,105,67,0.1); }
+
+        .mcp-card-head { display: flex; align-items: center; gap: 12px; padding: 14px 16px; }
+        .mcp-card-icon { width: 38px; height: 38px; border-radius: 9px; display: flex; align-items: center; justify-content: center; font-size: 16px; flex-shrink: 0; }
+        .mcp-card-title { flex: 1; min-width: 0; }
+        .mcp-card-title-name { font-size: 13px; font-weight: 600; color: var(--text-primary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .mcp-card-title-owner { font-size: 11px; color: var(--grey); margin-top: 1px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .mcp-card-meta { display: flex; flex-direction: column; align-items: flex-end; gap: 4px; flex-shrink: 0; }
+        .mcp-card-stars { display: flex; align-items: center; gap: 3px; font-size: 11px; color: #f59e0b; font-weight: 600; }
+        .mcp-card-lang { font-size: 10px; color: var(--grey); background: var(--light-grey-bg); padding: 1px 6px; border-radius: 3px; }
+
+        /* Progressive disclosure: collapsed */
+        .mcp-card-desc { font-size: 12px; color: var(--grey); line-height: 1.5; padding: 0 16px 0; max-height: 0; overflow: hidden; opacity: 0; transition: max-height 0.25s ease, opacity 0.2s ease, padding 0.2s ease; }
+        .mcp-card.expanded .mcp-card-desc { max-height: 80px; opacity: 1; padding-bottom: 12px; }
+
+        /* Progressive disclosure: expanded */
+        .mcp-card-detail { display: none; padding: 0 16px 14px; border-top: 1px solid var(--border-color); margin-top: 0; }
+        .mcp-card.expanded .mcp-card-detail { display: block; }
+        .mcp-card-detail-tags { display: flex; flex-wrap: wrap; gap: 4px; margin: 10px 0 10px; }
+        .mcp-tag { font-size: 10px; padding: 2px 7px; background: var(--light-grey-bg); color: var(--grey); border-radius: 4px; border: 1px solid var(--border-color); }
+        .mcp-tag.official { background: rgba(0,105,67,0.08); color: var(--primary); border-color: rgba(0,105,67,0.2); }
+        .mcp-install-row { display: flex; align-items: center; gap: 6px; margin-bottom: 8px; }
+        .mcp-install-code { font-size: 11px; color: var(--primary); font-family: "JetBrains Mono", monospace; background: rgba(0,105,67,0.06); padding: 4px 8px; border-radius: 5px; border: 1px solid rgba(0,105,67,0.15); flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .mcp-copy-btn { background: none; border: none; color: var(--grey); cursor: pointer; font-size: 12px; padding: 4px 6px; border-radius: 4px; flex-shrink: 0; transition: color 0.12s; }
+        .mcp-copy-btn:hover { color: var(--primary); }
+        .mcp-github-link { font-size: 11px; color: var(--grey); display: flex; align-items: center; gap: 4px; text-decoration: none; }
+        .mcp-github-link:hover { color: var(--primary); }
+        .mcp-github-link i { font-size: 11px; }
+
+        /* Collapsed hint */
+        .mcp-card-hint { font-size: 10px; color: var(--grey); padding: 0 16px 10px; display: flex; align-items: center; gap: 4px; max-height: 0; overflow: hidden; opacity: 0; transition: max-height 0.2s, opacity 0.2s; }
+        .mcp-card-hint i { font-size: 9px; }
+        .mcp-card:not(.expanded) .mcp-card-hint { max-height: 20px; opacity: 1; }
+        .mcp-card.expanded .mcp-card-hint { max-height: 0; opacity: 0; }
+
+        /* ── Skill Discovery ────────────────────────────────── */
+        .discover-search-wrap { display: flex; align-items: center; gap: 8px; background: #fff; border: 1px solid var(--border-color); border-radius: 8px; padding: 6px 12px; }
+        .discover-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(340px, 1fr)); gap: 14px; }
+        .discover-card { background: #fff; border: 1px solid var(--border-color); border-radius: 12px; padding: 0; overflow: hidden; transition: border-color 0.15s, box-shadow 0.15s; }
+        .discover-card:hover { border-color: var(--primary); box-shadow: 0 3px 14px rgba(0,105,67,0.1); }
+        .discover-card-head { display: flex; align-items: flex-start; gap: 12px; padding: 14px 16px; cursor: pointer; }
+        .discover-card-icon { width: 38px; height: 38px; border-radius: 9px; display: flex; align-items: center; justify-content: center; font-size: 16px; flex-shrink: 0; }
+        .discover-card-title { flex: 1; min-width: 0; }
+        .discover-card-name { font-size: 13px; font-weight: 600; color: var(--text-primary); }
+        .discover-card-source { font-size: 11px; color: var(--grey); margin-top: 2px; }
+        .discover-card-badge { font-size: 10px; padding: 2px 7px; border-radius: 4px; font-weight: 600; background: rgba(0,105,67,0.1); color: var(--primary); flex-shrink: 0; }
+        .discover-card-desc { font-size: 12px; color: var(--grey); line-height: 1.5; padding: 0 16px 12px; }
+        .discover-card-expand { display: flex; align-items: center; gap: 5px; font-size: 11px; color: var(--primary); padding: 0 16px 12px; cursor: pointer; background: none; border: none; width: 100%; text-align: left; }
+        .discover-card-expand:hover { text-decoration: underline; }
+        .discover-card-expand i { font-size: 10px; transition: transform 0.2s; }
+        .discover-card.expanded .discover-card-expand i { transform: rotate(180deg); }
+        .discover-card-detail { display: none; padding: 0 16px 14px; border-top: 1px solid var(--border-color); }
+        .discover-card.expanded .discover-card-detail { display: block; }
+        .discover-prompt-label { font-size: 11px; font-weight: 600; color: var(--grey); margin: 10px 0 6px; text-transform: uppercase; letter-spacing: 0.3px; }
+        .discover-prompt-text { font-size: 11px; color: var(--text-secondary); line-height: 1.6; background: var(--light-grey-bg); padding: 10px 12px; border-radius: 6px; border-left: 3px solid var(--primary); max-height: 200px; overflow-y: auto; white-space: pre-wrap; }
+        .discover-card-actions { display: flex; gap: 6px; margin-top: 10px; flex-wrap: wrap; }
+        .discover-action-btn { font-size: 11px; padding: 5px 12px; border-radius: 5px; border: 1px solid var(--border-color); background: #fff; color: var(--text-secondary); cursor: pointer; display: flex; align-items: center; gap: 5px; transition: border-color 0.12s, color 0.12s; }
+        .discover-action-btn:hover { border-color: var(--primary); color: var(--primary); }
+        .discover-action-btn.primary { background: var(--primary); color: #fff; border-color: var(--primary); }
+        .discover-action-btn.primary:hover { opacity: 0.9; }
+        .discover-hidden { display: none; }
+        .discover-hint-banner { display: flex; align-items: flex-start; gap: 10px; background: rgba(0,105,67,0.06); border: 1px solid rgba(0,105,67,0.2); border-radius: 8px; padding: 12px 16px; margin-bottom: 16px; font-size: 12px; color: var(--text-secondary); line-height: 1.5; }
+        .discover-hint-banner i { color: #f59e0b; font-size: 14px; flex-shrink: 0; margin-top: 1px; }
+
+        /* ── Your MCP servers (custom) ─────────────────────── */
+        .tab-empty-state { text-align: center; padding: 28px 24px; background: #ffffff; border: 1px dashed var(--border-color); border-radius: 10px; }
+        .tab-empty-icon { font-size: 40px; color: var(--border-color); margin-bottom: 16px; }
+        .tab-empty-state h3 { font-size: 16px; font-weight: 600; color: var(--text-primary); margin-bottom: 8px; }
+        .tab-empty-state p { font-size: 13px; color: var(--grey); margin-bottom: 20px; max-width: 480px; margin-left: auto; margin-right: auto; }
+        .tab-empty-state code { background: var(--light-grey-bg); padding: 1px 5px; border-radius: 3px; font-size: 12px; }
+        .tab-empty-actions { display: flex; gap: 8px; justify-content: center; }
+        /* ── MCP Progressive Disclosure ─────────────────────── */
+        .tools-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 12px; }
+        .tool-card { background: #ffffff; border: 1px solid var(--border-color); border-radius: 10px; padding: 16px; }
+        .tool-card-header { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; }
+        .tool-card-icon { width: 36px; height: 36px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 16px; flex-shrink: 0; }
+        .tool-card-icon.read { background: rgba(59,130,246,0.1); color: #3b82f6; }
+        .tool-card-icon.write { background: rgba(16,185,129,0.1); color: #10b981; }
+        .tool-card-icon.edit { background: rgba(245,158,11,0.1); color: #f59e0b; }
+        .tool-card-icon.bash { background: rgba(139,92,246,0.1); color: #7c3aed; }
+        .tool-card-icon.search { background: rgba(236,72,153,0.1); color: #db2777; }
+        .tool-card h3 { font-size: 14px; font-weight: 600; color: var(--text-primary); }
+        .tool-card p { font-size: 12px; color: var(--grey); line-height: 1.5; margin-bottom: 8px; }
+        .tool-card-security { font-size: 11px; color: #6b7280; display: flex; align-items: center; gap: 4px; }
+        .tool-card-security i { font-size: 10px; }
+
+    /* ── Shared ───────────────────────────────────────── */
+    .page-skills > .app-container > .main-content > .page-content {
+        overflow-y: auto;
+    }
+
+    .btn { padding: 8px 16px; border-radius: 6px; cursor: pointer; font-size: 13px; font-weight: 500; transition: opacity 0.15s; display: inline-flex; align-items: center; gap: 6px; border: none; font-family: "Inter", sans-serif; }
+        .btn:hover { opacity: 0.9; }
+        .btn-primary { background: var(--primary); color: #ffffff; }
+        .btn-outline { background: #ffffff; color: var(--text-secondary); border: 1px solid var(--border-color); }
+        .btn-outline:hover { background: var(--light-grey-bg); }
         .dialog-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); align-items: center; justify-content: center; z-index: 1000; overflow-y: auto; padding: 20px; }
         .dialog-overlay.show { display: flex; }
-        .dialog { background: #FFFFFF; padding: 24px; width: 100%; max-width: 520px; border-radius: 12px; max-height: 90vh; overflow-y: auto; }
-        .dialog-header { display: flex; justify-content: space-between; margin-bottom: 20px; }
+        .dialog { background: #ffffff; padding: 24px; width: 100%; max-width: 520px; border-radius: 12px; max-height: 90vh; overflow-y: auto; }
+        .dialog-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
         .dialog-header h3 { font-size: 16px; font-weight: 600; display: flex; align-items: center; gap: 8px; }
         .dialog-close { background: none; border: none; font-size: 20px; color: var(--grey); cursor: pointer; }
         .dialog-body { margin-bottom: 20px; }
         .dialog-footer { display: flex; justify-content: flex-end; gap: 8px; }
-        .form-group { margin-bottom: 16px; }
+        .form-group { margin-bottom: 14px; }
         .form-group label { display: block; font-size: 13px; font-weight: 500; color: var(--text-secondary); margin-bottom: 6px; }
-        .form-group input, .form-group textarea, .form-group select { width: 100%; padding: 10px 12px; border: 1px solid var(--border-color); font-size: 14px; background: #FFFFFF; border-radius: 6px; box-sizing: border-box; }
+        .form-group input, .form-group textarea, .form-group select { width: 100%; padding: 9px 12px; border: 1px solid var(--border-color); font-size: 13px; background: #ffffff; border-radius: 6px; box-sizing: border-box; font-family: inherit; }
         .form-group input:focus, .form-group textarea:focus { outline: none; border-color: var(--primary); }
-        .form-group textarea { resize: vertical; min-height: 60px; }
+        .form-group textarea { resize: vertical; min-height: 52px; }
         .form-hint { font-size: 11px; color: var(--grey); margin-top: 4px; }
         .form-row-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
         .icon-picker { display: flex; flex-wrap: wrap; gap: 4px; margin-bottom: 4px; }
-        .icon-option { background: var(--light-grey-bg); border: 1px solid var(--border-color); border-radius: 6px; padding: 8px 10px; cursor: pointer; transition: background 0.15s, border-color 0.15s; font-size: 14px; color: var(--grey); }
-        .icon-option:hover { border-color: var(--primary); background: var(--primary-bg); color: var(--primary); }
-        .icon-option.selected { background: var(--primary); border-color: var(--primary); color: #FFFFFF; }
-        .tools-grid { display: flex; flex-wrap: wrap; gap: 6px; }
-        .tool-checkbox-label { display: flex; align-items: center; gap: 6px; padding: 6px 12px; border: 1px solid var(--border-color); border-radius: 6px; cursor: pointer; font-size: 13px; color: var(--text-secondary); transition: background 0.15s, border-color 0.15s; }
-        .tool-checkbox-label:hover { border-color: var(--primary); background: var(--primary-bg); }
-        .tool-checkbox-label.selected { background: var(--primary-bg); border-color: var(--primary); color: var(--primary); }
+        .icon-option { background: var(--light-grey-bg); border: 1px solid var(--border-color); border-radius: 6px; padding: 7px 9px; cursor: pointer; transition: background 0.12s, border-color 0.12s; font-size: 14px; color: var(--grey); }
+        .icon-option:hover { border-color: var(--primary); background: rgba(0,105,67,0.06); color: var(--primary); }
+        .icon-option.selected { background: var(--primary); border-color: var(--primary); color: #ffffff; }
+        .tools-grid { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 4px; }
+        .tool-checkbox-label { display: flex; align-items: center; gap: 6px; padding: 5px 10px; border: 1px solid var(--border-color); border-radius: 6px; cursor: pointer; font-size: 12px; color: var(--text-secondary); transition: background 0.12s, border-color 0.12s; }
+        .tool-checkbox-label:hover { border-color: var(--primary); background: rgba(0,105,67,0.06); }
+        .tool-checkbox-label.selected { background: rgba(0,105,67,0.08); border-color: var(--primary); color: var(--primary); }
         .tool-checkbox-label input { display: none; }
-        .btn { padding: 8px 16px; border-radius: 6px; cursor: pointer; font-size: 14px; font-weight: 500; transition: opacity 0.15s; }
-        .btn:hover { opacity: 0.9; }
-        .btn-primary { background: var(--primary); color: #FFFFFF; border: 1px solid var(--primary); }
-        .btn-outline { background: #FFFFFF; color: var(--text-secondary); border: 1px solid var(--border-color); }
-        .btn-outline:hover { background: var(--light-grey-bg); }
+        .toast-container { position: fixed; bottom: 20px; right: 20px; z-index: 2000; display: flex; flex-direction: column; gap: 8px; }
+        .toast { background: var(--primary); color: #ffffff; padding: 10px 16px; border-radius: 8px; font-size: 13px; display: flex; align-items: center; gap: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.15); animation: toastIn 0.2s ease; }
+        .toast.error { background: #dc2626; }
+        @keyframes toastIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
     </style>
 
-    <script src="/alicloud-main-agent/web/static/js/skills.js"></script>
+    <script src="/static/js/shared-sidebar.js"></script>
+
+    <script>
+    // ─────────────────────────────────────────────────────────────
+    //  DATA: Real MCP Servers from GitHub (curated, categorized)
+    // ─────────────────────────────────────────────────────────────
+    const MCP_SERVERS = {
+
+        official: [
+            {
+                name: 'GitHub MCP Server', owner: 'github', repo: 'github-mcp-server', stars: '29.9k',
+                desc: 'GitHub\'s official MCP server. Manage repos, issues, PRs, and automate workflows directly from the agent.',
+                lang: 'Go', icon: 'fa-brands fa-github', bg: 'rgba(36,41,46,0.1)', fc: '#24292f',
+                tags: ['Official', 'GitHub', 'CI/CD'],
+                install: 'npx -y @modelcontextprotocol/server-github',
+                url: 'https://github.com/github/mcp-server'
+            },
+            {
+                name: 'MCP Official Servers', owner: 'modelcontextprotocol', repo: 'servers', stars: '85.8k',
+                desc: 'Official reference implementation. Includes Filesystem, Git, Fetch, Memory, Sequential Thinking, and Time servers — the standard library of MCP.',
+                lang: 'TypeScript', icon: 'fa-solid fa-cubes', bg: 'rgba(124,58,237,0.1)', fc: '#7c3aed',
+                tags: ['Official', 'Reference', 'Filesystem'],
+                install: 'npx -y @modelcontextprotocol/server-filesystem ~/workspace',
+                url: 'https://github.com/modelcontextprotocol/servers'
+            },
+            {
+                name: 'Google APIs Toolbox', owner: 'googleapis', repo: 'mcp-toolbox', stars: '15.2k',
+                desc: 'Connect to PostgreSQL, MySQL, Redis, BigQuery, MongoDB, SQLite, Oracle, and more. The most versatile database MCP.',
+                lang: 'Go', icon: 'fa-solid fa-database', bg: 'rgba(59,130,246,0.1)', fc: '#3b82f6',
+                tags: ['Official', 'Database', 'PostgreSQL'],
+                install: 'npx -y @modelcontextprotocol/server-googleapis',
+                url: 'https://github.com/googleapis/mcp-toolbox'
+            },
+            {
+                name: 'Playwright MCP', owner: 'microsoft', repo: 'playwright-mcp', stars: '32.5k',
+                desc: 'Browser automation via Playwright. Open pages, take screenshots, extract content, fill forms, interact with web apps.',
+                lang: 'TypeScript', icon: 'fa-solid fa-globe', bg: 'rgba(16,185,129,0.1)', fc: '#10b981',
+                tags: ['Official', 'Browser', 'Automation'],
+                install: 'npx -y @modelcontextprotocol/server-playwright',
+                url: 'https://github.com/microsoft/playwright-mcp'
+            },
+        ],
+
+        browser: [
+            {
+                name: 'Hyperbrowser MCP', owner: 'hyperbrowserai', repo: 'mcp', stars: '761',
+                desc: 'Web scraping, structured data extraction, and crawling via Hyperbrowser. Integrates with OpenAI CUA and Claude Computer Use.',
+                lang: 'TypeScript', icon: 'fa-solid fa-robot', bg: 'rgba(236,72,153,0.1)', fc: '#db2777',
+                tags: ['Browser', 'Scraping', 'Crawling'],
+                install: 'npx -y @hyperbrowser/mcp',
+                url: 'https://github.com/hyperbrowserai/mcp'
+            },
+            {
+                name: 'MCP Playwright Browser', owner: 'Mhrnqaruni', repo: 'mcp-playwright-browser', stars: '—',
+                desc: 'Production-grade Playwright MCP with 71 tools, multi-tab support, accessibility tree, session persistence, and token-optimized profiles.',
+                lang: 'TypeScript', icon: 'fa-solid fa-layer-group', bg: 'rgba(245,158,11,0.1)', fc: '#f59e0b',
+                tags: ['Browser', 'Playwright', 'Multi-Tab'],
+                install: 'npx -y @mhrnqaruni/mcp-playwright-browser',
+                url: 'https://github.com/Mhrnqaruni/mcp-playwright-browser'
+            },
+        ],
+
+        charts: [
+            {
+                name: 'MCP Plots', owner: 'MR901', repo: 'mcp-plots', stars: '—',
+                desc: 'Generate charts via matplotlib/plotly and Mermaid diagrams. Output as Mermaid (instant preview in Cursor), PNG, or text.',
+                lang: 'Python', icon: 'fa-solid fa-chart-line', bg: 'rgba(16,185,129,0.1)', fc: '#10b981',
+                tags: ['Charts', 'matplotlib', 'Plotly'],
+                install: 'pip install mcp-plots && uvx mcp-plots',
+                url: 'https://github.com/MR901/mcp-plots'
+            },
+            {
+                name: 'Excalidraw Diagram Skill', owner: 'coleam00', repo: 'excalidraw-diagram-skill', stars: '—',
+                desc: 'Generate hand-drawn Excalidraw diagrams from natural language. Includes Playwright-based render pipeline for agent self-validation.',
+                lang: 'Markdown', icon: 'fa-solid fa-pen-nib', bg: 'rgba(245,158,11,0.1)', fc: '#f59e0b',
+                tags: ['Diagram', 'Excalidraw', 'Skill'],
+                install: 'See GitHub repo for setup instructions',
+                url: 'https://github.com/coleam00/excalidraw-diagram-skill'
+            },
+            {
+                name: 'Draw.io Skill', owner: 'Agents365-ai', repo: 'drawio-skill', stars: '—',
+                desc: 'Generate professional diagrams (ERD, UML Class, Sequence, Architecture, ML, Flowchart) from natural language. Export to PNG/SVG/PDF.',
+                lang: 'Markdown', icon: 'fa-solid fa-diagram-project', bg: 'rgba(59,130,246,0.1)', fc: '#3b82f6',
+                tags: ['Diagram', 'Draw.io', 'UML'],
+                install: 'See GitHub repo for setup instructions',
+                url: 'https://github.com/agents365-ai/drawio-skill'
+            },
+        ],
+
+        cloud: [
+            {
+                name: 'Alibaba Cloud ECS', owner: 'aliyun', repo: 'alibabacloud-ecs-mcp-server', stars: '108',
+                desc: 'Manage ECS instances, deploy applications, analyze projects, and use dynamic API tools for Alibaba Cloud — directly from the agent.',
+                lang: 'Python', icon: 'fa-solid fa-server', bg: 'rgba(239,68,68,0.1)', fc: '#dc2626',
+                tags: ['Alibaba Cloud', 'ECS', 'Cloud'],
+                install: 'pip install alibabacloud-ecs-mcp-server',
+                url: 'https://github.com/aliyun/alibabacloud-ecs-mcp-server'
+            },
+            {
+                name: 'Alibaba Cloud OSS', owner: 'aliyun', repo: 'alibabacloud-oss-mcp-server', stars: '3',
+                desc: 'Alibaba Cloud Object Storage Service (OSS) MCP server. Manage buckets, list objects, and get storage statistics.',
+                lang: 'TypeScript', icon: 'fa-solid fa-cloud-arrow-up', bg: 'rgba(239,68,68,0.1)', fc: '#dc2626',
+                tags: ['Alibaba Cloud', 'OSS', 'Storage'],
+                install: 'npx -y @modelcontextprotocol/server-aliyun-oss',
+                url: 'https://github.com/aliyun/alibabacloud-oss-mcp-server'
+            },
+            {
+                name: 'Alibaba Cloud FC', owner: 'aliyun', repo: 'alibabacloud-fc-mcp-server', stars: '—',
+                desc: 'Manage serverless functions on Alibaba Cloud Function Compute. Deploy functions, manage lifecycles, configure VPCs, and monitor logs.',
+                lang: 'TypeScript', icon: 'fa-solid fa-bolt', bg: 'rgba(239,68,68,0.1)', fc: '#dc2626',
+                tags: ['Alibaba Cloud', 'Function Compute', 'Serverless'],
+                install: 'npx -y @aliyun/fc-mcp-server',
+                url: 'https://github.com/aliyun/alibabacloud-fc-mcp-server'
+            },
+        ],
+
+        search: [
+            {
+                name: 'Brave Search', owner: 'brave', repo: 'brave-search-mcp-server', stars: '1k',
+                desc: 'Fresh, accurate web search powered by Brave. Avoids hallucination from outdated training data.',
+                lang: 'TypeScript', icon: 'fa-solid fa-magnifying-glass', bg: 'rgba(245,158,11,0.1)', fc: '#f59e0b',
+                tags: ['Search', 'Web', 'Brave'],
+                install: 'npx -y @modelcontextprotocol/server-brave-search',
+                url: 'https://github.com/brave/brave-search-mcp-server'
+            },
+            {
+                name: 'Exa Search', owner: 'exa-labs', repo: 'exa-mcp-server', stars: '4.4k',
+                desc: 'Semantic web and code search via Exa. ML-based relevance — finds results that keyword search misses.',
+                lang: 'TypeScript', icon: 'fa-solid fa-brain', bg: 'rgba(236,72,153,0.1)', fc: '#db2777',
+                tags: ['Search', 'Semantic', 'Code'],
+                install: 'npx -y @exa-mcp/server',
+                url: 'https://github.com/exa-labs/exa-mcp-server'
+            },
+            {
+                name: 'DBHub', owner: 'bytebase', repo: 'dbhub', stars: '2.7k',
+                desc: 'Zero-dependency database MCP for PostgreSQL, MySQL, SQL Server, MariaDB, SQLite. Multi-DB connections via TOML config.',
+                lang: 'Go', icon: 'fa-solid fa-database', bg: 'rgba(139,92,246,0.1)', fc: '#7c3aed',
+                tags: ['Database', 'PostgreSQL', 'MySQL'],
+                install: 'go install github.com/bytebase/dbhub@latest',
+                url: 'https://github.com/bytebase/dbhub'
+            },
+            {
+                name: 'GitMCP', owner: 'wong2', repo: 'git-mcp', stars: '8k',
+                desc: 'Transform any GitHub repo into AI context. Zero-setup remote MCP — provides docs and code directly, eliminates hallucinations.',
+                lang: 'TypeScript', icon: 'fa-solid fa-code-branch', bg: 'rgba(0,105,67,0.1)', fc: '#00693c',
+                tags: ['GitHub', 'Context', 'Docs'],
+                install: 'npx -y @wong2/git-mcp',
+                url: 'https://github.com/wong2/git-mcp'
+            },
+            {
+                name: 'Slack MCP', owner: 'korotovsky', repo: 'slack-mcp-server', stars: '1.5k',
+                desc: 'Full Slack integration. Read/write messages, manage channels, search history, send DMs — all from the agent.',
+                lang: 'Go', icon: 'fa-brands fa-slack', bg: 'rgba(74,144,226,0.1)', fc: '#4a90e2',
+                tags: ['Slack', 'Communication', 'Messaging'],
+                install: 'npx -y @korotovsky/slack-mcp-server',
+                url: 'https://github.com/korotovsky/slack-mcp-server'
+            },
+        ],
+    };
+
+    // ─────────────────────────────────────────────────────────────
+    //  DATA: Curated Skills (progressive disclosure — prompts lazy-loaded)
+    // ─────────────────────────────────────────────────────────────
+    //  prompt_url: link to the actual SKILL.md on GitHub — loaded on demand
+    const CURATED_SKILLS = [
+        {
+            name: 'Spec-Driven Development',
+            source: 'addyosmani/agent-skills',
+            desc: 'Write a PRD (Product Requirements Document) covering objectives, commands, structure, code style, testing, and boundaries before any code. From the most-starred AI coding skills repo.',
+            icon: 'fa-solid fa-file-signature', bg: 'rgba(0,105,67,0.1)', fc: '#00693c',
+            category: 'Development',
+            stars: '43k',
+            prompt_url: 'https://raw.githubusercontent.com/addyosmani/agent-skills/main/skills/spec-driven-development/SKILL.md',
+            tags: ['Specification', 'Planning', 'PRD'],
+        },
+        {
+            name: 'TDD — Test-Driven Development',
+            source: 'addyosmani/agent-skills',
+            desc: 'Red-Green-Refactor cycle. Test pyramid (80% unit / 15% integration / 5% E2E), Beyonce Rule, DAMP over DRY, browser testing patterns.',
+            icon: 'fa-solid fa-check-double', bg: 'rgba(16,185,129,0.1)', fc: '#10b981',
+            category: 'Testing',
+            stars: '43k',
+            prompt_url: 'https://raw.githubusercontent.com/addyosmani/agent-skills/main/skills/test-driven-development/SKILL.md',
+            tags: ['Testing', 'TDD', 'Quality'],
+        },
+        {
+            name: 'Frontend UI Engineering',
+            source: 'addyosmani/agent-skills',
+            desc: 'Component architecture, design systems, state management, responsive design, WCAG 2.1 AA accessibility. For React, Vue, or plain HTML/CSS.',
+            icon: 'fa-solid fa-palette', bg: 'rgba(59,130,246,0.1)', fc: '#3b82f6',
+            category: 'Frontend',
+            stars: '43k',
+            prompt_url: 'https://raw.githubusercontent.com/addyosmani/agent-skills/main/skills/frontend-ui-engineering/SKILL.md',
+            tags: ['Frontend', 'UI', 'Accessibility'],
+        },
+        {
+            name: 'API & Interface Design',
+            source: 'addyosmani/agent-skills',
+            desc: 'Contract-first design, Hyrum\'s Law, One-Version Rule, error semantics, and boundary validation for APIs and module boundaries.',
+            icon: 'fa-solid fa-network-wired', bg: 'rgba(124,58,237,0.1)', fc: '#7c3aed',
+            category: 'Architecture',
+            stars: '43k',
+            prompt_url: 'https://raw.githubusercontent.com/addyosmani/agent-skills/main/skills/api-and-interface-design/SKILL.md',
+            tags: ['API', 'Architecture', 'REST'],
+        },
+        {
+            name: 'Security & Hardening',
+            source: 'addyosmani/agent-skills',
+            desc: 'OWASP Top 10 prevention, auth patterns, secrets management, dependency auditing, three-tier boundary system. Essential for any production code.',
+            icon: 'fa-solid fa-shield-halved', bg: 'rgba(239,68,68,0.1)', fc: '#dc2626',
+            category: 'Security',
+            stars: '43k',
+            prompt_url: 'https://raw.githubusercontent.com/addyosmani/agent-skills/main/skills/security-and-hardening/SKILL.md',
+            tags: ['Security', 'OWASP', 'Hardening'],
+        },
+        {
+            name: 'Code Review & Quality',
+            source: 'addyosmani/agent-skills',
+            desc: 'Five-axis review (correctness, design, readability, security, performance), change sizing ~100 lines, severity labels (Critical/Major/Minor), review speed norms.',
+            icon: 'fa-solid fa-magnifying-glass-chart', bg: 'rgba(245,158,11,0.1)', fc: '#f59e0b',
+            category: 'Quality',
+            stars: '43k',
+            prompt_url: 'https://raw.githubusercontent.com/addyosmani/agent-skills/main/skills/code-review-and-quality/SKILL.md',
+            tags: ['Review', 'Quality', 'Refactor'],
+        },
+        {
+            name: 'Debugging & Error Recovery',
+            source: 'addyosmani/agent-skills',
+            desc: 'Five-step triage: reproduce, localize, reduce, fix, guard. Stop-the-line rule, safe fallbacks, minimal reproduction cases.',
+            icon: 'fa-solid fa-bug-slash', bg: 'rgba(236,72,153,0.1)', fc: '#db2777',
+            category: 'Debugging',
+            stars: '43k',
+            prompt_url: 'https://raw.githubusercontent.com/addyosmani/agent-skills/main/skills/debugging-and-error-recovery/SKILL.md',
+            tags: ['Debug', 'Bug', 'Triage'],
+        },
+        {
+            name: 'Git Workflow & Versioning',
+            source: 'addyosmani/agent-skills',
+            desc: 'Trunk-based development, atomic commits, change sizing ~100 lines, the commit-as-save-point pattern, meaningful commit messages.',
+            icon: 'fa-solid fa-code-branch', bg: 'rgba(0,105,67,0.1)', fc: '#00693c',
+            category: 'DevOps',
+            stars: '43k',
+            prompt_url: 'https://raw.githubusercontent.com/addyosmani/agent-skills/main/skills/git-workflow-and-versioning/SKILL.md',
+            tags: ['Git', 'Versioning', 'DevOps'],
+        },
+        {
+            name: 'Browser Testing with DevTools',
+            source: 'addyosmani/agent-skills',
+            desc: 'Chrome DevTools MCP for live runtime data — DOM inspection, console logs, network traces, and performance profiling.',
+            icon: 'fa-solid fa-laptop-code', bg: 'rgba(59,130,246,0.1)', fc: '#3b82f6',
+            category: 'Testing',
+            stars: '43k',
+            prompt_url: 'https://raw.githubusercontent.com/addyosmani/agent-skills/main/skills/browser-testing-with-devtools/SKILL.md',
+            tags: ['Browser', 'DevTools', 'Playwright'],
+        },
+        {
+            name: 'Context Engineering',
+            source: 'addyosmani/agent-skills',
+            desc: 'Feed the agent the right information at the right time. Rules files, context packing, MCP integrations. Key for large codebases.',
+            icon: 'fa-solid fa-brain', bg: 'rgba(124,58,237,0.1)', fc: '#7c3aed',
+            category: 'AI Engineering',
+            stars: '43k',
+            prompt_url: 'https://raw.githubusercontent.com/addyosmani/agent-skills/main/skills/context-engineering/SKILL.md',
+            tags: ['Context', 'Memory', 'Large Codebase'],
+        },
+        {
+            name: 'Performance Optimization',
+            source: 'addyosmani/agent-skills',
+            desc: 'Measure-first approach. Core Web Vitals targets, profiling workflows, bundle analysis, anti-pattern detection.',
+            icon: 'fa-solid fa-gauge-high', bg: 'rgba(16,185,129,0.1)', fc: '#10b981',
+            category: 'Performance',
+            stars: '43k',
+            prompt_url: 'https://raw.githubusercontent.com/addyosmani/agent-skills/main/skills/performance-optimization/SKILL.md',
+            tags: ['Performance', 'Web Vitals', 'Profiling'],
+        },
+        {
+            name: 'Planning & Task Breakdown',
+            source: 'addyosmani/agent-skills',
+            desc: 'Decompose specs into small, verifiable tasks with acceptance criteria and dependency ordering. The foundation of every good implementation.',
+            icon: 'fa-solid fa-list-check', bg: 'rgba(245,158,11,0.1)', fc: '#f59e0b',
+            category: 'Planning',
+            stars: '43k',
+            prompt_url: 'https://raw.githubusercontent.com/addyosmani/agent-skills/main/skills/planning-and-task-breakdown/SKILL.md',
+            tags: ['Planning', 'Tasks', 'Agile'],
+        },
+        {
+            name: 'PPT Generation (DeepPresenter)',
+            source: 'icip-cas/PPTAgent',
+            desc: 'AI-powered PPT generation via DeepPresenter (9B). Auto-generates slides from content, with Deep Research integration and 20+ built-in tools. EMNLP 2025 accepted.',
+            icon: 'fa-solid fa-presentation', bg: 'rgba(239,68,68,0.1)', fc: '#dc2626',
+            category: 'Office',
+            stars: '4.3k',
+            prompt_url: '',
+            tags: ['PPT', 'Presentation', 'Deep Learning'],
+        },
+        {
+            name: 'Scientific Paper Writer',
+            source: 'K-Dense-AI/claude-scientific-writer',
+            desc: 'Generate publication-ready scientific papers with real-time literature search via Perplexity Sonar Pro, verified citations, and grant proposal support.',
+            icon: 'fa-solid fa-file-word', bg: 'rgba(59,130,246,0.1)', fc: '#3b82f6',
+            category: 'Research',
+            stars: '—',
+            prompt_url: '',
+            tags: ['Research', 'Paper', 'Academic'],
+        },
+        {
+            name: 'Paper to Slides',
+            source: 'luwill/research-skills',
+            desc: 'Transform academic papers into professional slide decks. Supports 17 visual styles, auto figure extraction, AI-generated visuals, and conference-specific color schemes.',
+            icon: 'fa-solid fa-person-chalkboard', bg: 'rgba(16,185,129,0.1)', fc: '#10b981',
+            category: 'Research',
+            stars: '—',
+            prompt_url: '',
+            tags: ['Slides', 'Academic', 'Research'],
+        },
+        {
+            name: 'Gentleman E2E Testing',
+            source: 'Gentleman-Programming/gentleman-skills',
+            desc: 'Battle-tested patterns for Playwright E2E testing and pytest. Community-vetted testing workflows and best practices.',
+            icon: 'fa-solid fa-vial', bg: 'rgba(139,92,246,0.1)', fc: '#7c3aed',
+            category: 'Testing',
+            stars: '487',
+            prompt_url: '',
+            tags: ['E2E', 'Playwright', 'Testing'],
+        },
+    ];
+
+    // ─────────────────────────────────────────────────────────────
+    //  MCP RENDER: Progressive disclosure cards
+    // ─────────────────────────────────────────────────────────────
+    function renderMcpCard(server, index) {
+        return `
+        <div class="mcp-card" id="mcp-card-${index}" onclick="toggleMcpCard('${index}')">
+            <div class="mcp-card-head">
+                <div class="mcp-card-icon" style="background:${server.bg};color:${server.fc};">
+                    <i class="${server.icon}"></i>
+                </div>
+                <div class="mcp-card-title">
+                    <div class="mcp-card-title-name">${e(server.name)}</div>
+                    <div class="mcp-card-title-owner">${e(server.owner)}/${e(server.repo)}</div>
+                </div>
+                <div class="mcp-card-meta">
+                    ${server.stars !== '—' ? `<span class="mcp-card-stars"><i class="fa-solid fa-star"></i>${server.stars}</span>` : ''}
+                    <span class="mcp-card-lang">${e(server.lang)}</span>
+                </div>
+            </div>
+            <div class="mcp-card-desc">${e(server.desc)}</div>
+            <div class="mcp-card-hint"><i class="fa-solid fa-chevron-down"></i> Click to see install &amp; usage</div>
+            <div class="mcp-card-detail">
+                <div class="mcp-card-detail-tags">
+                    ${server.tags.map(t => `<span class="mcp-tag ${t==='Official'?'official':''}">${e(t)}</span>`).join('')}
+                </div>
+                <div class="mcp-install-row">
+                    <code class="mcp-install-code" id="install-code-${index}">${e(server.install)}</code>
+                    <button class="mcp-copy-btn" onclick="event.stopPropagation();copyInstall('${server.install.replace(/'/g,"\\'")}')" title="Copy install command">
+                        <i class="fa-solid fa-copy"></i>
+                    </button>
+                </div>
+                <a href="${server.url}" target="_blank" class="mcp-github-link" onclick="event.stopPropagation()">
+                    <i class="fa-solid fa-arrow-up-right-from-square"></i> View on GitHub
+                </a>
+            </div>
+        </div>`;
+    }
+
+    const _mcpExpanded = {};
+    function toggleMcpCard(index) {
+        const card = document.getElementById('mcp-card-' + index);
+        if (!card) return;
+        _mcpExpanded[index] = !_mcpExpanded[index];
+        card.classList.toggle('expanded', _mcpExpanded[index]);
+    }
+
+    function renderAllMcpGrids() {
+        const grids = {
+            'mcp-official-grid': MCP_SERVERS.official,
+            'mcp-browser-grid': MCP_SERVERS.browser,
+            'mcp-charts-grid': MCP_SERVERS.charts,
+            'mcp-cloud-grid': MCP_SERVERS.cloud,
+            'mcp-search-grid': MCP_SERVERS.search,
+        };
+        let idx = 0;
+        for (const [gridId, servers] of Object.entries(grids)) {
+            const grid = document.getElementById(gridId);
+            if (!grid) continue;
+            grid.innerHTML = servers.map(s => renderMcpCard(s, idx++)).join('');
+        }
+    }
+
+    // ─────────────────────────────────────────────────────────────
+    //  MCP CUSTOM SERVERS
+    // ─────────────────────────────────────────────────────────────
+    let mcpServers = [];
+
+    function loadMcpServers() {
+        const saved = localStorage.getItem('agent_mcp_servers');
+        mcpServers = saved ? JSON.parse(saved) : [];
+        renderMcpServers();
+    }
+
+    function renderMcpServers() {
+        const empty = document.getElementById('mcp-empty');
+        const list = document.getElementById('mcp-list');
+        if (!empty || !list) return;
+        if (mcpServers.length === 0) {
+            empty.style.display = '';
+            list.style.display = 'none';
+        } else {
+            empty.style.display = 'none';
+            list.style.display = '';
+            list.innerHTML = mcpServers.map((s, i) => `
+                <div class="mcp-custom-card">
+                    <div class="mcp-custom-head">
+                        <div class="mcp-custom-icon"><i class="fa-solid fa-plug"></i></div>
+                        <div class="mcp-custom-title">
+                            <div class="mcp-custom-name">${e(s.name)}</div>
+                            <div class="mcp-custom-sub">Custom Server</div>
+                        </div>
+                        <div class="mcp-custom-actions">
+                            <button onclick="editMcpServer(${i})" title="Edit"><i class="fa-solid fa-pencil"></i></button>
+                            <button class="del" onclick="deleteMcpServer(${i})" title="Delete"><i class="fa-solid fa-trash"></i></button>
+                        </div>
+                    </div>
+                    <code class="mcp-custom-code">${e(s.command)} ${e(s.args||'')}</code>
+                    ${s.desc ? `<p class="mcp-custom-desc">${e(s.desc)}</p>` : ''}
+                </div>`).join('');
+        }
+    }
+
+    function showMcpDialog(index) {
+        if (index !== undefined) {
+            const s = mcpServers[index];
+            document.getElementById('mcp-name').value = s.name;
+            document.getElementById('mcp-command').value = s.command;
+            document.getElementById('mcp-args').value = s.args || '';
+            document.getElementById('mcp-desc').value = s.desc || '';
+            document.getElementById('mcp-dialog-overlay').dataset.editIndex = index;
+        } else {
+            document.getElementById('mcp-name').value = '';
+            document.getElementById('mcp-command').value = '';
+            document.getElementById('mcp-args').value = '';
+            document.getElementById('mcp-desc').value = '';
+            delete document.getElementById('mcp-dialog-overlay').dataset.editIndex;
+        }
+        document.getElementById('mcp-dialog-overlay').classList.add('show');
+    }
+
+    function closeMcpDialog() {
+        document.getElementById('mcp-dialog-overlay').classList.remove('show');
+    }
+
+    function saveMcpServer() {
+        const name = document.getElementById('mcp-name').value.trim();
+        const command = document.getElementById('mcp-command').value.trim();
+        const args = document.getElementById('mcp-args').value.trim();
+        const desc = document.getElementById('mcp-desc').value.trim();
+        if (!name || !command) { showToast('Name and command are required', 'error'); return; }
+        const editIdx = document.getElementById('mcp-dialog-overlay').dataset.editIndex;
+        const server = { name, command, args, desc };
+        if (editIdx !== undefined) {
+            mcpServers[parseInt(editIdx)] = server;
+            showToast('Server updated');
+        } else {
+            mcpServers.push(server);
+            showToast('Server added');
+        }
+        localStorage.setItem('agent_mcp_servers', JSON.stringify(mcpServers));
+        closeMcpDialog();
+        renderMcpServers();
+    }
+
+    function editMcpServer(index) { showMcpDialog(index); }
+
+    function deleteMcpServer(index) {
+        if (!confirm('Remove this MCP server?')) return;
+        mcpServers.splice(index, 1);
+        localStorage.setItem('agent_mcp_servers', JSON.stringify(mcpServers));
+        renderMcpServers();
+        showToast('Server removed');
+    }
+
+    // ─────────────────────────────────────────────────────────────
+    //  SKILL DISCOVERY: Progressive disclosure
+    // ─────────────────────────────────────────────────────────────
+    const _skillPrompts = {};
+
+    function renderDiscoverSkills(skills) {
+        const grid = document.getElementById('discover-grid');
+        if (!grid) return;
+        grid.innerHTML = skills.map((s, i) => `
+            <div class="discover-card" id="discover-card-${i}" data-name="${s.name.toLowerCase()}" data-tags="${(s.tags||[]).join(' ').toLowerCase()}">
+                <div class="discover-card-head" onclick="toggleDiscoverCard('${i}','${s.prompt_url}')">
+                    <div class="discover-card-icon" style="background:${s.bg};color:${s.fc};">
+                        <i class="${s.icon}"></i>
+                    </div>
+                    <div class="discover-card-title">
+                        <div class="discover-card-name">${e(s.name)}</div>
+                        <div class="discover-card-source">${e(s.source)}</div>
+                    </div>
+                    ${s.stars !== '—' ? `<span class="mcp-card-stars" style="font-size:10px;flex-shrink:0;"><i class="fa-solid fa-star"></i>${s.stars}</span>` : ''}
+                    <span class="discover-card-badge">${e(s.category)}</span>
+                </div>
+                <p class="discover-card-desc">${e(s.desc)}</p>
+                <button class="discover-card-expand" onclick="event.stopPropagation();toggleDiscoverCard('${i}','${s.prompt_url}')">
+                    <i class="fa-solid fa-chevron-down" id="discover-icon-${i}"></i>
+                    <span id="discover-label-${i}">Show skill prompt</span>
+                </button>
+                <div class="discover-card-detail" id="discover-detail-${i}">
+                    <div class="discover-prompt-label">Skill Prompt Preview</div>
+                    <div class="discover-prompt-text" id="discover-prompt-${i}">
+                        <i class="fa-solid fa-spinner fa-spin" style="font-size:11px;margin-right:6px;"></i> Loading from GitHub...
+                    </div>
+                    <div class="discover-card-actions">
+                        <button class="discover-action-btn primary" onclick="event.stopPropagation();copySkillPrompt('${i}')" id="discover-copy-${i}">
+                            <i class="fa-solid fa-copy"></i> Copy Prompt
+                        </button>
+                        ${s.prompt_url ? `<a href="${s.prompt_url}" target="_blank" class="discover-action-btn" onclick="event.stopPropagation()">
+                            <i class="fa-solid fa-arrow-up-right-from-square"></i> View on GitHub
+                        </a>` : ''}
+                        <button class="discover-action-btn" onclick="event.stopPropagation();window.open('https://github.com/search?q='+encodeURIComponent('${s.source}')+'&type=repositories','_blank')">
+                            <i class="fa-brands fa-github"></i> Repo
+                        </button>
+                    </div>
+                </div>
+            </div>`).join('');
+    }
+
+    const _discoverExpanded = {};
+    function toggleDiscoverCard(index, promptUrl) {
+        const card = document.getElementById('discover-card-' + index);
+        const label = document.getElementById('discover-label-' + index);
+        if (!card) return;
+
+        const wasExpanded = _discoverExpanded[index];
+        if (!wasExpanded && promptUrl && !_skillPrompts[index]) {
+            // Lazy load: fetch only on first expand
+            fetch(promptUrl)
+                .then(r => r.text())
+                .then(text => {
+                    _skillPrompts[index] = text;
+                    const el = document.getElementById('discover-prompt-' + index);
+                    if (el) el.textContent = text.length > 2000 ? text.substring(0, 2000) + '\n\n… (truncated, see GitHub for full version)' : text;
+                })
+                .catch(() => {
+                    const el = document.getElementById('discover-prompt-' + index);
+                    if (el) el.textContent = 'Failed to load prompt. Please check the GitHub link directly.';
+                });
+        }
+
+        _discoverExpanded[index] = !wasExpanded;
+        card.classList.toggle('expanded', !wasExpanded);
+        if (label) label.textContent = !wasExpanded ? 'Hide skill prompt' : 'Show skill prompt';
+    }
+
+    function copySkillPrompt(index) {
+        const text = _skillPrompts[index];
+        if (!text) { showToast('Prompt not loaded yet — expand the card first', 'error'); return; }
+        navigator.clipboard.writeText(text).then(() => showToast('Skill prompt copied!')).catch(() => showToast('Copy failed', 'error'));
+    }
+
+    function filterDiscoverSkills(query) {
+        const q = query.toLowerCase().trim();
+        document.querySelectorAll('.discover-card').forEach(card => {
+            const name = card.dataset.name;
+            const tags = card.dataset.tags;
+            const match = !q || name.includes(q) || tags.includes(q);
+            card.classList.toggle('discover-hidden', !match);
+        });
+    }
+
+    // ─────────────────────────────────────────────────────────────
+    //  BUILTIN TOOLS
+    // ─────────────────────────────────────────────────────────────
+    function renderBuiltinTools() {
+        const list = document.getElementById('tools-list');
+        if (!list) return;
+        const tools = [
+            { name: 'Read', icon: 'read', desc: 'Read file contents from the workspace.', sec: 'Sandboxed to ./workspace' },
+            { name: 'Write', icon: 'write', desc: 'Create or overwrite a file with specified content.', sec: 'Sandboxed to ./workspace' },
+            { name: 'Edit', icon: 'edit', desc: 'Perform precise string replacement within a file.', sec: 'Sandboxed to ./workspace' },
+            { name: 'Bash', icon: 'bash', desc: 'Execute shell commands (npm, git, python, docker, etc.).', sec: 'Allowlist + blocklist filter' },
+            { name: 'Glob', icon: 'search', desc: 'Find files matching a glob pattern within the workspace.', sec: 'Sandboxed to ./workspace' },
+            { name: 'Grep', icon: 'search', desc: 'Search for regex patterns across files in the workspace.', sec: 'Sandboxed to ./workspace' },
+        ];
+        list.innerHTML = tools.map(t => `
+            <div class="tool-card">
+                <div class="tool-card-header">
+                    <div class="tool-card-icon ${t.icon}"><i class="fa-solid fa-file-lines"></i></div>
+                    <h3>${t.name}</h3>
+                </div>
+                <p>${t.desc}</p>
+                <div class="tool-card-security"><i class="fa-solid fa-shield-halved"></i> ${t.sec}</div>
+            </div>`).join('');
+    }
+
+    // ─────────────────────────────────────────────────────────────
+    //  UTILITIES
+    // ─────────────────────────────────────────────────────────────
+    function e(t) {
+        if (!t) return '';
+        return String(t).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+    }
+
+    function copyInstall(cmd) {
+        navigator.clipboard.writeText(cmd).then(() => showToast('Install command copied!')).catch(() => showToast('Copy failed', 'error'));
+    }
+
+    function showToast(msg, type) {
+        type = type || 'success';
+        const container = document.getElementById('toast-container');
+        if (!container) return;
+        const t = document.createElement('div');
+        t.className = 'toast' + (type === 'error' ? ' error' : '');
+        t.innerHTML = '<i class="fa-solid fa-' + (type === 'success' ? 'check' : 'xmark') + '"></i>' + e(msg);
+        container.appendChild(t);
+        setTimeout(function() { t.remove(); }, 3000);
+    }
+
+    // ─────────────────────────────────────────────────────────────
+    //  AUTH
+    // ─────────────────────────────────────────────────────────────
+    function checkAuth() {
+        var session = localStorage.getItem('agent_session') || sessionStorage.getItem('agent_session');
+        if (!session) window.location.href = '/login';
+    }
+
+    function logout() {
+        localStorage.removeItem('agent_session');
+        sessionStorage.removeItem('agent_session');
+        window.location.href = '/login';
+    }
+
+    // ─────────────────────────────────────────────────────────────
+    //  API: Load user-created skills from backend
+    // ─────────────────────────────────────────────────────────────
+    var API_BASE_URL = '/api';
+
+    function loadSkills() {
+        fetch(API_BASE_URL + '/skills')
+            .then(function(r) { return r.json(); })
+            .then(function(data) {
+                var skills = Array.isArray(data) ? data : (data.skills || []);
+                renderSkills(skills);
+            })
+            .catch(function() {
+                var grid = document.getElementById('skills-grid');
+                if (grid) grid.innerHTML = '<div class="loading-state"><i class="fa-solid fa-exclamation-circle"></i> Failed to load skills</div>';
+            });
+    }
+
+    function renderSkills(skills) {
+        var grid = document.getElementById('skills-grid');
+        if (!grid) return;
+        if (skills.length === 0) {
+            grid.innerHTML = '<div class="empty-state"><i class="fa-solid fa-puzzle-piece"></i> No skills yet. Create your first skill to get started.</div>';
+            return;
+        }
+        grid.innerHTML = skills.map(function(s) {
+            return '<div class="skill-card" data-id="' + s.id + '">' +
+                '<div class="skill-card-header">' +
+                    '<div class="skill-card-title-row">' +
+                        '<i class="' + (s.icon || 'fa-solid fa-puzzle-piece') + ' skill-card-icon"></i>' +
+                        '<h3>' + e(s.name) + '</h3>' +
+                    '</div>' +
+                    '<span class="skill-badge ' + (s.enabled ? 'enabled' : 'disabled') + '">' + (s.enabled ? 'Enabled' : 'Disabled') + '</span>' +
+                '</div>' +
+                '<p class="skill-card-desc">' + e(s.description || 'No description') + '</p>' +
+                '<div class="skill-card-tags">' +
+                    ((s.tags||[]).slice(0,4).map(function(t) { return '<span class="skill-tag">' + e(t) + '</span>'; })).join('') +
+                '</div>' +
+                '<div class="skill-card-tools">' +
+                    ((s.allowed_tools||[]).map(function(t) { return '<span class="tool-chip"><i class="fa-solid fa-gear"></i>' + e(t) + '</span>'; })).join('') +
+                '</div>' +
+                '<div class="skill-card-footer">' +
+                    '<span>' + e(s.category || 'Uncategorized') + ' &bull; v' + (s.version || '1.0.0') + (s.is_builtin ? ' &bull; <span style="color:var(--primary)">Built-in</span>' : '') + '</span>' +
+                    '<div class="skill-card-actions">' +
+                        '<button onclick="toggleSkill(\'' + s.id + '\')" title="' + (s.enabled ? 'Disable' : 'Enable') + '"><i class="fa-solid ' + (s.enabled ? 'fa-ban' : 'fa-check') + '"></i></button>' +
+                        '<button onclick="editSkill(\'' + s.id + '\')" title="Edit"><i class="fa-solid fa-pencil"></i></button>' +
+                        (!s.is_builtin ? '<button onclick="deleteSkill(\'' + s.id + '\')" title="Delete"><i class="fa-solid fa-trash"></i></button>' : '') +
+                    '</div>' +
+                '</div>' +
+            '</div>';
+        }).join('');
+    }
+
+    // Skill dialog
+    var _dialogSkillId = null;
+
+    function showSkillDialog(id) {
+        _dialogSkillId = id || null;
+        var overlay = document.getElementById('skill-dialog-overlay');
+        var title = document.getElementById('skill-dialog-title');
+        var body = document.getElementById('skill-dialog-body');
+        var confirmBtn = document.getElementById('skill-dialog-confirm');
+        title.textContent = id ? 'Edit Skill' : 'Create Skill';
+        body.innerHTML = buildSkillForm(id);
+        confirmBtn.textContent = id ? 'Save Changes' : 'Create';
+        confirmBtn.onclick = id ? function() { updateSkill(id); } : createSkill;
+        overlay.classList.add('show');
+        setTimeout(function() { var nameInput = document.getElementById('skill-name'); if (nameInput) nameInput.focus(); }, 50);
+    }
+
+    function closeSkillDialog() {
+        document.getElementById('skill-dialog-overlay').classList.remove('show');
+    }
+
+    function buildSkillForm(existingId) {
+        var s = {};
+        if (existingId) {
+            // sync from DOM if editing
+            var nameEl = document.getElementById('skill-name');
+            var descEl = document.getElementById('skill-desc');
+            var catEl = document.getElementById('skill-category');
+            var iconEl = document.getElementById('skill-icon');
+            var kwEl = document.getElementById('skill-keywords');
+            var promptEl = document.getElementById('skill-prompt');
+            var toolsEl = document.getElementById('skill-tools');
+            var tagsEl = document.getElementById('skill-tags');
+            s = {
+                name: nameEl ? nameEl.value : '',
+                description: descEl ? descEl.value : '',
+                category: catEl ? catEl.value : '',
+                icon: iconEl ? iconEl.value : 'fa-code',
+                trigger_keywords: kwEl ? kwEl.value.split(',').map(function(k){return k.trim();}).filter(Boolean) : [],
+                system_prompt_addition: promptEl ? promptEl.value : '',
+                allowed_tools: toolsEl ? toolsEl.value.split(',').map(function(t){return t.trim();}).filter(Boolean) : [],
+                tags: tagsEl ? tagsEl.value.split(',').map(function(t){return t.trim();}).filter(Boolean) : [],
+            };
+        }
+        var keywords = (s.trigger_keywords || []).join(', ');
+        var selectedIcon = s.icon || 'fa-code';
+        var selectedTools = s.allowed_tools || [];
+        var iconOptions = ['fa-code','fa-brands fa-python','fa-globe','fa-terminal','fa-magnifying-glass','fa-wand-magic-sparkles','fa-database','fa-server','fa-shield-halved','fa-robot','fa-brain','fa-bolt','fa-chart-line','fa-book','fa-file-code'];
+        var toolOptions = ['Read','Write','Edit','Bash','Glob','Grep'];
+        var iconBtns = iconOptions.map(function(ic) {
+            return '<button type="button" class="icon-option ' + (selectedIcon === ic ? 'selected' : '') + '" data-icon="' + ic + '" onclick="selectIcon(\'' + ic + '\')"><i class="fa-solid ' + ic + '"></i></button>';
+        }).join('');
+        var toolLabels = toolOptions.map(function(tool) {
+            return '<label class="tool-checkbox-label ' + (selectedTools.indexOf(tool) >= 0 ? 'selected' : '') + '" onclick="toggleToolCb(this,\'' + tool + '\')">' +
+                '<input type="checkbox" id="tool-' + tool + '" value="' + tool + '" ' + (selectedTools.indexOf(tool) >= 0 ? 'checked' : '') + '>' +
+                '<i class="fa-solid fa-gear"></i> ' + tool +
+            '</label>';
+        }).join('');
+        return '<div class="form-group"><label>Name *</label><input type="text" id="skill-name" value="' + e(s.name || '') + '" placeholder="e.g., Python Expert"></div>' +
+            '<div class="form-group"><label>Description</label><textarea id="skill-desc" rows="2" placeholder="Describe what this skill does...">' + e(s.description || '') + '</textarea></div>' +
+            '<div class="form-row-2">' +
+                '<div class="form-group"><label>Category</label><input type="text" id="skill-category" value="' + e(s.category || '') + '" placeholder="e.g., Language"></div>' +
+                '<div class="form-group"><label>Icon</label><div class="icon-picker">' + iconBtns + '</div><input type="hidden" id="skill-icon" value="' + selectedIcon + '"></div>' +
+            '</div>' +
+            '<div class="form-group"><label>Trigger Keywords</label><input type="text" id="skill-keywords" value="' + e(keywords) + '" placeholder="Comma-separated: python, fastapi"><p class="form-hint">Agent auto-selects this skill when message contains these keywords</p></div>' +
+            '<div class="form-group"><label>System Prompt Addition</label><textarea id="skill-prompt" rows="3" placeholder="Additional instructions for this skill...">' + e(s.system_prompt_addition || '') + '</textarea></div>' +
+            '<div class="form-group"><label>Allowed Tools</label><div class="tools-grid">' + toolLabels + '</div><input type="hidden" id="skill-tools" value="' + selectedTools.join(',') + '"></div>' +
+            '<div class="form-group"><label>Tags</label><input type="text" id="skill-tags" value="' + ((s.tags||[]).join(', ')) + '" placeholder="Comma-separated: python, backend, api"></div>';
+    }
+
+    function selectIcon(ic) {
+        document.querySelectorAll('.icon-option').forEach(function(el) { el.classList.remove('selected'); });
+        var btn = document.querySelector('.icon-option[data-icon="' + ic + '"]');
+        if (btn) btn.classList.add('selected');
+        document.getElementById('skill-icon').value = ic;
+    }
+
+    function toggleToolCb(el, tool) {
+        el.classList.toggle('selected');
+        document.getElementById('tool-' + tool).checked = el.classList.contains('selected');
+        var tools = [].map.call(document.querySelectorAll('#skill-dialog-body input:checked'), function(i) { return i.value; });
+        document.getElementById('skill-tools').value = tools.join(',');
+    }
+
+    function createSkill() {
+        var name = document.getElementById('skill-name').value.trim();
+        if (!name) { showToast('Please enter a name', 'error'); return; }
+        var skill = {
+            name: name,
+            description: document.getElementById('skill-desc').value.trim(),
+            category: document.getElementById('skill-category').value.trim() || 'Custom',
+            icon: document.getElementById('skill-icon').value,
+            trigger_keywords: document.getElementById('skill-keywords').value.split(',').map(function(k){return k.trim();}).filter(Boolean),
+            system_prompt_addition: document.getElementById('skill-prompt').value.trim(),
+            allowed_tools: document.getElementById('skill-tools').value.split(',').map(function(t){return t.trim();}).filter(Boolean),
+            tags: document.getElementById('skill-tags').value.split(',').map(function(t){return t.trim();}).filter(Boolean),
+        };
+        fetch(API_BASE_URL + '/skills', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(skill)
+        }).then(function(r) { return r.ok ? r.json() : Promise.reject(); })
+          .then(function() { closeSkillDialog(); loadSkills(); showToast('Skill created'); })
+          .catch(function() { showToast('Failed to create skill', 'error'); });
+    }
+
+    function updateSkill(id) {
+        var name = document.getElementById('skill-name').value.trim();
+        if (!name) { showToast('Please enter a name', 'error'); return; }
+        var skill = {
+            name: name,
+            description: document.getElementById('skill-desc').value.trim(),
+            category: document.getElementById('skill-category').value.trim() || 'Custom',
+            icon: document.getElementById('skill-icon').value,
+            trigger_keywords: document.getElementById('skill-keywords').value.split(',').map(function(k){return k.trim();}).filter(Boolean),
+            system_prompt_addition: document.getElementById('skill-prompt').value.trim(),
+            allowed_tools: document.getElementById('skill-tools').value.split(',').map(function(t){return t.trim();}).filter(Boolean),
+            tags: document.getElementById('skill-tags').value.split(',').map(function(t){return t.trim();}).filter(Boolean),
+        };
+        fetch(API_BASE_URL + '/skills/' + id, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(skill)
+        }).then(function(r) { return r.ok ? r.json() : Promise.reject(); })
+          .then(function() { closeSkillDialog(); loadSkills(); showToast('Skill updated'); })
+          .catch(function() { showToast('Failed to update skill', 'error'); });
+    }
+
+    function toggleSkill(id) {
+        fetch(API_BASE_URL + '/skills/' + id + '/toggle', { method: 'PATCH' })
+            .then(function(r) { return r.ok ? r.json() : Promise.reject(); })
+            .then(function() { loadSkills(); showToast('Skill updated'); })
+            .catch(function() { showToast('Failed to update skill', 'error'); });
+    }
+
+    function editSkill(id) {
+        fetch(API_BASE_URL + '/skills')
+            .then(function(r) { return r.json(); })
+            .then(function(data) {
+                var skills = Array.isArray(data) ? data : (data.skills || []);
+                var skill = skills.find(function(s) { return s.id === id; });
+                if (!skill) return;
+                showSkillDialog(id);
+                // Fill form after DOM is updated
+                setTimeout(function() {
+                    document.getElementById('skill-name').value = skill.name || '';
+                    document.getElementById('skill-desc').value = skill.description || '';
+                    document.getElementById('skill-category').value = skill.category || '';
+                    document.getElementById('skill-icon').value = skill.icon || 'fa-code';
+                    document.getElementById('skill-keywords').value = (skill.trigger_keywords||[]).join(', ');
+                    document.getElementById('skill-prompt').value = skill.system_prompt_addition || '';
+                    document.getElementById('skill-tools').value = (skill.allowed_tools||[]).join(',');
+                    document.getElementById('skill-tags').value = (skill.tags||[]).join(', ');
+                    selectIcon(skill.icon || 'fa-code');
+                    skill.allowed_tools && skill.allowed_tools.forEach(function(tool) {
+                        var label = document.querySelector('.tool-checkbox-label[onclick*="\'" + tool + "\'"]');
+                        if (label) label.classList.add('selected');
+                    });
+                }, 30);
+            })
+            .catch(function() {});
+    }
+
+    function deleteSkill(id) {
+        if (!confirm('Delete this skill? This cannot be undone.')) return;
+        fetch(API_BASE_URL + '/skills/' + id, { method: 'DELETE' })
+            .then(function(r) { return r.ok ? null : Promise.reject(); })
+            .then(function() { loadSkills(); showToast('Skill deleted'); })
+            .catch(function() { showToast('Failed to delete (may be built-in)', 'error'); });
+    }
+
+    // ─────────────────────────────────────────────────────────────
+    //  INIT
+    // ─────────────────────────────────────────────────────────────
+    document.addEventListener('DOMContentLoaded', function() {
+        checkAuth();
+        renderAllMcpGrids();
+        loadMcpServers();
+        renderBuiltinTools();
+        renderDiscoverSkills(CURATED_SKILLS);
+        loadSkills();
+    });
+    </script>
 </body>
 </html>
-

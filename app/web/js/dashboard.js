@@ -1,7 +1,6 @@
 // Dashboard Page JavaScript
 document.addEventListener('DOMContentLoaded', () => {
     checkAuth();
-    initSidebarResize();
     loadUserInfo();
     setGreeting();
     renderDashboard();
@@ -10,27 +9,6 @@ document.addEventListener('DOMContentLoaded', () => {
 function checkAuth() {
     const session = localStorage.getItem('agent_session') || sessionStorage.getItem('agent_session');
     if (!session) window.location.href = '/login';
-}
-
-function initSidebarResize() {
-    const sidebar = document.getElementById('sidebar');
-    const handle = document.getElementById('sidebar-resize-handle');
-    let dragging = false;
-    handle && handle.addEventListener('mousedown', e => {
-        dragging = true;
-        document.body.style.cursor = 'col-resize';
-        document.body.style.userSelect = 'none';
-        e.preventDefault();
-    });
-    document.addEventListener('mousemove', e => {
-        if (!dragging) return;
-        sidebar.style.width = Math.min(400, Math.max(200, e.clientX)) + 'px';
-    });
-    document.addEventListener('mouseup', () => {
-        dragging = false;
-        document.body.style.cursor = '';
-        document.body.style.userSelect = '';
-    });
 }
 
 function loadUserInfo() {
@@ -127,6 +105,54 @@ async function renderDashboard() {
                     <div>
                         <div class="dash-stat-value" data-target="6">6</div>
                         <div class="dash-stat-label">Built-in Tools</div>
+                    </div>
+                </div>
+                <div class="dash-stat-card" onclick="window.location.href='/monitoring'" style="cursor:pointer;" title="View full monitoring">
+                    <div class="dash-stat-icon icon-purple">
+                        <i class="fa-solid fa-chart-line" style="color:#7C3AED;"></i>
+                    </div>
+                    <div>
+                        <div class="dash-stat-value" data-target="--" style="font-size:20px;">--</div>
+                        <div class="dash-stat-label">Sessions Today</div>
+                    </div>
+                </div>
+                <div class="dash-stat-card" onclick="window.location.href='/monitoring'" style="cursor:pointer;" title="View full monitoring">
+                    <div class="dash-stat-icon icon-teal">
+                        <i class="fa-solid fa-bolt" style="color:#0D9488;"></i>
+                    </div>
+                    <div>
+                        <div class="dash-stat-value" data-target="--" style="font-size:20px;">--</div>
+                        <div class="dash-stat-label">Avg Response</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Monitoring Snapshot -->
+            <div class="dash-section-card" style="margin-top:16px; animation-delay:0.05s;">
+                <div class="dash-section-title" style="display:flex;justify-content:space-between;align-items:center;">
+                    <span><i class="fa-solid fa-chart-line" style="color:#7C3AED;"></i> Monitoring Snapshot</span>
+                    <a href="/monitoring" style="font-size:12px;color:var(--primary);text-decoration:none;font-weight:500;">View full monitoring →</a>
+                </div>
+                <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-top:12px;">
+                    <div class="monitoring-mini-card">
+                        <div class="monitoring-mini-label"><i class="fa-solid fa-message"></i> Conversations Today</div>
+                        <div class="monitoring-mini-value" id="dash-conv-today">--</div>
+                        <div class="monitoring-mini-sub">All time: ${convCount}</div>
+                    </div>
+                    <div class="monitoring-mini-card">
+                        <div class="monitoring-mini-label"><i class="fa-solid fa-circle-nodes"></i> Active Skills</div>
+                        <div class="monitoring-mini-value" id="dash-active-skills">${skillCount}</div>
+                        <div class="monitoring-mini-sub">Total: ${skillCount} enabled</div>
+                    </div>
+                    <div class="monitoring-mini-card">
+                        <div class="monitoring-mini-label"><i class="fa-solid fa-folder-tree"></i> Workspace Files</div>
+                        <div class="monitoring-mini-value" id="dash-files-count">${fileCount}</div>
+                        <div class="monitoring-mini-sub">In current session</div>
+                    </div>
+                    <div class="monitoring-mini-card">
+                        <div class="monitoring-mini-label"><i class="fa-solid fa-shield-halved"></i> System Status</div>
+                        <div class="monitoring-mini-value" style="color:#10B981;"><i class="fa-solid fa-circle-check"></i> Healthy</div>
+                        <div class="monitoring-mini-sub">All services operational</div>
                     </div>
                 </div>
             </div>

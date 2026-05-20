@@ -17,7 +17,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-from app.api import chat, skills, workspace, memory, knowledge, config, agents_api, deploy
+from app.api import chat, skills, workspace, memory, knowledge, config, agents_api, deploy, docs, github_api, scheduler_api, pptx_export
 
 app.include_router(chat.router, prefix="/api/chat", tags=["Chat"])
 app.include_router(skills.router, prefix="/api/skills", tags=["Skills"])
@@ -27,13 +27,16 @@ app.include_router(knowledge.router, prefix="/api/knowledge", tags=["Knowledge"]
 app.include_router(config.router, prefix="/api/config", tags=["Config"])
 app.include_router(agents_api.router, prefix="/api/agents", tags=["Agents"])
 app.include_router(deploy.router, prefix="/api/system", tags=["System"])
+app.include_router(docs.router, prefix="/api/docs", tags=["Documents"])
+app.include_router(github_api.router, prefix="/api/github", tags=["GitHub"])
+app.include_router(scheduler_api.router, prefix="/api/scheduler", tags=["Scheduler"])
+app.include_router(pptx_export.router, prefix="/api/workspace", tags=["Workspace"])
 
 import sys
 import os
 
-app.mount("/alicloud-main-agent/web/static", StaticFiles(directory="app/web"), name="static")
+app.mount("/static", StaticFiles(directory="app/web"), name="static")
 
-app.root_path = os.getenv("ROOT_PATH", "/alicloud-main-agent/web")
 
 
 def read_html(filename: str) -> str:
@@ -45,11 +48,16 @@ def read_html(filename: str) -> str:
     return ""
 
 
-# Page Routes
 @app.get("/", response_class=HTMLResponse)
 async def root():
-    """根路径重定向到 dashboard"""
-    return RedirectResponse(url="/dashboard")
+    """根路径重定向到 chat"""
+    return RedirectResponse(url="/chat")
+
+
+@app.get("/index", response_class=HTMLResponse)
+async def index_page():
+    """管理控制台页面"""
+    return read_html("index.html")
 
 
 @app.get("/login", response_class=HTMLResponse)
@@ -127,4 +135,4 @@ async def monitoring_page():
 
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run("main:app", host="127.0.0.1", port=8000, reload=True)
+    uvicorn.run("main:app", host="127.0.0.1", port=8080, reload=True)

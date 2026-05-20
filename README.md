@@ -91,7 +91,7 @@ Open your browser at **http://localhost:8000**
 ├── main.py                      # FastAPI entry point, routes, middleware
 ├── requirements.txt             # Python dependencies
 ├── .env                         # Environment variables
-├── DESIGN_DOCUMENTATION.md      # Frontend design system reference
+├── DESIGN.md                      # Design documentation (product roadmap)
 ├── app/
 │   ├── core/
 │   │   ├── config.py           # Settings singleton (reads .env)
@@ -246,8 +246,10 @@ DEFAULT_MODEL=qwen3-max
 
 | Route | Page | Description |
 |-------|------|-------------|
+| `/` | Chat | Root redirects to `/chat` — main chat interface |
 | `/dashboard` | Dashboard | Overview with stats and quick actions |
-| `/chat` | Chat | Main AI chat interface |
+| `/chat` | Chat | Main AI chat interface (Execution / Memory / Workspace panels) |
+| `/index` | Management Console | Quick access to all management tools |
 | `/skills` | Skill Center | Manage AI agent skills |
 | `/knowledge` | Knowledge Base | Reference documents |
 | `/workspace` | Workspace | File browser and editor |

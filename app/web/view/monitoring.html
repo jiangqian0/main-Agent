@@ -4,44 +4,46 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Monitoring Panel - Agent Hub</title>
-    <link rel="stylesheet" href="/alicloud-main-agent/web/static/css/style.css">
+    <link rel="stylesheet" href="/static/css/style.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 </head>
 <body>
     <div class="app-container">
         <div class="sidebar" id="sidebar">
-            <div class="sidebar-menu">
-                <div class="sidebar-logo">
-                    <div class="sidebar-logo-header">
-                        <div class="sidebar-logo-icon"><i class="fa-solid fa-robot"></i></div>
-                        <div class="sidebar-logo-text"><h2>Agent Hub</h2><p>Enterprise Edition</p></div>
-                    </div>
-                    <button class="btn-new-chat" onclick="window.location.href='/chat'">
-                        <i class="fa-solid fa-plus"></i><span>New Conversation</span>
-                    </button>
+            <div class="sidebar-resize-handle" id="sidebar-resize-handle"></div>
+
+            <div class="sidebar-logo">
+                <div class="sidebar-logo-header">
+                    <div class="sidebar-logo-icon"><i class="fa-solid fa-robot"></i></div>
+                    <div class="sidebar-logo-text"><h2>Agent Hub</h2><p>Enterprise Edition</p></div>
                 </div>
+                <button class="btn-new-chat" onclick="window.location.href='/chat'">
+                    <i class="fa-solid fa-plus"></i><span>New Chat</span>
+                </button>
+            </div>
+
+            <div class="sidebar-menu">
                 <div class="menu-section">
                     <div class="menu-section-header"><div class="menu-section-dot"></div><span class="menu-section-title">Core Functions</span></div>
                     <a href="/dashboard" class="menu-item"><i class="fa-solid fa-gauge-high"></i><span>Dashboard</span></a>
-                    <a href="/chat" class="menu-item"><i class="fa-solid fa-code"></i><span>Code Development</span></a>
-                    <a href="/chat?type=fc" class="menu-item"><i class="fa-solid fa-bolt"></i><span>Function Compute</span></a>
+                    <a href="/chat" class="menu-item"><i class="fa-solid fa-code"></i><span>AI Chat</span></a>
                     <a href="/resources" class="menu-item"><i class="fa-solid fa-server"></i><span>Resource Management</span></a>
-                    <a href="/deploy" class="menu-item"><i class="fa-solid fa-rocket"></i><span>Deployment & Ops</span></a>
+                    <a href="/deploy" class="menu-item"><i class="fa-solid fa-rocket"></i><span>Deployment &amp; Ops</span></a>
                 </div>
                 <div class="menu-section">
                     <div class="menu-section-header"><div class="menu-section-dot"></div><span class="menu-section-title">Management Center</span></div>
-                    <a href="/skills" class="menu-item"><i class="fa-solid fa-puzzle-piece"></i><span>Skill Center</span></a>
-                    <a href="/knowledge" class="menu-item"><i class="fa-solid fa-book-open"></i><span>Knowledge Base</span></a>
+                    <a href="/skills" class="menu-item"><i class="fa-solid fa-puzzle-piece"></i><span>Plugin Center</span></a>
+                    <a href="/knowledge" class="menu-item"><i class="fa-solid fa-book-open"></i><span>Knowledge &amp; Docs</span></a>
                     <a href="/agents" class="menu-item"><i class="fa-solid fa-robot"></i><span>Agent Center</span></a>
                 </div>
                 <div class="menu-section">
                     <div class="menu-section-header"><div class="menu-section-dot"></div><span class="menu-section-title">Auxiliary Tools</span></div>
-                    <a href="/docs" class="menu-item"><i class="fa-solid fa-file-lines"></i><span>Documents & Reports</span></a>
-                    <a href="/monitoring" class="menu-item active"><i class="fa-solid fa-chart-line"></i><span>Monitoring Panel</span></a>
+                    <a href="/monitoring" class="menu-item active"><i class="fa-solid fa-chart-line"></i><span>Monitoring</span></a>
                     <a href="/settings" class="menu-item"><i class="fa-solid fa-gear"></i><span>Settings</span></a>
                 </div>
             </div>
+
             <div class="sidebar-user">
                 <div class="user-info">
                     <div class="user-avatar"><i class="fa-solid fa-user"></i></div>
@@ -52,7 +54,6 @@
                     <a href="/settings" title="Logout" onclick="logout()" class="sidebar-action-btn logout"><i class="fa-solid fa-right-from-bracket"></i></a>
                 </div>
             </div>
-            <div class="sidebar-resize-handle" id="sidebar-resize-handle"></div>
         </div>
 
         <div class="main-content">
@@ -87,6 +88,64 @@
                     </div>
                 </div>
 
+                <!-- Scheduled Tasks Section -->
+                <div style="background:#fff;border:1px solid var(--border-color);border-radius:10px;padding:20px;margin-bottom:16px;">
+                    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;">
+                        <h2 style="font-size:15px;font-weight:600;color:var(--text-primary);display:flex;align-items:center;gap:8px;">
+                            <i class="fa-solid fa-clock-rotate-left" style="color:var(--primary);"></i> Scheduled Tasks
+                            <span id="task-count-badge" style="font-size:11px;font-weight:400;padding:2px 8px;background:var(--light-grey-bg);color:var(--grey);border-radius:10px;margin-left:4px;">0 tasks</span>
+                        </h2>
+                        <div style="display:flex;gap:8px;">
+                            <button class="header-btn" onclick="loadTasks()" title="Refresh" style="width:32px;height:32px;display:flex;align-items:center;justify-content:center;border:1px solid var(--border-color);border-radius:6px;background:#fff;cursor:pointer;transition:all 0.15s;">
+                                <i class="fa-solid fa-rotate" style="font-size:14px;color:var(--grey);"></i>
+                            </button>
+                            <button onclick="openTaskDialog()" style="padding:6px 14px;background:var(--primary);color:#fff;border:none;border-radius:6px;font-size:13px;font-weight:500;cursor:pointer;display:flex;align-items:center;gap:6px;transition:background 0.15s;">
+                                <i class="fa-solid fa-plus"></i> Add Task
+                            </button>
+                        </div>
+                    </div>
+                    <!-- Task filter tabs -->
+                    <div style="display:flex;gap:8px;margin-bottom:14px;">
+                        <button class="task-filter-btn active" data-filter="all" onclick="setTaskFilter('all')" style="padding:5px 12px;border:1px solid var(--border-color);border-radius:20px;font-size:12px;cursor:pointer;background:#fff;color:var(--grey);transition:all 0.12s;">All</button>
+                        <button class="task-filter-btn" data-filter="enabled" onclick="setTaskFilter('enabled')" style="padding:5px 12px;border:1px solid var(--border-color);border-radius:20px;font-size:12px;cursor:pointer;background:#fff;color:var(--grey);transition:all 0.12s;">Active</button>
+                        <button class="task-filter-btn" data-filter="presets" onclick="setTaskFilter('presets')" style="padding:5px 12px;border:1px solid var(--border-color);border-radius:20px;font-size:12px;cursor:pointer;background:#fff;color:var(--grey);transition:all 0.12s;">Presets</button>
+                    </div>
+                    <!-- Tasks list -->
+                    <div id="tasks-list" style="display:flex;flex-direction:column;gap:10px;"></div>
+                    <div id="tasks-empty" style="text-align:center;padding:32px;color:var(--grey);font-size:13px;">
+                        <i class="fa-solid fa-calendar-xmark" style="font-size:32px;opacity:0.3;display:block;margin-bottom:8px;"></i>
+                        No scheduled tasks yet. Click "Add Task" to create one.
+                    </div>
+                </div>
+
+                <!-- Task Execution History -->
+                <div style="background:#fff;border:1px solid var(--border-color);border-radius:10px;padding:20px;margin-bottom:16px;">
+                    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;">
+                        <h2 style="font-size:15px;font-weight:600;color:var(--text-primary);display:flex;align-items:center;gap:8px;">
+                            <i class="fa-solid fa-list-check" style="color:var(--primary);"></i> Execution History
+                        </h2>
+                        <button onclick="loadHistory()" style="padding:5px 10px;border:1px solid var(--border-color);border-radius:6px;font-size:12px;cursor:pointer;background:#fff;color:var(--grey);">
+                            <i class="fa-solid fa-rotate"></i> Refresh
+                        </button>
+                    </div>
+                    <div style="overflow-x:auto;">
+                        <table style="width:100%;border-collapse:collapse;font-size:13px;">
+                            <thead>
+                                <tr style="border-bottom:2px solid var(--border-color);">
+                                    <th style="text-align:left;padding:8px 12px;color:var(--grey);font-weight:500;font-size:12px;">Task</th>
+                                    <th style="text-align:left;padding:8px 12px;color:var(--grey);font-weight:500;font-size:12px;">Time</th>
+                                    <th style="text-align:left;padding:8px 12px;color:var(--grey);font-weight:500;font-size:12px;">Duration</th>
+                                    <th style="text-align:left;padding:8px 12px;color:var(--grey);font-weight:500;font-size:12px;">Status</th>
+                                    <th style="text-align:left;padding:8px 12px;color:var(--grey);font-weight:500;font-size:12px;">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="history-table">
+                                <tr><td colspan="5" style="text-align:center;padding:32px;color:var(--grey);">No execution history yet</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
                 <!-- Charts Row -->
                 <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px;">
                     <!-- Token Usage Chart -->
@@ -96,7 +155,13 @@
                         </h2>
                         <div id="token-chart" style="height:180px;display:flex;align-items:flex-end;gap:6px;"></div>
                         <div style="display:flex;justify-content:space-between;margin-top:8px;">
-                            ${['Mon','Tue','Wed','Thu','Fri','Sat','Sun'].map(d => `<span style="font-size:11px;color:var(--grey);width:14%;text-align:center;">${d}</span>`).join('')}
+                            <span style="font-size:11px;color:var(--grey);width:14%;text-align:center;">Mon</span>
+                            <span style="font-size:11px;color:var(--grey);width:14%;text-align:center;">Tue</span>
+                            <span style="font-size:11px;color:var(--grey);width:14%;text-align:center;">Wed</span>
+                            <span style="font-size:11px;color:var(--grey);width:14%;text-align:center;">Thu</span>
+                            <span style="font-size:11px;color:var(--grey);width:14%;text-align:center;">Fri</span>
+                            <span style="font-size:11px;color:var(--grey);width:14%;text-align:center;">Sat</span>
+                            <span style="font-size:11px;color:var(--grey);width:14%;text-align:center;">Sun</span>
                         </div>
                     </div>
 
@@ -107,7 +172,13 @@
                         </h2>
                         <div id="response-chart" style="height:180px;display:flex;align-items:flex-end;gap:6px;"></div>
                         <div style="display:flex;justify-content:space-between;margin-top:8px;">
-                            ${['Mon','Tue','Wed','Thu','Fri','Sat','Sun'].map(d => `<span style="font-size:11px;color:var(--grey);width:14%;text-align:center;">${d}</span>`).join('')}
+                            <span style="font-size:11px;color:var(--grey);width:14%;text-align:center;">Mon</span>
+                            <span style="font-size:11px;color:var(--grey);width:14%;text-align:center;">Tue</span>
+                            <span style="font-size:11px;color:var(--grey);width:14%;text-align:center;">Wed</span>
+                            <span style="font-size:11px;color:var(--grey);width:14%;text-align:center;">Thu</span>
+                            <span style="font-size:11px;color:var(--grey);width:14%;text-align:center;">Fri</span>
+                            <span style="font-size:11px;color:var(--grey);width:14%;text-align:center;">Sat</span>
+                            <span style="font-size:11px;color:var(--grey);width:14%;text-align:center;">Sun</span>
                         </div>
                     </div>
                 </div>
@@ -145,7 +216,7 @@
                         <div>
                             <div style="display:flex;justify-content:space-between;margin-bottom:6px;">
                                 <span style="font-size:13px;color:var(--text-secondary);">CPU Usage</span>
-                                <span style="font-size:13px;font-weight:600;color:var(--text-primary);" id="cpu-val">â€?/span>
+                                <span style="font-size:13px;font-weight:600;color:var(--text-primary);" id="cpu-val">0%</span>
                             </div>
                             <div style="height:8px;background:var(--light-grey-bg);border-radius:4px;overflow:hidden;">
                                 <div id="cpu-bar" style="height:100%;background:#3B82F6;border-radius:4px;width:0%;transition:width 0.5s;"></div>
@@ -154,7 +225,7 @@
                         <div>
                             <div style="display:flex;justify-content:space-between;margin-bottom:6px;">
                                 <span style="font-size:13px;color:var(--text-secondary);">Memory Usage</span>
-                                <span style="font-size:13px;font-weight:600;color:var(--text-primary);" id="mem-val">â€?/span>
+                                <span style="font-size:13px;font-weight:600;color:var(--text-primary);" id="mem-val">0%</span>
                             </div>
                             <div style="height:8px;background:var(--light-grey-bg);border-radius:4px;overflow:hidden;">
                                 <div id="mem-bar" style="height:100%;background:#10B981;border-radius:4px;width:0%;transition:width 0.5s;"></div>
@@ -163,7 +234,7 @@
                         <div>
                             <div style="display:flex;justify-content:space-between;margin-bottom:6px;">
                                 <span style="font-size:13px;color:var(--text-secondary);">Disk Usage</span>
-                                <span style="font-size:13px;font-weight:600;color:var(--text-primary);" id="disk-val">â€?/span>
+                                <span style="font-size:13px;font-weight:600;color:var(--text-primary);" id="disk-val">0%</span>
                             </div>
                             <div style="height:8px;background:var(--light-grey-bg);border-radius:4px;overflow:hidden;">
                                 <div id="disk-bar" style="height:100%;background:#F59E0B;border-radius:4px;width:0%;transition:width 0.5s;"></div>
@@ -172,7 +243,7 @@
                         <div>
                             <div style="display:flex;justify-content:space-between;margin-bottom:6px;">
                                 <span style="font-size:13px;color:var(--text-secondary);">API Latency</span>
-                                <span style="font-size:13px;font-weight:600;color:var(--text-primary);" id="latency-val">â€?/span>
+                                <span style="font-size:13px;font-weight:600;color:var(--text-primary);" id="latency-val">0%</span>
                             </div>
                             <div style="height:8px;background:var(--light-grey-bg);border-radius:4px;overflow:hidden;">
                                 <div id="latency-bar" style="height:100%;background:#7C3AED;border-radius:4px;width:0%;transition:width 0.5s;"></div>
@@ -184,7 +255,96 @@
         </div>
     </div>
 
-    <script src="/alicloud-main-agent/web/static/js/monitoring.js"></script>
+    <!-- Task Dialog -->
+    <div id="task-dialog-overlay" class="dialog-overlay">
+        <div class="dialog" style="max-width:560px;">
+            <div class="dialog-header">
+                <h3 id="task-dialog-title"><i class="fa-solid fa-clock-rotate-left" style="color:var(--primary);"></i> Add Scheduled Task</h3>
+                <button class="dialog-close" onclick="closeTaskDialog()">&times;</button>
+            </div>
+            <div class="dialog-body" style="display:flex;flex-direction:column;gap:14px;">
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+                    <div class="dialog-field" style="margin:0;">
+                        <label style="display:block;font-size:13px;font-weight:500;color:var(--text-secondary);margin-bottom:6px;">Task Name *</label>
+                        <input type="text" id="task-name" placeholder="e.g. Daily Code Review" style="width:100%;padding:9px 12px;border:1px solid var(--border-color);border-radius:6px;font-size:13px;box-sizing:border-box;">
+                    </div>
+                    <div class="dialog-field" style="margin:0;">
+                        <label style="display:block;font-size:13px;font-weight:500;color:var(--text-secondary);margin-bottom:6px;">Model</label>
+                        <select id="task-model" style="width:100%;padding:9px 12px;border:1px solid var(--border-color);border-radius:6px;font-size:13px;background:#fff;box-sizing:border-box;">
+                            <option value="qwen3-max">Qwen3 Max</option>
+                            <option value="qwen3-plus">Qwen3 Plus</option>
+                            <option value="qwen3">Qwen3</option>
+                            <option value="qwen-plus">Qwen Plus</option>
+                            <option value="qwen-turbo">Qwen Turbo</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="dialog-field" style="margin:0;">
+                    <label style="display:block;font-size:13px;font-weight:500;color:var(--text-secondary);margin-bottom:6px;">Description</label>
+                    <input type="text" id="task-description" placeholder="Brief description of this task" style="width:100%;padding:9px 12px;border:1px solid var(--border-color);border-radius:6px;font-size:13px;box-sizing:border-box;">
+                </div>
+                <div class="dialog-field" style="margin:0;">
+                    <label style="display:block;font-size:13px;font-weight:500;color:var(--text-secondary);margin-bottom:6px;">Prompt / Task Description *</label>
+                    <textarea id="task-prompt" rows="4" placeholder="Describe what the AI should do when this task runs..." style="width:100%;padding:9px 12px;border:1px solid var(--border-color);border-radius:6px;font-size:13px;resize:vertical;box-sizing:border-box;font-family:inherit;line-height:1.5;"></textarea>
+                </div>
+                <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;">
+                    <div class="dialog-field" style="margin:0;">
+                        <label style="display:block;font-size:13px;font-weight:500;color:var(--text-secondary);margin-bottom:6px;">Schedule Type</label>
+                        <select id="task-schedule-type" onchange="updateScheduleValueUI()" style="width:100%;padding:9px 12px;border:1px solid var(--border-color);border-radius:6px;font-size:13px;background:#fff;box-sizing:border-box;">
+                            <option value="once">Once</option>
+                            <option value="daily">Daily</option>
+                            <option value="weekly">Weekly</option>
+                        </select>
+                    </div>
+                    <div class="dialog-field" style="margin:0;">
+                        <label style="display:block;font-size:13px;font-weight:500;color:var(--text-secondary);margin-bottom:6px;" id="schedule-value-label">Time</label>
+                        <input type="time" id="task-schedule-value" value="09:00" style="width:100%;padding:9px 12px;border:1px solid var(--border-color);border-radius:6px;font-size:13px;box-sizing:border-box;">
+                    </div>
+                    <div class="dialog-field" style="margin:0;">
+                        <label style="display:block;font-size:13px;font-weight:500;color:var(--text-secondary);margin-bottom:6px;">Mode</label>
+                        <select id="task-mode" style="width:100%;padding:9px 12px;border:1px solid var(--border-color);border-radius:6px;font-size:13px;background:#fff;box-sizing:border-box;">
+                            <option value="ask">Ask</option>
+                            <option value="agent">Agent</option>
+                            <option value="plan">Plan</option>
+                        </select>
+                    </div>
+                </div>
+                <div id="schedule-value-extra" style="display:none;background:var(--light-grey-bg);padding:10px 12px;border-radius:6px;font-size:12px;color:var(--grey);">
+                    <i class="fa-solid fa-info-circle" style="margin-right:6px;"></i>
+                    <span id="schedule-hint">Daily: task runs at the specified time every day.</span>
+                </div>
+            </div>
+            <div class="dialog-footer">
+                <button class="dialog-btn cancel" onclick="closeTaskDialog()">Cancel</button>
+                <button class="dialog-btn confirm" onclick="saveTask()" style="background:var(--primary);border-color:var(--primary);color:#fff;">
+                    <i class="fa-solid fa-check"></i> Save Task
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Task Result Dialog -->
+    <div id="result-dialog-overlay" class="dialog-overlay">
+        <div class="dialog" style="max-width:640px;max-height:80vh;display:flex;flex-direction:column;">
+            <div class="dialog-header">
+                <h3 id="result-dialog-title"><i class="fa-solid fa-clipboard-list" style="color:var(--primary);"></i> Task Result</h3>
+                <button class="dialog-close" onclick="closeResultDialog()">&times;</button>
+            </div>
+            <div style="flex:1;overflow-y:auto;padding:0 0 16px;">
+                <div id="result-task-info" style="padding:12px 16px;background:var(--light-grey-bg);border-bottom:1px solid var(--border-color);font-size:12px;color:var(--grey);"></div>
+                <div id="result-content" style="padding:16px;font-size:13px;line-height:1.7;color:var(--text-primary);white-space:pre-wrap;word-break:break-word;"></div>
+            </div>
+            <div class="dialog-footer" style="border-top:1px solid var(--border-color);padding-top:12px;">
+                <button class="dialog-btn cancel" onclick="closeResultDialog()">Close</button>
+                <button class="dialog-btn confirm" onclick="copyResult()" style="background:var(--primary);border-color:var(--primary);color:#fff;">
+                    <i class="fa-solid fa-copy"></i> Copy Result
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script src="/static/js/shared-sidebar.js"></script>
+    <script src="/static/js/monitoring.js"></script>
 </body>
 </html>
 

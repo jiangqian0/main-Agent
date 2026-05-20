@@ -4,7 +4,6 @@ let skills = [];
 
 document.addEventListener('DOMContentLoaded', () => {
     checkAuth();
-    initSidebarResize();
     loadSkills();
 });
 
@@ -17,27 +16,6 @@ function logout() {
     localStorage.removeItem('agent_session');
     sessionStorage.removeItem('agent_session');
     window.location.href = '/login';
-}
-
-function initSidebarResize() {
-    const sidebar = document.getElementById('sidebar');
-    const handle = document.getElementById('sidebar-resize-handle');
-    let isDragging = false;
-    handle && handle.addEventListener('mousedown', e => {
-        isDragging = true;
-        document.body.style.cursor = 'col-resize';
-        document.body.style.userSelect = 'none';
-        e.preventDefault();
-    });
-    document.addEventListener('mousemove', e => {
-        if (!isDragging) return;
-        sidebar.style.width = Math.min(400, Math.max(200, e.clientX)) + 'px';
-    });
-    document.addEventListener('mouseup', () => {
-        isDragging = false;
-        document.body.style.cursor = '';
-        document.body.style.userSelect = '';
-    });
 }
 
 function loadSkills() {

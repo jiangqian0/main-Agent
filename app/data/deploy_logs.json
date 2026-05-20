@@ -1,0 +1,52 @@
+{
+  "logs": [
+    {
+      "id": "log-20260518095712",
+      "project": "Node.js App",
+      "environment": "staging",
+      "status": "success",
+      "message": "Deployment completed successfully.",
+      "created_at": "2026-05-18T09:57:12.827848"
+    },
+    {
+      "id": "log-20260518095709",
+      "project": "Node.js App",
+      "environment": "staging",
+      "status": "pending",
+      "message": "Starting docker deployment to staging...",
+      "created_at": "2026-05-18T09:57:09.809521"
+    },
+    {
+      "id": "log-20260518095705",
+      "project": "Static Website",
+      "environment": "staging",
+      "status": "failed",
+      "message": "Deployment failed: connection timeout.",
+      "created_at": "2026-05-18T09:57:05.544684"
+    },
+    {
+      "id": "log-20260518095702",
+      "project": "Static Website",
+      "environment": "staging",
+      "status": "pending",
+      "message": "Starting docker deployment to staging...",
+      "created_at": "2026-05-18T09:57:02.534968"
+    },
+    {
+      "id": "log-20260518095648",
+      "project": "Docker Container",
+      "environment": "production",
+      "status": "success",
+      "message": "Deployment completed successfully.",
+      "created_at": "2026-05-18T09:56:48.222995"
+    },
+    {
+      "id": "log-20260518095645",
+      "project": "Docker Container",
+      "environment": "production",
+      "status": "pending",
+      "message": "Starting docker deployment to production...",
+      "created_at": "2026-05-18T09:56:45.207502"
+    }
+  ]
+}

@@ -40,3 +40,5 @@ class ChatRequest(BaseModel):
     knowledge_bases: Optional[List[str]] = []
     enable_tools: Optional[bool] = True
     model: Optional[str] = None
+    mode: Optional[str] = "agent"  # "agent" | "plan" | "ask"
+    plan_confirmed: Optional[bool] = False

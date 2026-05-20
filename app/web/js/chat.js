@@ -40,6 +40,7 @@
 window.updateStep        = typeof updateStep !== 'undefined' ? updateStep : () => {};
 window.addLog            = typeof addLog !== 'function' ? () => {} : addLog;
 window.updateToolPanel   = typeof updateToolPanel !== 'undefined' ? updateToolPanel : () => {};
+window.resetExecutionState = typeof resetExecutionState !== 'undefined' ? resetExecutionState : () => {};
 
 // Alias storage functions to HTML onclick names
 window.loadConversation   = storageLoadConversation;
@@ -72,17 +73,166 @@ let skills = [];
 let skillDropdownOpen = false;
 let kbDropdownOpen = false;
 
+// ─── Mode Switching (Agent / Plan / Ask) ─────────────────────────────────────────
+
+const MODE_INFO = {
+  agent: { badge: 'Agent', desc: 'Full access — read, write, execute', badgeClass: '' },
+  plan:  { badge: 'Plan',  desc: 'Plan first, then execute with your approval',  badgeClass: 'plan' },
+  ask:   { badge: 'Ask',   desc: 'Question answering only — no tools or file access', badgeClass: 'ask' },
+};
+
+function switchMode(mode) {
+  window.currentMode = mode;
+  window.planConfirmed = false;
+  window.pendingPlanMessage = '';
+
+  // Update tab UI
+  document.querySelectorAll('.mode-tab').forEach(tab => {
+    tab.classList.toggle('active', tab.dataset.mode === mode);
+  });
+
+  // Update mode badge
+  const info = MODE_INFO[mode] || MODE_INFO.agent;
+  const badge = document.getElementById('mode-badge');
+  const desc  = document.getElementById('mode-desc');
+  if (badge) {
+    badge.textContent = info.badge;
+    badge.className = 'mode-badge' + (info.badgeClass ? ' ' + info.badgeClass : '');
+  }
+  if (desc) desc.textContent = info.desc;
+
+  // Show/hide Plan mode banner
+  const planBanner = document.getElementById('plan-mode-banner');
+  if (planBanner) planBanner.classList.toggle('visible', mode === 'plan');
+
+  // Show/hide Ask mode banner
+  let askBanner = document.getElementById('ask-mode-banner');
+  if (!askBanner) {
+    // Inject once
+    const planBanner = document.getElementById('plan-mode-banner');
+    if (planBanner) {
+      askBanner = document.createElement('div');
+      askBanner.id = 'ask-mode-banner';
+      askBanner.className = 'ask-mode-banner';
+      askBanner.innerHTML = '<i class="fa-solid fa-comment"></i><span>Ask Mode — Asking questions, no tools or file operations</span>';
+      planBanner.parentNode.insertBefore(askBanner, planBanner.nextSibling);
+    }
+  }
+  if (askBanner) askBanner.classList.toggle('visible', mode === 'ask');
+
+  // Show/hide Plan mode tools notice (tools are disabled)
+  let planToolsNotice = document.getElementById('plan-tools-notice');
+  if (!planToolsNotice) {
+    const toolbar = document.getElementById('input-toolbar');
+    if (toolbar) {
+      planToolsNotice = document.createElement('div');
+      planToolsNotice.id = 'plan-tools-notice';
+      planToolsNotice.className = 'mode-tools-notice';
+      planToolsNotice.innerHTML = '<i class="fa-solid fa-info-circle"></i> Tools are disabled in Plan mode';
+      toolbar.insertAdjacentElement('afterend', planToolsNotice);
+    }
+  }
+  if (planToolsNotice) planToolsNotice.classList.toggle('visible', mode === 'plan');
+
+  // Hide confirm bar on mode switch
+  const confirmBar = document.getElementById('plan-confirm-bar');
+  if (confirmBar) confirmBar.classList.remove('visible');
+
+  // Persist preference
+  localStorage.setItem('agent_mode', mode);
+}
+
+function confirmPlan() {
+  const confirmBar = document.getElementById('plan-confirm-bar');
+  if (confirmBar) confirmBar.classList.remove('visible');
+
+  // 获取 AI 生成的 Plan 内容，追加到用户消息中
+  const conv = getCurrentConversation();
+  let planContent = '';
+  if (conv && conv.messages && conv.messages.length > 0) {
+    const lastMsg = conv.messages[conv.messages.length - 1];
+    if (lastMsg.role === 'assistant') {
+      planContent = lastMsg.content;
+    }
+  }
+
+  // 组合消息：用户原始请求 + Plan 结果 + 附件
+  let executeMessage = window.pendingPlanMessage || '';
+  if (planContent) {
+    executeMessage +=
+      '\n\n[以下是 AI 生成的执行计划，请严格按此计划执行，不要偏离：]\n' +
+      planContent;
+  }
+  const attachCtx = getAttachmentContext();
+  if (attachCtx) executeMessage += attachCtx;
+  if (!executeMessage.trim()) return;
+
+  window.planConfirmed = true;
+
+  // 清空当前助手消息占位，重新执行
+  const streamingMsg = document.querySelector('.message.assistant.streaming');
+  if (streamingMsg) {
+    const msgContent = streamingMsg.querySelector('.message-content');
+    if (msgContent) msgContent.innerHTML = '<p><em>Executing plan...</em></p>';
+  }
+
+  resetStreamState();
+  resetExecutionState();
+  execSetStep(1, 'running');
+  execSetStep(2, 'running');
+  execAddLog('info', 'Executing confirmed plan...');
+
+  const skillId = window.selectedSkillId || '';
+  abortController = new AbortController();
+  streamFetch(executeMessage, skillId, { mode: 'agent', plan_confirmed: true });
+}
+
+function cancelPlanConfirm() {
+  const confirmBar = document.getElementById('plan-confirm-bar');
+  if (confirmBar) confirmBar.classList.remove('visible');
+  window.planConfirmed = false;
+  window.pendingPlanMessage = '';
+  // 不删除消息，只是停止等待确认
+  execAddLog('warning', 'Plan cancelled');
+}
+
+function persistPlanMessage() {
+  // 保存当前用户消息，供 confirmPlan 使用
+  const convId = window.currentConversationId;
+  const conv = conversations.find(c => c.id === convId);
+  if (!conv) return;
+  const msgs_arr = conv.messages;
+  if (msgs_arr && msgs_arr.length > 0) {
+    const last = msgs_arr[msgs_arr.length - 1];
+    if (last.role === 'user') {
+      window.pendingPlanMessage = last.content;
+    }
+  }
+}
+
 // ─── Init ─────────────────────────────────────────────────────────────────────
 document.addEventListener('DOMContentLoaded', () => {
-  loadConversations();
+  // Force sidebar scroll to top so history list is visible
+  const sidebarMenu = document.querySelector('.sidebar-menu');
+  if (sidebarMenu) sidebarMenu.scrollTop = 0;
+
+  // Load data
+  loadConversations();        // loads from localStorage + calls renderHistory('')
   loadMemories();
   loadWorkspaceFiles();
   loadMemoryConfig();
   loadSkills();
   loadKnowledgeEntries();
-  initSidebarResize();
   loadModelFromStorage();
   initDropdownCloseHandlers();
+
+  // Restore saved mode
+  const savedMode = localStorage.getItem('agent_mode');
+  if (savedMode && MODE_INFO[savedMode]) switchMode(savedMode);
+
+  // Focus the input textarea
+  const input = document.getElementById('chat-input');
+  if (input) input.focus();
 });
 
 // ─── Model Selector ───────────────────────────────────────────────────────────
@@ -200,14 +350,8 @@ function toggleKbEntry(id) {
 }
 
 // ─── History Toggle ──────────────────────────────────────────────────────────
-function toggleHistory() {
-  const list = document.getElementById('history-list');
-  const icon = document.querySelector('.history-header i');
-  if (!list || !icon) return;
-  list.classList.toggle('hidden');
-  icon.classList.toggle('fa-chevron-down');
-  icon.classList.toggle('fa-chevron-up');
-}
+// toggleHistory() is defined in shared-sidebar.js (shared across all pages)
+// chat.js does NOT redefine it — do not add a local override here.
 
 // ─── New Conversation ─────────────────────────────────────────────────────────
 function newConversation() {
@@ -506,14 +650,398 @@ function _wsGetFileIcon(name) {
 
 function handleUpload(e) {
   const fd = new FormData();
-  for (const f of e.target.files) fd.append('files', f);
+  for (const f of e.target.files) fd.append('file', f);
   fetch('/api/workspace/upload', { method: 'POST', body: fd })
-    .then(r => r.ok ? loadWorkspaceFiles() : alert('Upload failed'))
+    .then(r => {
+      if (r.ok) {
+        loadWorkspaceFiles();
+        showToast('File uploaded successfully');
+      } else {
+        alert('Upload failed');
+      }
+    })
     .catch(() => alert('Upload failed'));
 }
 
-// ─── Input Helpers ────────────────────────────────────────────────────────────
+function handleUploadFromButton(e) {
+  // Triggered by the attach button — same logic as drag & drop
+  const files = Array.from(e.files || []);
+  if (files.length) processDroppedFiles(files);
+  e.value = ''; // reset so same file can be selected again
+}
+
+// ─── File Drag & Drop ────────────────────────────────────────────────────────
+
+let pendingAttachments = []; // { file, name, status }
+
+function handleDragOver(e) {
+  e.preventDefault();
+  document.getElementById('drop-zone')?.classList.add('active');
+}
+
+function handleDragLeave(e) {
+  // Only hide if leaving the window
+  if (!e.relatedTarget || !document.body.contains(e.relatedTarget)) {
+    document.getElementById('drop-zone')?.classList.remove('active');
+  }
+}
+
+function handleFileDrop(e) {
+  e.preventDefault();
+  document.getElementById('drop-zone')?.classList.remove('active');
+  const files = Array.from(e.dataTransfer.files);
+  if (files.length) processDroppedFiles(files);
+}
+
+function processDroppedFiles(files) {
+  files.forEach(file => {
+    const id = 'att_' + Date.now() + '_' + Math.random().toString(36).slice(2);
+    pendingAttachments.push({ id, file, name: file.name, status: 'pending' });
+    renderAttachmentBar();
+    uploadAttachment(id, file);
+  });
+}
+
+function uploadAttachment(id, file) {
+  const att = pendingAttachments.find(a => a.id === id);
+  if (!att) return;
+  att.status = 'uploading';
+  renderAttachmentBar();
+
+  const fd = new FormData();
+  fd.append('file', file);
+  fetch('/api/workspace/upload', { method: 'POST', body: fd })
+    .then(r => {
+      if (r.ok) {
+        att.status = 'done';
+        att.uploadedPath = file.name;
+        // Refresh workspace panel to show uploaded file
+        loadWorkspaceFiles();
+      } else {
+        att.status = 'error';
+        att.error = 'Upload failed';
+      }
+    })
+    .catch(() => { att.status = 'error'; att.error = 'Upload failed'; })
+    .finally(() => renderAttachmentBar());
+}
+
+function removeAttachment(id) {
+  pendingAttachments = pendingAttachments.filter(a => a.id !== id);
+  renderAttachmentBar();
+}
+
+function clearAttachments() {
+  pendingAttachments = [];
+  renderAttachmentBar();
+}
+
+function renderAttachmentBar() {
+  const bar = document.getElementById('attachment-bar');
+  const list = document.getElementById('attachment-list');
+  if (!bar || !list) return;
+
+  if (pendingAttachments.length === 0) {
+    bar.classList.remove('visible');
+    return;
+  }
+
+  bar.classList.add('visible');
+  const icons = {
+    pdf: 'fa-solid fa-file-pdf', doc: 'fa-solid fa-file-word', docx: 'fa-solid fa-file-word',
+    xls: 'fa-solid fa-file-excel', xlsx: 'fa-solid fa-file-excel',
+    zip: 'fa-solid fa-file-zipper', png: 'fa-solid fa-image',
+    jpg: 'fa-solid fa-image', jpeg: 'fa-solid fa-image', gif: 'fa-solid fa-image',
+    mp3: 'fa-solid fa-file-audio', mp4: 'fa-solid fa-file-video',
+    py: 'fa-brands fa-python', js: 'fa-brands fa-js', ts: 'fa-solid fa-code',
+    html: 'fa-brands fa-html5', css: 'fa-brands fa-css3-alt', json: 'fa-solid fa-code',
+    txt: 'fa-solid fa-file-lines', md: 'fa-solid fa-file-lines',
+  };
+  const getIcon = (name) => {
+    const ext = name.split('.').pop().toLowerCase();
+    return icons[ext] || 'fa-solid fa-file';
+  };
+  const getStatusIcon = (s) => {
+    if (s === 'done') return '<i class="fa-solid fa-check-circle" style="color:#10b981"></i>';
+    if (s === 'error') return '<i class="fa-solid fa-circle-exclamation" style="color:#ef4444"></i>';
+    if (s === 'uploading') return '<i class="fa-solid fa-spinner fa-spin" style="color:#3b82f6"></i>';
+    return '<i class="fa-solid fa-clock" style="color:#9ca3af"></i>';
+  };
+
+  list.innerHTML = pendingAttachments.map(att => `
+    <div class="attachment-chip ${att.status}" id="${att.id}">
+      ${getStatusIcon(att.status)}
+      <i class="${getIcon(att.name)}"></i>
+      <span class="attachment-chip-name" title="${escapeHtml(att.name)}">${escapeHtml(att.name)}</span>
+      <button class="attachment-chip-remove" onclick="removeAttachment('${att.id}')">✕</button>
+    </div>
+  `).join('');
+}
+
+function getAttachmentContext() {
+  // Returns a string describing attached files for the prompt
+  if (!pendingAttachments.length) return '';
+  const done = pendingAttachments.filter(a => a.status === 'done');
+  if (!done.length) return '';
+  const names = done.map(a => a.name).join(', ');
+  return `\n[Attached files: ${names}]\n`;
+}
+window.getAttachmentContext = getAttachmentContext;
+
+// ─── Voice Input ─────────────────────────────────────────────────────────────
+
+let recognition = null;
+let voiceIsListening = false;
+
+function toggleVoiceInput() {
+  if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
+    showToast('Your browser does not support voice input', 'error');
+    return;
+  }
+  if (voiceIsListening) {
+    stopVoiceInput();
+  } else {
+    startVoiceInput();
+  }
+}
+
+function startVoiceInput() {
+  const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+  recognition = new SpeechRecognition();
+  recognition.lang = 'zh-CN';
+  recognition.continuous = true;
+  recognition.interimResults = true;
+
+  recognition.onstart = () => {
+    voiceIsListening = true;
+    updateVoiceBtn(true);
+    showToast('Listening... speak now', 'info');
+  };
+
+  recognition.onresult = (event) => {
+    let transcript = '';
+    for (let i = event.resultIndex; i < event.results.length; i++) {
+      transcript += event.results[i][0].transcript;
+    }
+    const input = document.getElementById('chat-input');
+    if (input) {
+      const prev = input.value.trim();
+      input.value = prev ? prev + ' ' + transcript : transcript;
+      autoResize(input);
+    }
+  };
+
+  recognition.onerror = (event) => {
+    if (event.error !== 'no-speech') {
+      showToast('Voice error: ' + event.error, 'error');
+    }
+    stopVoiceInput();
+  };
+
+  recognition.onend = () => {
+    if (voiceIsListening) {
+      // Restart if still supposed to be listening
+      try { recognition.start(); } catch(e) {}
+    }
+  };
+
+  recognition.start();
+}
+
+function stopVoiceInput() {
+  if (recognition) {
+    voiceIsListening = false;
+    updateVoiceBtn(false);
+    try { recognition.stop(); } catch(e) {}
+    recognition = null;
+  }
+}
+
+function updateVoiceBtn(listening) {
+  const btn = document.getElementById('voice-btn');
+  const icon = document.getElementById('voice-icon');
+  if (!btn || !icon) return;
+  btn.classList.toggle('recording', listening);
+  icon.className = listening ? 'fa-solid fa-stop' : 'fa-solid fa-microphone';
+}
+
+// ─── Slash Commands ─────────────────────────────────────────────────────────────
+
+const SLASH_COMMANDS = [
+  { cmd: 'ask',    label: '/ask',    hint: 'Switch to Ask mode', desc: 'Answer questions without executing' },
+  { cmd: 'plan',   label: '/plan',   hint: 'Switch to Plan mode', desc: 'Show plan before executing' },
+  { cmd: 'agent',  label: '/agent',  hint: 'Switch to Agent mode', desc: 'Full access — read, write, execute' },
+  { cmd: 'clear',  label: '/clear',  hint: 'Clear conversation', desc: 'Clear current chat history' },
+  { cmd: 'new',    label: '/new',    hint: 'New conversation', desc: 'Start a fresh conversation' },
+  { cmd: 'export', label: '/export', hint: 'Export conversation', desc: 'Download current conversation' },
+  { cmd: 'model',  label: '/model',  hint: 'Switch model', desc: 'Usage: /model qwen3-max' },
+  { cmd: 'help',   label: '/help',   hint: 'Show all commands', desc: 'List all available commands' },
+];
+
+let slashMenuEl = null;
+let slashActiveIdx = -1;
+let slashQuery = '';
+
+function showSlashMenu(input) {
+  closeSlashMenu();
+
+  const form = input.closest('.chat-input-form');
+  const wrapper = input.closest('.chat-input-wrapper');
+  const target = form || wrapper || document.body;
+
+  const targetRect = target.getBoundingClientRect();
+  const inputRect = input.getBoundingClientRect();
+
+  // How far the input's bottom is from the target's top edge
+  const inputBottomFromTarget = inputRect.bottom - targetRect.top;
+  // Menu sits directly above the textarea (inputBottomFromTarget px from target top)
+  const menuBottom = inputBottomFromTarget + 6;
+
+  const menu = document.createElement('div');
+  menu.id = 'slash-menu';
+  menu.style.cssText =
+    `position:absolute;bottom:${menuBottom}px;left:0;right:0;` +
+    `min-width:320px;max-height:300px;background:#fff;` +
+    `border:1px solid #e8e8e8;border-radius:12px;` +
+    `box-shadow:0 8px 30px rgba(0,0,0,0.15);` +
+    `z-index:999;overflow-y:auto;font-family:Inter,sans-serif;` +
+    `animation:slashMenuIn 0.15s ease`;
+
+  menu.innerHTML = SLASH_COMMANDS.map((c, i) =>
+    `<div class="slash-item ${i===0?'active':''}" data-cmd="${c.cmd}" data-idx="${i}" style="display:flex;align-items:center;gap:10px;padding:10px 14px;cursor:pointer;border-radius:8px;margin:3px 6px">
+      <span style="font-size:13px;font-weight:700;color:var(--primary);min-width:64px">${escapeHtml(c.label)}</span>
+      <span style="font-size:12px;color:var(--text-secondary);flex:1">${escapeHtml(c.desc)}</span>
+    </div>`
+  ).join('');
+
+  target.style.position = 'relative';
+  target.appendChild(menu);
+
+  menu.addEventListener('mousedown', e => e.preventDefault());
+  menu.addEventListener('click', e => {
+    const item = e.target.closest('.slash-item');
+    if (item) executeSlashCommand(item.dataset.cmd, input);
+  });
+
+  slashMenuEl = menu;
+  slashActiveIdx = 0;
+}
+
+function closeSlashMenu() {
+  if (slashMenuEl) { slashMenuEl.remove(); slashMenuEl = null; }
+  slashActiveIdx = -1;
+}
+
+function updateSlashMenu(query) {
+  if (!slashMenuEl) return;
+  slashQuery = query;
+  const items = slashMenuEl.querySelectorAll('.slash-item');
+  if (!query) {
+    items.forEach((it, i) => { it.style.display = 'flex'; it.classList.toggle('active', i === 0); });
+    slashActiveIdx = 0;
+    return;
+  }
+  const q = query.toLowerCase();
+  let first = -1;
+  items.forEach((it, i) => {
+    const cmd = SLASH_COMMANDS[i];
+    const match = cmd.cmd.includes(q) || cmd.label.includes(q) || cmd.desc.toLowerCase().includes(q);
+    it.style.display = match ? 'flex' : 'none';
+    if (match && first === -1) { first = i; it.classList.add('active'); }
+    else it.classList.remove('active');
+  });
+  if (first !== -1) slashActiveIdx = first;
+  else slashActiveIdx = -1;
+  const active = slashMenuEl.querySelector('.slash-item.active');
+  active?.scrollIntoView({ block: 'nearest' });
+}
+
+function executeSlashCommand(cmd, input) {
+  closeSlashMenu();
+  switch (cmd) {
+    case 'ask':
+      switchMode('ask');
+      showToast('Switched to Ask mode', 'info');
+      break;
+    case 'plan':
+      switchMode('plan');
+      showToast('Switched to Plan mode', 'info');
+      break;
+    case 'agent':
+      switchMode('agent');
+      showToast('Switched to Agent mode', 'info');
+      break;
+    case 'clear':
+      clearChat(true);
+      showToast('Conversation cleared', 'info');
+      break;
+    case 'new':
+      newConversation();
+      showToast('New conversation started', 'info');
+      break;
+    case 'export':
+      if (window.currentConversationId) storageExportConversation(window.currentConversationId);
+      else showToast('No active conversation', 'error');
+      break;
+    case 'model':
+      const sel = document.getElementById('model-select');
+      if (sel) {
+        sel.focus();
+        showToast('Use dropdown to select model', 'info');
+      }
+      break;
+    case 'help':
+      input.value = '';
+      showSlashHelp();
+      break;
+  }
+}
+
+function showSlashHelp() {
+  const msg = [
+    '**Available Commands:**\n',
+    ...SLASH_COMMANDS.map(c => `- **${c.label}** — ${c.desc}`),
+    '\n_Type any command above in the input box_'
+  ].join('\n');
+  appendAssistantMessage(msg);
+  persistAssistantMessage(msg);
+}
+
 function handleKeyDown(e) {
+  const input = document.getElementById('chat-input');
+
+  // Slash menu navigation
+  if (slashMenuEl) {
+    const items = [...slashMenuEl.querySelectorAll('.slash-item')].filter(it => it.style.display !== 'none');
+    if (e.key === 'ArrowDown') {
+      e.preventDefault();
+      items.forEach(it => it.classList.remove('active'));
+      slashActiveIdx = (slashActiveIdx + 1) % items.length;
+      if (slashActiveIdx >= items.length) slashActiveIdx = 0;
+      items[slashActiveIdx]?.classList.add('active');
+      items[slashActiveIdx]?.scrollIntoView({ block: 'nearest' });
+      return;
+    }
+    if (e.key === 'ArrowUp') {
+      e.preventDefault();
+      items.forEach(it => it.classList.remove('active'));
+      slashActiveIdx = slashActiveIdx <= 0 ? items.length - 1 : slashActiveIdx - 1;
+      items[slashActiveIdx]?.classList.add('active');
+      items[slashActiveIdx]?.scrollIntoView({ block: 'nearest' });
+      return;
+    }
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      const active = slashMenuEl.querySelector('.slash-item.active');
+      if (active) executeSlashCommand(active.dataset.cmd, input);
+      return;
+    }
+    if (e.key === 'Escape') {
+      closeSlashMenu();
+      return;
+    }
+  }
+
   if (e.key === 'Enter' && !e.shiftKey) {
     e.preventDefault();
     sendMessage();
@@ -522,37 +1050,21 @@ function handleKeyDown(e) {
 
 function handleSubmit(e) { e.preventDefault(); sendMessage(); }
 
+// autoResize: auto-grows textarea and detects "/" slash commands
 function autoResize(el) {
   el.style.height = 'auto';
   el.style.height = Math.min(el.scrollHeight, 200) + 'px';
-}
 
-// ─── Sidebar Resize ──────────────────────────────────────────────────────────
-function initSidebarResize() {
-  const handle = document.getElementById('sidebar-resize-handle');
-  const sidebar = document.getElementById('sidebar');
-  if (!handle || !sidebar) return;
-  let isR = false;
-  handle.addEventListener('mousedown', e => {
-    isR = true;
-    handle.classList.add('dragging');
-    document.body.style.cursor = 'col-resize';
-    document.body.style.userSelect = 'none';
-  });
-  document.addEventListener('mousemove', e => {
-    if (!isR) return;
-    const r = sidebar.getBoundingClientRect();
-    const w = e.clientX - r.left;
-    if (w >= 200 && w <= 400) sidebar.style.width = w + 'px';
-  });
-  document.addEventListener('mouseup', () => {
-    if (isR) {
-      isR = false;
-      handle.classList.remove('dragging');
-      document.body.style.cursor = '';
-      document.body.style.userSelect = '';
-    }
-  });
+  const val = el.value;
+  const cursor = el.selectionStart;
+  const beforeCursor = val.slice(0, cursor);
+  const slashMatch = beforeCursor.match(/(?:^|\s)\/(\w*)$/);
+  if (slashMatch) {
+    if (!slashMenuEl) showSlashMenu(el);
+    updateSlashMenu(slashMatch[1]);
+  } else {
+    closeSlashMenu();
+  }
 }
 
 // ─── Toast ───────────────────────────────────────────────────────────────────
@@ -658,3 +1170,87 @@ function formatDate(d) {
   if (days < 7) return `${days}d ago`;
   return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
 }
+
+// ─── Profile Popover ───────────────────────────────────────────────────────────
+
+const ANSWER_STYLES = {
+  concise: {
+    name: 'Concise',
+    prompt_suffix: '\n\n**Reply Style**: Be concise and direct. Lead with the answer, code-first. Only elaborate when asked.',
+  },
+  detailed: {
+    name: 'Detailed',
+    prompt_suffix: '\n\n**Reply Style**: Give thorough explanations with full context. Include background, trade-offs, and alternatives.',
+  },
+  academic: {
+    name: 'Academic',
+    prompt_suffix: '\n\n**Reply Style**: Be structured and formal. Use precise terminology, cite sources when possible, and analyze from multiple angles.',
+  },
+  creative: {
+    name: 'Creative',
+    prompt_suffix: '\n\n**Reply Style**: Be flexible and innovative. Explore unconventional approaches and suggest creative solutions.',
+  },
+};
+
+let profilePopoverOpen = false;
+
+function toggleProfilePopover(e) {
+  if (e) e.stopPropagation();
+  profilePopoverOpen = !profilePopoverOpen;
+  const popover = document.getElementById('profile-popover');
+  if (!popover) return;
+  popover.style.display = profilePopoverOpen ? 'block' : 'none';
+
+  if (profilePopoverOpen) {
+    // Populate user info
+    const username = localStorage.getItem('agent_username') || 'User';
+    const email = localStorage.getItem('agent_email') || 'user@example.com';
+    const el = document.getElementById('popover-username');
+    const em = document.getElementById('popover-email');
+    if (el) el.textContent = username;
+    if (em) em.textContent = email;
+
+    // Sync style checkmark
+    const saved = localStorage.getItem('agent_answer_style') || 'concise';
+    document.querySelectorAll('.style-option').forEach(opt => {
+      opt.classList.toggle('active', opt.dataset.style === saved);
+    });
+  }
+}
+
+function selectAnswerStyle(style) {
+  localStorage.setItem('agent_answer_style', style);
+  document.querySelectorAll('.style-option').forEach(opt => {
+    opt.classList.toggle('active', opt.dataset.style === style);
+  });
+  // Persist to server config
+  fetch('/api/config', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ answer_style: style }),
+  }).catch(() => {});
+  showToast(`Answer style: ${ANSWER_STYLES[style]?.name || style}`, 'info');
+}
+
+function getAnswerStyleSuffix() {
+  const style = localStorage.getItem('agent_answer_style') || 'concise';
+  return ANSWER_STYLES[style]?.prompt_suffix || ANSWER_STYLES.concise.prompt_suffix;
+}
+
+window.toggleProfilePopover = toggleProfilePopover;
+window.selectAnswerStyle = selectAnswerStyle;
+window.getAnswerStyleSuffix = getAnswerStyleSuffix;
+
+// Close popover when clicking outside
+const _origInitDropdownClose = typeof initDropdownCloseHandlers !== 'undefined' ? initDropdownCloseHandlers : null;
+document.addEventListener('DOMContentLoaded', () => {
+  document.addEventListener('click', e => {
+    if (profilePopoverOpen && !e.target.closest('#profile-popover') && !e.target.closest('#profile-btn')) {
+      profilePopoverOpen = false;
+      const popover = document.getElementById('profile-popover');
+      if (popover) popover.style.display = 'none';
+    }
+    if (!e.target.closest('#skill-dropdown-container')) closeSkillDropdown();
+    if (!e.target.closest('#kb-dropdown-container')) closeKbDropdown();
+  });
+});
