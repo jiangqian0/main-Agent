@@ -380,6 +380,10 @@ class AgentLoop:
         headers = {"Authorization": f"Bearer {self.api_key}", "Content-Type": "application/json"}
         tools = convert_to_openai_tools(self.tool_executor.get_tools_definitions())
 
+        print(f"[AgentLoop] API Key length: {len(self.api_key) if self.api_key else 0}")
+        print(f"[AgentLoop] Model: {self.model}")
+        print(f"[AgentLoop] Base URL: {self.base_url}")
+
         data = {
             "model": self.model, "messages": messages,
             "tools": tools or None, "tool_choice": "auto", "stream": True
@@ -412,12 +416,17 @@ class AgentLoop:
                 trust_env=False, verify=False
             ) as client:
                 async with client.stream("POST", url, headers=headers, json=data) as resp:
+                    print(f"[AgentLoop] Response status: {resp.status_code}")
                     resp.raise_for_status()
                     last_data_time = asyncio.get_event_loop().time()
                     fast_timeout = 5.0
                     normal_timeout = 30.0
+                    chunks_received = 0
 
                     async for line in resp.aiter_lines():
+                        chunks_received += 1
+                        if chunks_received == 1:
+                            print(f"[AgentLoop] First chunk: {line[:100]}...")
                         current_time = asyncio.get_event_loop().time()
                         if not line.startswith("data: "):
                             continue
@@ -488,10 +497,18 @@ class AgentLoop:
                             break
 
                     if tool_calls_buffer:
+                        print(f"[AgentLoop] Stream complete: tool_calls detected ({len(tool_calls_buffer)} calls)")
                         yield {"type": "tool_calls", "content": tool_calls_buffer}
                     else:
+                        print(f"[AgentLoop] Stream complete: done, full_content length = {len(full_content)}")
                         yield {"type": "done", "content": full_content}
 
+        except httpx.HTTPStatusError as e:
+            print(f"[AgentLoop] HTTP error: {e.response.status_code} - {e.response.text[:500]}")
+            raise
+        except Exception as e:
+            print(f"[AgentLoop] Stream error: {type(e).__name__}: {e}")
+            raise
         finally:
             if orig_http is not None: os.environ["HTTP_PROXY"] = orig_http
             if orig_https is not None: os.environ["HTTPS_PROXY"] = orig_https

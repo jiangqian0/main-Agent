@@ -1,0 +1,20 @@
+{
+  "skills": [
+    {
+      "id": "custom-7a98c90e",
+      "name": "Paper reader",
+      "description": "去搜索顶刊论文，并返回论文的摘要",
+      "enabled": true,
+      "category": "Custom",
+      "version": "1.0.0",
+      "icon": "fa-globe",
+      "is_builtin": false,
+      "trigger_keywords": [
+        "论文搜索、Paper"
+      ],
+      "system_prompt_addition": "请你才爱思维尔、arxiv等论文网页去检索相关论文，用户会给出关键词。至少5篇论文。",
+      "allowed_tools": [],
+      "tags": []
+    }
+  ]
+}

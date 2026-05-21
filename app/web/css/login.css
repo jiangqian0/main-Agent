@@ -1,5 +1,9 @@
 /* Login Page Styles */
 
+.hidden {
+    display: none !important;
+}
+
 .login-page {
     overflow: auto;
     background: linear-gradient(135deg, #f5f7fa 0%, #e4e8ec 100%);

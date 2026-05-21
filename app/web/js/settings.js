@@ -8,6 +8,25 @@ document.addEventListener('DOMContentLoaded', () => {
     loadAvailableModels();
 });
 
+function getAuthHeaders() {
+    const headers = { 'Content-Type': 'application/json' };
+    const sessionStr = localStorage.getItem('agent_session') || sessionStorage.getItem('agent_session');
+    if (sessionStr) {
+        try {
+            const sessionData = JSON.parse(sessionStr);
+            if (sessionData.token) {
+                headers['Authorization'] = `Bearer ${sessionData.token}`;
+            }
+        } catch (e) {
+            // 兼容直接存储token的情况
+            if (sessionStr && sessionStr.length > 10) {
+                headers['Authorization'] = `Bearer ${sessionStr}`;
+            }
+        }
+    }
+    return headers;
+}
+
 function checkAuth() {
     const session = localStorage.getItem('agent_session') || sessionStorage.getItem('agent_session');
     if (!session) window.navigateTo('/login');
@@ -22,25 +41,62 @@ function checkAuth() {
 
 async function loadSettings() {
     try {
-        const resp = await fetch(`${API_BASE}/config`);
+        // 首先尝试从服务器获取用户配置
+        const resp = await fetch(`${API_BASE}/auth/config`, {
+            headers: getAuthHeaders()
+        });
+
         if (resp.ok) {
             const cfg = await resp.json();
-            document.getElementById('api-url').value = cfg.api_base_url || 'https://dashscope-intl.aliyuncs.com/compatible-mode/v1';
-            document.getElementById('theme-select').value = cfg.theme || 'light';
-            document.getElementById('sidebar-width').value = cfg.sidebar_width || '260';
-            // Username
-            const username = localStorage.getItem('agent_username') || cfg.username || 'User';
-            const usernameInput = document.getElementById('username');
-            if (usernameInput) usernameInput.value = username;
-            // API Key (from server-side config, then localStorage)
-            const savedKey = localStorage.getItem('agent_api_key');
-            if (cfg.api_key && cfg.api_key !== '***') {
+            if (cfg.api_base_url) {
+                document.getElementById('api-url').value = cfg.api_base_url;
+            }
+            if (cfg.theme) {
+                document.getElementById('theme-select').value = cfg.theme;
+            }
+            if (cfg.model) {
+                const modelSelect = document.getElementById('model-select');
+                if (modelSelect) {
+                    modelSelect.value = cfg.model;
+                }
+            }
+            // API Key - 如果服务器有保存的，显示部分遮罩
+            if (cfg.api_key) {
                 document.getElementById('api-key').value = cfg.api_key;
-            } else if (savedKey) {
-                document.getElementById('api-key').value = savedKey;
             }
         }
     } catch {}
+
+    // 同时检查 localStorage 的配置作为补充
+    const savedModel = localStorage.getItem('agent_model');
+    if (savedModel) {
+        const modelSelect = document.getElementById('model-select');
+        if (modelSelect && !modelSelect.value) {
+            modelSelect.value = savedModel;
+        }
+    }
+
+    const savedApiUrl = localStorage.getItem('agent_api_url');
+    if (savedApiUrl) {
+        const apiUrlInput = document.getElementById('api-url');
+        if (apiUrlInput && !apiUrlInput.value) {
+            apiUrlInput.value = savedApiUrl;
+        }
+    }
+
+    const savedApiKey = localStorage.getItem('agent_api_key');
+    if (savedApiKey) {
+        const apiKeyInput = document.getElementById('api-key');
+        if (apiKeyInput && !apiKeyInput.value) {
+            apiKeyInput.value = savedApiKey;
+        }
+    }
+
+    // Username
+    const username = localStorage.getItem('agent_username') || sessionStorage.getItem('agent_username');
+    const usernameInput = document.getElementById('username');
+    if (usernameInput) usernameInput.value = username || '';
+
     // GitHub settings
     document.getElementById('gh-token').value = localStorage.getItem('gh_token') || '';
     document.getElementById('gh-repo').value = localStorage.getItem('gh_repo') || '';
@@ -54,7 +110,7 @@ async function loadAvailableModels() {
         if (resp.ok) {
             const data = await resp.json();
             const sel = document.getElementById('model-select');
-            if (sel) {
+            if (sel && data.models && data.models.length > 0) {
                 const current = localStorage.getItem('agent_model') || 'qwen3-max';
                 sel.innerHTML = data.models.map(m =>
                     `<option value="${m.id}" ${m.id === current ? 'selected' : ''}>${m.name} (${m.provider})</option>`
@@ -93,6 +149,7 @@ async function saveSettings() {
     const apiUrl = document.getElementById('api-url')?.value?.trim();
     const apiKey = document.getElementById('api-key')?.value?.trim();
 
+    // 保存到 localStorage
     localStorage.setItem('agent_model', model);
     localStorage.setItem('agent_theme', theme);
     localStorage.setItem('agent_sidebar_width', sidebarWidth);
@@ -100,7 +157,7 @@ async function saveSettings() {
     if (username) localStorage.setItem('agent_username', username);
     if (apiKey) localStorage.setItem('agent_api_key', apiKey);
 
-    // Save GitHub settings to localStorage
+    // 保存 GitHub 设置到 localStorage
     const ghToken = document.getElementById('gh-token')?.value?.trim();
     const ghRepo = document.getElementById('gh-repo')?.value?.trim();
     const ghBranch = document.getElementById('gh-branch')?.value?.trim() || 'main';
@@ -110,54 +167,47 @@ async function saveSettings() {
     localStorage.setItem('gh_branch', ghBranch);
     localStorage.setItem('gh_auto_sync', ghAutoSync ? 'true' : 'false');
 
-    // Save API key to server-side config
-    if (apiKey) {
-        localStorage.setItem('agent_api_key', apiKey);
-        let apiKeySaved = false;
+    // 保存 API 配置到服务器（用户级别）
+    let serverSaveSuccess = false;
+    if (apiKey || apiUrl || model) {
         try {
-            const res = await fetch(`${API_BASE}/config/api-key`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ api_key: apiKey }),
+            const res = await fetch(`${API_BASE}/auth/config`, {
+                method: 'PUT',
+                headers: getAuthHeaders(),
+                body: JSON.stringify({
+                    api_key: apiKey || undefined,
+                    api_base_url: apiUrl || undefined,
+                    model: model || undefined,
+                    temperature: 0.7,
+                    max_tokens: 4096,
+                    theme: theme || undefined,
+                })
             });
+
             if (res.ok) {
-                apiKeySaved = true;
+                serverSaveSuccess = true;
+                showToast('Settings saved to server and browser');
+            } else if (res.status === 401) {
+                // 未登录，只保存到本地
+                showToast('Settings saved locally (please login to sync)', 'warning');
             } else {
                 const err = await res.json().catch(() => ({}));
-                showToast('API key (local) saved — server error: ' + (err.detail || res.status), 'error');
+                showToast('Settings saved locally — server error: ' + (err.detail || res.status), 'error');
             }
         } catch (err) {
-            showToast('API key (local) saved — server unreachable', 'error');
-        }
-        if (apiKeySaved) {
-            showToast('API key saved successfully');
+            showToast('Settings saved locally (server unreachable)', 'warning');
         }
     } else {
-        showToast('Settings saved (API key unchanged)', 'success');
+        showToast('Settings saved', 'success');
     }
 
-    try {
-        await fetch(`${API_BASE}/config`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                theme,
-                sidebar_width: sidebarWidth,
-                username,
-                api_base_url: apiUrl,
-            })
-        });
-    } catch {}
-
-    // Apply theme immediately
+    // 应用主题和侧边栏宽度
     applyTheme(theme);
     applySidebarWidth(sidebarWidth);
-
-    showToast('Settings saved');
 }
 
 function applyTheme(theme) {
-    // Could toggle a data-theme attribute for CSS
+    // 可以切换 data-theme 属性用于 CSS
 }
 
 function applySidebarWidth(w) {
@@ -171,10 +221,12 @@ function resetSettings() {
     localStorage.removeItem('agent_theme');
     localStorage.removeItem('agent_sidebar_width');
     localStorage.removeItem('agent_api_url');
+    localStorage.removeItem('agent_api_key');
     document.getElementById('api-url').value = 'https://dashscope-intl.aliyuncs.com/compatible-mode/v1';
     document.getElementById('model-select').value = 'qwen3-max';
     document.getElementById('theme-select').value = 'light';
     document.getElementById('sidebar-width').value = '260';
+    document.getElementById('api-key').value = '';
     showToast('Settings reset');
 }
 
@@ -215,7 +267,7 @@ function showToast(msg, type = 'success') {
     const container = document.getElementById('toast-container');
     const t = document.createElement('div');
     t.className = `toast ${type}`;
-    t.innerHTML = `<i class="fa-solid fa-${type === 'success' ? 'check' : 'xmark'}"></i>${msg}`;
+    t.innerHTML = `<i class="fa-solid fa-${type === 'success' ? 'check' : type === 'warning' ? 'triangle-exclamation' : 'xmark'}"></i>${msg}`;
     container.appendChild(t);
     setTimeout(() => t.remove(), 3000);
 }

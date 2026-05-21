@@ -27,6 +27,19 @@ class SkillCreate(BaseModel):
     allowed_tools: List[str] = []
     tags: List[str] = []
 
+class SkillUpdate(BaseModel):
+    name: Optional[str] = None
+    description: Optional[str] = None
+    enabled: Optional[bool] = None
+    category: Optional[str] = None
+    version: Optional[str] = None
+    icon: Optional[str] = None
+    is_builtin: Optional[bool] = None
+    trigger_keywords: Optional[List[str]] = None
+    system_prompt_addition: Optional[str] = None
+    allowed_tools: Optional[List[str]] = None
+    tags: Optional[List[str]] = None
+
 class FileInfo(BaseModel):
     name: str
     path: str
@@ -42,3 +55,4 @@ class ChatRequest(BaseModel):
     model: Optional[str] = None
     mode: Optional[str] = "agent"  # "agent" | "plan" | "ask"
     plan_confirmed: Optional[bool] = False
+    auth_token: Optional[str] = None  # 用户认证token，用于获取用户API Key配置

@@ -31,15 +31,8 @@ class HttpRequestTool(BaseTool):
         "required": ["url"]
     }
 
-    # 允许调用的域名白名单
-    ALLOWED_HOSTS = [
-        "dev-api.gcr.manulife.com",
-        "hkg-dev-api.gcr.manulife.com",
-        # K8s 内部服务（同 namespace，Istio mTLS）
-        "svc-alicloud-governance-agent.ns-hkg-alicloud-system",
-        "svc-ets-alicloud-aiops-automation.ns-hkg-alicloud-system",
-        "svc-ets-alicloud-aiops-security.ns-hkg-alicloud-system",
-    ]
+    # 允许调用的域名白名单（留空表示不限制，或添加常见域名）
+    ALLOWED_HOSTS = []
 
     def __init__(self):
         # 在初始化时快照所有代理环境变量（AgentLoop 会在调 LLM 前 pop 掉）
@@ -78,14 +71,15 @@ class HttpRequestTool(BaseTool):
             if not url.startswith("https://") and not (url.startswith("http://") and is_internal):
                 return ToolResult(success=False, error="仅允许 HTTPS 请求（K8s 内部服务允许 HTTP）")
 
-            # 安全检查：域名白名单
-            from urllib.parse import urlparse
-            parsed = urlparse(url)
-            if parsed.hostname not in self.ALLOWED_HOSTS:
-                return ToolResult(
-                    success=False,
-                    error=f"域名不在允许列表中: {parsed.hostname}。允许的域名: {', '.join(self.ALLOWED_HOSTS)}"
-                )
+            # 安全检查：域名白名单（如果配置为空则不限制）
+            if self.ALLOWED_HOSTS:
+                from urllib.parse import urlparse
+                parsed = urlparse(url)
+                if parsed.hostname not in self.ALLOWED_HOSTS:
+                    return ToolResult(
+                        success=False,
+                        error=f"域名不在允许列表中: {parsed.hostname}。允许的域名: {', '.join(self.ALLOWED_HOSTS)}"
+                    )
 
             req_headers = {"Content-Type": "application/json"}
             if headers:

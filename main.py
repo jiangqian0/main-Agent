@@ -1,4 +1,6 @@
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Request
+from fastapi.exceptions import RequestValidationError
+from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import HTMLResponse, RedirectResponse, FileResponse
 from dotenv import load_dotenv
@@ -213,7 +215,27 @@ class PrefixPathMiddleware:
         return result
 
 
-app = FastAPI(title="Alicloud Agent", version="1.0.0")
+from app.api import chat, skills, memory, knowledge, config, agents_api, deploy, scheduler_api, workspace
+from app.api import auth, conversations
+from contextlib import asynccontextmanager
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    from app.db.database import init_db
+    await init_db()
+    yield
+
+app = FastAPI(title="Alicloud Agent", version="1.0.0", lifespan=lifespan)
+
+
+@app.exception_handler(RequestValidationError)
+async def validation_exception_handler(request: Request, exc: RequestValidationError):
+    print(f"[422 VALIDATION ERROR] path={request.url.path} body={exc.body}")
+    print(f"[422] errors={exc.errors()}")
+    return JSONResponse(
+        status_code=422,
+        content={"detail": exc.errors(), "body": exc.body},
+    )
 
 app.add_middleware(
     CORSMiddleware,
@@ -223,7 +245,8 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-from app.api import chat, skills, memory, knowledge, config, agents_api, deploy, scheduler_api, workspace
+app.include_router(auth.router)
+app.include_router(conversations.router)
 
 app.include_router(chat.router, prefix="/api/chat", tags=["Chat"])
 app.include_router(skills.router, prefix="/api/skills", tags=["Skills"])
@@ -352,4 +375,4 @@ app = PrefixPathMiddleware(app, ROOT_PATH)
 
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run("main:app", host="0.0.0.0", port=8080)
+    uvicorn.run("main:app", host="0.0.0.0", port=8081)

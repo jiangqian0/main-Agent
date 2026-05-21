@@ -217,7 +217,30 @@ document.addEventListener('DOMContentLoaded', () => {
   if (sidebarMenu) sidebarMenu.scrollTop = 0;
 
   // Load data
-  loadConversations();        // loads from localStorage + calls renderHistory('')
+  loadConversations().then(() => {
+    // 对话列表加载后，恢复上次会话
+    const savedConvId = localStorage.getItem('last_conversation_id');
+    console.log('[Init] savedConvId from localStorage:', savedConvId, typeof savedConvId);
+    if (savedConvId) {
+      // localStorage 返回的是字符串，转为整数进行比较
+      const convIdNum = parseInt(savedConvId, 10);
+      console.log('[Init] looking for convId:', convIdNum, 'in', conversations.length, 'conversations');
+      // 查找会话是否存在于列表中（比较时转为字符串统一）
+      const conv = conversations.find(c => String(c.id) === savedConvId);
+      console.log('[Init] found conv:', conv ? conv.title : 'NOT FOUND');
+      if (conv) {
+        window.currentConversationId = String(conv.id); // 统一存储为字符串以匹配后端 schema
+        console.log('[Init] restored currentConversationId:', window.currentConversationId, typeof window.currentConversationId);
+        // 加载会话消息
+        if (typeof storageLoadConversation === 'function') {
+          storageLoadConversation(conv.id).then(() => {
+            renderHistory('');
+          });
+        }
+      }
+    }
+  });
+
   loadMemories();
   loadWorkspaceFiles();
   loadMemoryConfig();

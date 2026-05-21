@@ -5,7 +5,7 @@ import yaml
 from pathlib import Path
 from typing import List, Dict, Optional, Any
 
-from app.core.schemas import Skill, SkillCreate
+from app.core.schemas import Skill, SkillCreate, SkillUpdate
 
 
 class SkillService:
@@ -178,19 +178,44 @@ class SkillService:
         self._save_custom_skills()
         return skill
 
-    def update_skill(self, skill_id: str, skill_data: Skill) -> Optional[Skill]:
+    def update_skill(self, skill_id: str, skill_data: SkillUpdate) -> Optional[Skill]:
         for i, s in enumerate(self._all_skills):
             if s.id != skill_id:
                 continue
+            update_dict = skill_data.model_dump(exclude_unset=True)
             if s.is_builtin:
-                s.enabled = skill_data.enabled
-                return s
+                skill_dir = self._skills_dir / s.id.replace("/", "-").lower()
+                md_path = skill_dir / "SKILL.md"
+                if md_path.exists():
+                    self._write_skill_md(md_path, s, update_dict)
+                updated_skill = s.model_copy(update=update_dict)
+                self._builtin_skills[i] = updated_skill
+                self._rebuild_all()
+                return updated_skill
+            updated_skill = s.model_copy(update=update_dict)
             self._custom_skills = [cs for cs in self._custom_skills if cs.id != skill_id]
-            self._custom_skills.append(skill_data)
+            self._custom_skills.append(updated_skill)
             self._rebuild_all()
             self._save_custom_skills()
-            return skill_data
+            return updated_skill
         return None
+
+    def _write_skill_md(self, md_path: Path, original_skill: Skill, updates: Dict[str, Any]):
+        import yaml
+        raw = md_path.read_text(encoding="utf-8")
+        m = re.match(r"^---\n(.*?)\n---\n(.*)$", raw, re.DOTALL)
+        if m:
+            fm = yaml.safe_load(m.group(1)) or {}
+            body = m.group(2)
+        else:
+            fm = {}
+            body = raw.strip()
+        for key in ['name', 'description', 'category', 'icon', 'enabled', 'trigger_keywords', 'system_prompt_addition', 'allowed_tools', 'tags', 'version']:
+            if key in updates:
+                fm[key] = updates[key]
+        fm['enabled'] = updates.get('enabled', original_skill.enabled)
+        output = "---\n" + yaml.dump(fm, allow_unicode=True, default_flow_style=False) + "---\n" + body
+        md_path.write_text(output, encoding="utf-8")
 
     def toggle_skill(self, skill_id: str) -> Optional[Skill]:
         skill = self.get_skill(skill_id)

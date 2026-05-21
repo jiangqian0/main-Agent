@@ -65,7 +65,7 @@ async function sendMessage() {
   resetStreamState();
   resetExecutionState();
 
-  // 确保对话已创建（自动标题）
+  // 确保对话已创建（自动标题）- 异步执行
   ensureConversation(msg);
 
   // UI: 添加用户消息（显示原始消息，不含附件说明）
@@ -77,7 +77,8 @@ async function sendMessage() {
   // Plan 模式：先保存用户消息用于确认后重发
   if (window.currentMode === 'plan') {
     window.pendingPlanMessage = msg;
-    persistPlanMessage();
+    // 等待对话创建完成后再保存
+    setTimeout(() => persistPlanMessage(), 100);
   }
 
   // 立即创建助手消息占位符，显示 "分析中..." 状态
@@ -130,19 +131,35 @@ async function streamFetch(message, skillId, opts = {}) {
   const styleSuffix = (typeof window.getAnswerStyleSuffix === 'function') ? window.getAnswerStyleSuffix() : '';
   const styledMessage = message + styleSuffix;
 
+  // 获取认证token（从session对象中提取token字段）
+  let authToken = '';
+  const sessionStr = localStorage.getItem('agent_session') || sessionStorage.getItem('agent_session');
+  if (sessionStr) {
+    try {
+      const sessionData = JSON.parse(sessionStr);
+      authToken = sessionData.token || '';
+    } catch (e) {
+      authToken = sessionStr; // 兼容直接存储token的情况
+    }
+  }
+
   try {
     const resp = await fetch(`${API_BASE_URL}/chat/stream`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+            'Content-Type': 'application/json',
+            ...(authToken ? { 'Authorization': `Bearer ${authToken}` } : {})
+        },
         body: JSON.stringify({
         message: styledMessage,
-        conversation_id: window.currentConversationId,
+        conversation_id: window.currentConversationId ? String(window.currentConversationId) : null,
         skill_id: skillId || null,
         enable_tools: true,
-        model,
-        knowledge_bases: kbIds,
+        model: model || undefined,
+        knowledge_bases: kbIds || [],
         mode: opts.mode || window.currentMode,
         plan_confirmed: opts.plan_confirmed || false,
+        auth_token: authToken || undefined,
       }),
       signal: abortController.signal
     });
@@ -601,6 +618,7 @@ function streamFinalize() {
   document.getElementById('stop-btn')?.classList.add('hidden');
 
   const text = streamState.textBuffer;
+  console.log('[streamFinalize] text length:', text ? text.length : 0, 'streamingMsg:', !!streamState.$streamingMsg);
 
   // Plan 模式：流结束后显示确认栏，不直接持久化
   if (window.currentMode === 'plan' && !window.planConfirmed) {
@@ -610,6 +628,24 @@ function streamFinalize() {
     if (text) persistAssistantMessage(text);
     execSetStep(4, 'completed');
     execAddLog('success', 'Plan ready — review and confirm to execute');
+
+    // 渲染 Markdown 格式
+    if (streamState.$streamingMsg) {
+      const msgBody = streamState.$streamingMsg.querySelector('.message-body');
+      if (msgBody) {
+        msgBody.querySelectorAll('.thinking-area').forEach(el => el.remove());
+        let respArea = msgBody.querySelector('.response-area');
+        if (respArea) {
+          respArea.innerHTML = `<div class="markdown-content">${renderMarkdown(text)}</div>`;
+        } else if (text) {
+          respArea = document.createElement('div');
+          respArea.className = 'response-area';
+          respArea.innerHTML = `<div class="markdown-content">${renderMarkdown(text)}</div>`;
+          msgBody.appendChild(respArea);
+        }
+      }
+    }
+
     const container = document.getElementById('chat-container');
     if (container) container.scrollTop = container.scrollHeight;
     if (streamState.$streamingMsg) streamState.$streamingMsg.classList.remove('streaming');
@@ -643,15 +679,20 @@ function streamFinalize() {
     const msgBody = streamState.$streamingMsg.querySelector('.message-body');
     if (msgBody) {
       msgBody.querySelectorAll('.thinking-area').forEach(el => el.remove());
-      const respArea = msgBody.querySelector('.response-area');
+      let respArea = msgBody.querySelector('.response-area');
+      console.log('[streamFinalize] respArea exists:', !!respArea, 'text length:', text ? text.length : 0);
       if (respArea) {
-        respArea.innerHTML = renderMarkdown(text);
+        const rendered = `<div class="markdown-content">${renderMarkdown(text)}</div>`;
+        console.log('[streamFinalize] Setting innerHTML, rendered length:', rendered.length);
+        respArea.innerHTML = rendered;
       } else if (text) {
-        const finalResp = document.createElement('div');
-        finalResp.className = 'response-area';
-        finalResp.innerHTML = `<div class="markdown-content">${renderMarkdown(text)}</div>`;
-        msgBody.appendChild(finalResp);
+        respArea = document.createElement('div');
+        respArea.className = 'response-area';
+        respArea.innerHTML = `<div class="markdown-content">${renderMarkdown(text)}</div>`;
+        msgBody.appendChild(respArea);
       }
+    } else {
+      console.log('[streamFinalize] No message body found!');
     }
 
     const msgContent = streamState.$streamingMsg.querySelector('.message-content');
@@ -667,6 +708,8 @@ function streamFinalize() {
         </div>
       `);
     }
+  } else {
+    console.log('[streamFinalize] No streaming message element!');
   }
 
   execSetStep(4, 'completed');
@@ -760,7 +803,8 @@ function streamToggleThinking(el) {
 
 // ─── Text Rendering ───────────────────────────────────────────────────────────
 
-function streamRenderText() {
+// 简化的流式渲染（快速更新）
+function streamRenderTextFast(text) {
   const container = document.getElementById('chat-container');
   if (!container) return;
 
@@ -778,16 +822,21 @@ function streamRenderText() {
     streamState._analyzingTimer = null;
   }
 
-  // 渲染回复区域（永久内容）
+  // 渲染回复区域（流式时使用简单 HTML）
   let responseEl = msgBody.querySelector('.response-area');
   if (!responseEl) {
     responseEl = document.createElement('div');
     responseEl.className = 'response-area';
     msgBody.appendChild(responseEl);
   }
-  responseEl.innerHTML = renderMarkdown(streamState.textBuffer) + '<span class="cursor-blink"></span>';
+  // 流式时只转义 HTML，不做完整 Markdown 渲染
+  responseEl.innerHTML = `<div class="markdown-content">${escapeHtml(text)}</div><span class="cursor-blink"></span>`;
 
   container.scrollTop = container.scrollHeight;
+}
+
+function streamRenderText() {
+  streamRenderTextFast(streamState.textBuffer);
 }
 
 // ─── Message DOM ──────────────────────────────────────────────────────────────
@@ -1198,7 +1247,7 @@ window.ensureConversation  = ensureConversation;
 window.persistUserMessage  = persistUserMessage;
 window.persistAssistantMessage = persistAssistantMessage;
 window.getCurrentConversation = getCurrentConversation;
-window.currentConversationId = null;
+// 注意：不重置 currentConversationId，让它从 localStorage 恢复
 window.selectedSkillId     = '';
 window.selectedKbIds       = new Set();
 window.toggleCodeBlock    = toggleCodeBlock;

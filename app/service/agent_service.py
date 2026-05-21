@@ -2,10 +2,12 @@ from typing import Dict, Any, Optional
 from fastapi.responses import StreamingResponse
 from fastapi import HTTPException
 import json
+import aiosqlite
 from app.agent.loop import AgentLoop
 from app.service.skill_service import get_skill_service
 from app.service.knowledge_service import get_knowledge_base_service
 from app.service.config_service import get_config_service
+from app.db.database import DATABASE_PATH
 
 
 SYSTEM_PROMPT = """你是一个专业的 AI 软件开发助手。
@@ -93,6 +95,72 @@ SYSTEM_PROMPT_AGENT = """你是一个专业的 AI 软件开发助手。
 - 最后给出完整的改动清单"""
 
 
+def verify_token(token: str) -> Optional[int]:
+    """验证token并返回用户ID"""
+    import base64
+    try:
+        decoded = base64.b64decode(token.encode()).decode()
+        user_id, timestamp = decoded.split(":")
+        return int(user_id)
+    except:
+        return None
+
+
+async def get_user_api_config(auth_token: Optional[str]) -> Dict[str, Any]:
+    """从用户token获取用户的API配置，优先级：用户配置 > 全局配置"""
+    # 获取全局配置作为默认值
+    cfg = get_config_service()
+    default_config = {
+        "api_key": cfg.get("api_key") or "",
+        "api_base_url": cfg.get("api_base_url", "https://dashscope-intl.aliyuncs.com/compatible-mode/v1"),
+        "model": cfg.get("model", "qwen3-max"),
+        "temperature": cfg.get("temperature", 0.7),
+        "max_tokens": cfg.get("max_tokens", 4096),
+    }
+
+    # 如果没有token，返回全局配置
+    if not auth_token:
+        return default_config
+
+    # 验证token获取用户ID
+    user_id = verify_token(auth_token)
+    if not user_id:
+        return default_config
+
+    # 从数据库获取用户配置
+    try:
+        async with aiosqlite.connect(DATABASE_PATH) as db:
+            db.row_factory = aiosqlite.Row
+            cursor = await db.execute(
+                """SELECT api_key, api_base_url, model, temperature, max_tokens
+                   FROM users WHERE id = ?""",
+                (user_id,)
+            )
+            row = await cursor.fetchone()
+
+            if row:
+                user_config = {}
+                # 用户配置会覆盖全局配置（如果用户配置了的话）
+                if row["api_key"]:
+                    user_config["api_key"] = row["api_key"]
+                if row["api_base_url"]:
+                    user_config["api_base_url"] = row["api_base_url"]
+                if row["model"]:
+                    user_config["model"] = row["model"]
+                if row["temperature"] is not None:
+                    user_config["temperature"] = row["temperature"]
+                if row["max_tokens"] is not None:
+                    user_config["max_tokens"] = row["max_tokens"]
+
+                # 合并配置：全局默认值 + 用户覆盖
+                return {**default_config, **user_config}
+
+    except Exception as e:
+        print(f"[AgentService] Error getting user config: {e}")
+
+    return default_config
+
+
 class AgentService:
     def __init__(self):
         cfg = get_config_service()
@@ -113,13 +181,17 @@ class AgentService:
         knowledge_bases: Optional[list] = None,
         mode: str = "agent",
         plan_confirmed: bool = False,
+        auth_token: Optional[str] = None,
     ):
         skill_service = get_skill_service()
         skill_system_prompt, allowed_tools = skill_service.get_skill_system_prompt(skill_id)
 
-        cfg = get_config_service()
-        current_api_key = cfg.get("api_key") or ""
-        current_base_url = cfg.get("api_base_url", "https://dashscope-intl.aliyuncs.com/compatible-mode/v1")
+        # 获取配置：优先用户配置，fallback到全局配置
+        api_config = await get_user_api_config(auth_token)
+        current_api_key = api_config.get("api_key", "")
+        current_base_url = api_config.get("api_base_url", "https://dashscope-intl.aliyuncs.com/compatible-mode/v1")
+        current_temperature = api_config.get("temperature", 0.7)
+        current_max_tokens = api_config.get("max_tokens", 4096)
 
         kb_context = ""
         if knowledge_bases:
@@ -131,13 +203,10 @@ class AgentService:
                     kb_parts.append(f"### {entry['title']}\n{entry['content']}\n")
                 kb_context = "\n".join(kb_parts)
 
-        effective_model = model or cfg.get("model", "qwen3-max")
+        # 模型优先级：请求指定 > 用户配置 > 全局配置
+        effective_model = model or api_config.get("model", "qwen3-max")
 
         # 根据模式决定工具和系统提示
-        #
-        # Ask   → 无工具，纯问答
-        # Plan  → 无工具，只输出计划
-        # Agent → 有工具，自动执行（plan_confirmed 时用 PLAN_AGENT prompt，严格执行计划）
         if mode == "ask":
             effective_tools = []
             system_prompt = SYSTEM_PROMPT_ASK
@@ -145,12 +214,9 @@ class AgentService:
             effective_tools = []
             system_prompt = SYSTEM_PROMPT_PLAN
         elif plan_confirmed:
-            # Plan 确认后执行：AI 已经看过自己的计划，用户点击了 Execute
-            # 必须严格按计划执行，不允许偏离
             effective_tools = allowed_tools if allowed_tools else None
             system_prompt = SYSTEM_PROMPT_AGENT
         else:
-            # 普通 Agent 模式
             effective_tools = allowed_tools if allowed_tools else None
             system_prompt = SYSTEM_PROMPT
 
@@ -196,6 +262,7 @@ class AgentService:
         knowledge_bases: Optional[list] = None,
         mode: str = "agent",
         plan_confirmed: bool = False,
+        auth_token: Optional[str] = None,
     ) -> Dict[str, Any]:
         try:
             skill_service = get_skill_service()
@@ -211,10 +278,11 @@ class AgentService:
                         kb_parts.append(f"### {entry['title']}\n{entry['content']}\n")
                     kb_context = "\n".join(kb_parts)
 
-            cfg = get_config_service()
-            current_api_key = cfg.get("api_key") or ""
-            current_base_url = cfg.get("api_base_url", "https://dashscope-intl.aliyuncs.com/compatible-mode/v1")
-            effective_model = model or cfg.get("model", "qwen3-max")
+            # 获取配置：优先用户配置，fallback到全局配置
+            api_config = await get_user_api_config(auth_token)
+            current_api_key = api_config.get("api_key", "")
+            current_base_url = api_config.get("api_base_url", "https://dashscope-intl.aliyuncs.com/compatible-mode/v1")
+            effective_model = model or api_config.get("model", "qwen3-max")
 
             if mode == "ask":
                 effective_tools = []

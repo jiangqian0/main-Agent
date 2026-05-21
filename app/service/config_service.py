@@ -28,7 +28,7 @@ class ConfigService:
 
     def _load_defaults(self) -> Dict[str, Any]:
         return {
-            "api_key": os.getenv("DASHSCOPE_API_KEY", "") or os.getenv("OPENAI_API_KEY", ""),
+            "api_key": os.getenv("DASHSCOPE_API_KEY", "") or os.getenv("OPENAI_API_KEY", "") or "your-api-key-here",
             "api_base_url": os.getenv("API_BASE_URL", "https://dashscope-intl.aliyuncs.com/compatible-mode/v1"),
             "model": os.getenv("DEFAULT_MODEL", "qwen3-max"),
             "temperature": 0.7,

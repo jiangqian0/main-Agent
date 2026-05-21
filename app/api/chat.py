@@ -9,6 +9,8 @@ router = APIRouter()
 @router.post("/stream")
 async def chat_stream(request: ChatRequest):
     """流式聊天接口"""
+    import json
+    print(f"[DEBUG] ChatRequest body: {json.dumps(request.model_dump(), ensure_ascii=False)}")
     try:
         agent = AgentService()
         return await agent.stream_response(
@@ -20,8 +22,12 @@ async def chat_stream(request: ChatRequest):
             knowledge_bases=request.knowledge_bases,
             mode=request.mode or "agent",
             plan_confirmed=request.plan_confirmed or False,
+            auth_token=request.auth_token,
         )
     except Exception as e:
+        import traceback
+        print(f"[ERROR] chat_stream exception: {e}")
+        traceback.print_exc()
         raise HTTPException(status_code=500, detail=str(e))
 
 
@@ -39,6 +45,7 @@ async def chat(request: ChatRequest):
             knowledge_bases=request.knowledge_bases,
             mode=request.mode or "agent",
             plan_confirmed=request.plan_confirmed or False,
+            auth_token=request.auth_token,
         )
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))

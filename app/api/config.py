@@ -22,8 +22,8 @@ async def get_config() -> Dict[str, Any]:
 async def update_config(config: Dict[str, Any]) -> Dict[str, Any]:
     try:
         service = get_config_service()
-        # Only save non-sensitive fields from client for security
-        safe_fields = ["api_base_url", "model", "theme", "sidebar_width", "username"]
+        # Allow user fields including api_key for authenticated users
+        safe_fields = ["api_base_url", "model", "theme", "sidebar_width", "username", "api_key", "temperature", "max_tokens"]
         filtered = {k: v for k, v in config.items() if k in safe_fields and v is not None}
         updated = service.update(filtered)
         if updated.get("api_key"):

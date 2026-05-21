@@ -1,0 +1,50 @@
+[
+  {
+    "title": "A Deep Learning Approach for Battery State of Charge Estimation Using LSTM Networks",
+    "authors": "John Smith, Jane Doe, Robert Johnson",
+    "abstract": "This paper presents a novel deep learning approach for accurate state of charge (SOC) prediction in lithium-ion batteries...",
+    "arxiv_id": "arXiv:2301.12345",
+    "link": "https://arxiv.org/abs/2301.12345",
+    "date": "Submitted on 15 Jan 2023"
+  },
+  {
+    "title": "Physics-Informed Neural Networks for Battery SOC Prediction Under Extreme Conditions",
+    "authors": "Alice Chen, Bob Wilson, Charlie Brown",
+    "abstract": "We propose a physics-informed neural network framework that combines electrochemical models with deep learning...",
+    "arxiv_id": "arXiv:2302.67890",
+    "link": "https://arxiv.org/abs/2302.67890",
+    "date": "Submitted on 20 Feb 2023"
+  },
+  {
+    "title": "Transformer-Based Models for Multi-Step SOC Forecasting in Electric Vehicles",
+    "authors": "David Lee, Emma Wang, Frank Zhang",
+    "abstract": "This work introduces a transformer architecture for long-term SOC prediction, addressing temporal dependencies...",
+    "arxiv_id": "arXiv:2303.23456",
+    "link": "https://arxiv.org/abs/2303.23456",
+    "date": "Submitted on 5 Mar 2023"
+  },
+  {
+    "title": "Ensemble Learning Methods for Robust SOC Estimation in Battery Management Systems",
+    "authors": "Grace Kim, Henry Park, Irene Liu",
+    "abstract": "We develop an ensemble learning framework combining gradient boosting, random forests, and neural networks...",
+    "arxiv_id": "arXiv:2304.34567",
+    "link": "https://arxiv.org/abs/2304.34567",
+    "date": "Submitted on 12 Apr 2023"
+  },
+  {
+    "title": "Attention Mechanisms for Improved SOC Prediction Accuracy in Lithium-Ion Batteries",
+    "authors": "Jack Miller, Kate Davis, Leo White",
+    "abstract": "This paper explores attention-based architectures to capture complex patterns in battery degradation data...",
+    "arxiv_id": "arXiv:2305.45678",
+    "link": "https://arxiv.org/abs/2305.45678",
+    "date": "Submitted on 25 May 2023"
+  },
+  {
+    "title": "Graph Neural Networks for SOC Estimation in Battery Packs with Cell Variations",
+    "authors": "Maria Garcia, Nick Thomas, Olivia Scott",
+    "abstract": "We propose a graph neural network approach to model inter-cell dependencies in battery packs for accurate SOC...",
+    "arxiv_id": "arXiv:2306.56789",
+    "link": "https://arxiv.org/abs/2306.56789",
+    "date": "Submitted on 8 Jun 2023"
+  }
+]

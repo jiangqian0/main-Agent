@@ -1,6 +1,6 @@
 from fastapi import APIRouter, HTTPException
 from typing import List, Optional, Dict, Any
-from app.core.schemas import Skill, SkillCreate
+from app.core.schemas import Skill, SkillCreate, SkillUpdate
 from app.service.skill_service import get_skill_service
 
 router = APIRouter()
@@ -93,7 +93,7 @@ async def toggle_skill(skill_id: str):
 
 
 @router.put("/{skill_id}")
-async def update_skill(skill_id: str, skill: Skill):
+async def update_skill(skill_id: str, skill: SkillUpdate):
     """更新技能"""
     try:
         service = get_skill_service()
