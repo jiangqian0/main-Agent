@@ -65,8 +65,8 @@ async function sendMessage() {
   resetStreamState();
   resetExecutionState();
 
-  // 确保对话已创建（自动标题）- 异步执行
-  ensureConversation(msg);
+  // 确保对话已创建（自动标题）- 必须 await，否则 persistUserMessage 会因 conv 未创建而重复创建
+  await ensureConversation(msg);
 
   // UI: 添加用户消息（显示原始消息，不含附件说明）
   appendUserMessage(msg, true);

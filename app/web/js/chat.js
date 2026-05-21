@@ -414,9 +414,23 @@ function toggleKbEntry(id) {
 // toggleHistory() is defined in shared-sidebar.js (shared across all pages)
 // chat.js does NOT redefine it — do not add a local override here.
 
+// ─── Clear Chat ───────────────────────────────────────────────────────────────
+function clearChat(resetConversation = false) {
+  const container = document.getElementById('chat-container');
+  if (!container) return;
+  container.innerHTML = `
+    <div class="welcome-message" id="welcome-message">
+      <div class="welcome-icon"><i class="fa-solid fa-robot"></i></div>
+      <h2>AliCloud Agent Hub</h2>
+      <p>${resetConversation ? 'New conversation started' : 'Select actions or start conversation'}</p>
+    </div>
+  `;
+  if (typeof resetExecutionState === 'function') resetExecutionState();
+}
+
 // ─── New Conversation ─────────────────────────────────────────────────────────
 function newConversation() {
-  currentConversationId = null;
+  window.currentConversationId = null;
   clearChat(true);
   window.selectedSkillId = '';
   selectSkill('', 'Auto (Smart)');
@@ -424,6 +438,7 @@ function newConversation() {
   if (label) label.textContent = 'Knowledge Base';
   const kbBtn = document.getElementById('kb-btn');
   if (kbBtn) kbBtn.classList.remove('active');
+  localStorage.removeItem('last_conversation_id');
 }
 
 // ─── Logout ──────────────────────────────────────────────────────────────────

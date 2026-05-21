@@ -152,7 +152,7 @@ function onHistorySearchInput(el) {
 }
 
 async function togglePinConversation(convId) {
-    const conv = conversations.find(c => c.id === convId);
+    const conv = conversations.find(c => String(c.id) === String(convId));
     if (!conv) return;
     const newPinned = !conv.pinned;
 
@@ -175,7 +175,7 @@ async function togglePinConversation(convId) {
 }
 
 function storageExportConversation(convId) {
-    const conv = conversations.find(c => c.id === convId);
+    const conv = conversations.find(c => String(c.id) === String(convId));
     if (!conv) return;
     const data = JSON.stringify(conv, null, 2);
     const blob = new Blob([data], { type: 'application/json' });
@@ -319,8 +319,8 @@ async function storageDeleteConversation(convId) {
 
         if (!response.ok) throw new Error('Failed to delete');
 
-        conversations = conversations.filter(c => c.id !== convId);
-        if (window.currentConversationId === convId) {
+        conversations = conversations.filter(c => c.id !== convId && String(c.id) !== String(convId));
+        if (window.currentConversationId === convId || String(window.currentConversationId) === String(convId)) {
             window.currentConversationId = null;
             clearChat(false);
         }
@@ -332,7 +332,7 @@ async function storageDeleteConversation(convId) {
 }
 
 async function storageRenameConversation(convId) {
-    const conv = conversations.find(c => c.id === convId);
+    const conv = conversations.find(c => String(c.id) === String(convId));
     if (!conv) return;
     const newTitle = prompt('Enter new name:', conv.title || '');
     if (newTitle !== null && newTitle.trim()) {

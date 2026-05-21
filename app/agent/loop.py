@@ -500,8 +500,14 @@ class AgentLoop:
                         print(f"[AgentLoop] Stream complete: tool_calls detected ({len(tool_calls_buffer)} calls)")
                         yield {"type": "tool_calls", "content": tool_calls_buffer}
                     else:
-                        print(f"[AgentLoop] Stream complete: done, full_content length = {len(full_content)}")
-                        yield {"type": "done", "content": full_content}
+                        # 如果 full_content 为空但有 thinking_content（模型直接把回复放在思考字段里）
+                        # 将思考内容作为正式回复返回给用户
+                        final_content = full_content
+                        if not final_content and thinking_buffer:
+                            final_content = thinking_buffer
+                            print(f"[AgentLoop] Using thinking_content as response ({len(final_content)} chars)")
+                        print(f"[AgentLoop] Stream complete: done, full_content length = {len(final_content)}")
+                        yield {"type": "done", "content": final_content}
 
         except httpx.HTTPStatusError as e:
             print(f"[AgentLoop] HTTP error: {e.response.status_code} - {e.response.text[:500]}")

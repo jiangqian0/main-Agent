@@ -1,0 +1,28 @@
+# Data files
+# Keep skills.json, agents.json, scheduled_tasks.json, deploy_logs.json in git
+# Only exclude config.json (contains API keys and sensitive settings)
+app/data/config.json
+
+# Environment files
+.env
+.env.dev
+.env.local
+
+# Python cache
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# IDE
+.vscode/
+.idea/
+*.swp
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+logs/
